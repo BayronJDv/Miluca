@@ -29,7 +29,6 @@ function App() {
               </Routes>
             </div>
           </main>
-          <FAB />
         </div>
       </BrowserRouter>
     );

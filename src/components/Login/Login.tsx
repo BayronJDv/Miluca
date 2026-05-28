@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useAtom } from "jotai";
 import { userAtom } from "../../store/UserAtom";
 import { Login as LoginUser } from "../../db/users";
-import { Input } from "./Input";
-import { Icon } from "./Icon";
-import { colors } from "./colors";
+import { Input } from "../design/Input";
+import { Icon } from "../design/Icon";
+import { colors } from "../design/colors";
 import "./Login.css";
 
 interface LoginProps {

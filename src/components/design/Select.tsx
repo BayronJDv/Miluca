@@ -1,18 +1,17 @@
-// components/Login/Input.tsx
+// components/Login/Select.tsx
 import { colors } from "./colors";
 import { Icon } from "./Icon";
 
-interface InputProps {
+interface SelectProps {
   label?: string;
   placeholder?: string;
   value: string;
   onChange: (value: string) => void;
-  type?: string;
+  options: string[];
   icon?: string;
-  onKeyDown?: (e: React.KeyboardEvent) => void;
 }
 
-export const Input = ({ label, placeholder, value, onChange, type = "text", icon, onKeyDown }: InputProps) => (
+export const Select = ({ label, placeholder, value, onChange, options, icon }: SelectProps) => (
   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
     {label && (
       <label style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", color: colors.onSurfaceVariant }}>
@@ -21,16 +20,13 @@ export const Input = ({ label, placeholder, value, onChange, type = "text", icon
     )}
     <div style={{ position: "relative" }}>
       {icon && (
-        <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: colors.outline, display: "flex" }}>
+        <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: colors.outline, display: "flex", zIndex: 1 }}>
           <Icon name={icon} size={16} />
         </span>
       )}
-      <input
-        type={type}
-        placeholder={placeholder}
+      <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        onKeyDown={onKeyDown}
         style={{
           width: "100%",
           height: 40,
@@ -38,10 +34,12 @@ export const Input = ({ label, placeholder, value, onChange, type = "text", icon
           border: `1px solid ${colors.outlineVariant}`,
           borderRadius: 8,
           fontSize: 14,
-          color: colors.onSurface,
+          color: value ? colors.onSurface : colors.outline,
           background: "#fff",
           transition: "all 0.15s",
           fontFamily: "inherit",
+          cursor: "pointer",
+          appearance: "none",
         }}
         onFocus={(e) => {
           e.currentTarget.style.borderColor = colors.primary;
@@ -50,7 +48,29 @@ export const Input = ({ label, placeholder, value, onChange, type = "text", icon
         onBlur={(e) => {
           e.currentTarget.style.borderColor = colors.outlineVariant;
         }}
-      />
+      >
+        <option value="" disabled>
+          {placeholder || "Seleccionar"}
+        </option>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+      <span
+        style={{
+          position: "absolute",
+          right: 12,
+          top: "50%",
+          transform: "translateY(-50%)",
+          color: colors.outline,
+          display: "flex",
+          pointerEvents: "none",
+        }}
+      >
+        <Icon name="chevron-down" size={16} />
+      </span>
     </div>
   </div>
 );
