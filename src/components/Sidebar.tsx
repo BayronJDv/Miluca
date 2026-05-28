@@ -1,0 +1,41 @@
+import { NavLink } from 'react-router-dom';
+
+const menuItems = [
+  { path: '/', label: 'Dashboard', icon: 'dashboard' },
+  { path: '/pos', label: 'POS', icon: 'point_of_sale' },
+  { path: '/inventario', label: 'Inventario', icon: 'inventory_2' },
+  { path: '/bitacora', label: 'Bitácora', icon: 'history_edu' },
+  { path: '/proveedores', label: 'Proveedores', icon: 'local_shipping' },
+  { path: '/compras', label: 'Compras', icon: 'shopping_cart' },
+  { path: '/reportes', label: 'Reportes', icon: 'analytics' },
+  { path: '/configuracion', label: 'Configuración', icon: 'settings' },
+];
+
+function Sidebar() {
+  return (
+    <aside className="w-64 h-screen fixed left-0 top-0 bg-[#1E293B] flex flex-col py-lg px-md z-50">
+      {/* Logo ... */}
+      <nav className="flex-1 space-y-1">
+        {menuItems.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            className={({ isActive }) =>
+              `flex items-center gap-md p-sm text-white transition-all duration-200 ${
+                isActive
+                  ? 'opacity-100 font-semibold border-l-4 border-primary bg-surface-variant/10'
+                  : 'opacity-70 hover:opacity-100 hover:bg-surface-variant/5'
+              }`
+            }
+          >
+            <span className="material-symbols-outlined">{item.icon}</span>
+            <span className="font-body-md text-body-md">{item.label}</span>
+          </NavLink>
+        ))}
+      </nav>
+      {/* Botón cerrar sesión ... */}
+    </aside>
+  );
+}
+
+export default Sidebar;

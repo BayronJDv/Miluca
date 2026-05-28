@@ -1,0 +1,22 @@
+/* Estilos específicos del FAB */
+.fab {
+  box-shadow: 0 4px 12px rgba(0, 88, 190, 0.3);
+  animation: float 2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.fab:hover {
+  animation: none;
+  box-shadow: 0 6px 16px rgba(0, 88, 190, 0.4);
+}

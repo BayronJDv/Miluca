@@ -1,0 +1,12 @@
+/* Estilos específicos de Summary Card */
+.summary-card {
+  transition: all 0.3s ease;
+}
+
+.summary-card:hover {
+  transform: translateY(-4px);
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #0058be 0%, #2170e4 100%);
+}

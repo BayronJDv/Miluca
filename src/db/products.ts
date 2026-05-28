@@ -22,6 +22,45 @@ export async function obtenerProductos(): Promise<Producto[]> {
   return await db.select('SELECT * FROM products ORDER BY name');
 }
 
+export async function buscarProductos(
+  busqueda: string,
+  pagina: number = 1,
+  porPagina: number = 10
+): Promise<{ productos: Producto[]; total: number; pagina: number; totalPaginas: number }> {
+  const db = await getDb();
+  const offset = (pagina - 1) * porPagina;
+  const like = `%${busqueda}%`;
+
+  const [{ count }] = await db.select<{ count: number }[]>(
+    'SELECT COUNT(*) as count FROM products WHERE name LIKE $1 OR CAST(code AS TEXT) LIKE $1',
+    [like]
+  );
+
+  const productos = await db.select<Producto[]>(
+    'SELECT * FROM products WHERE name LIKE $1 OR CAST(code AS TEXT) LIKE $1 ORDER BY name LIMIT $2 OFFSET $3',
+    [like, porPagina, offset]
+  );
+
+  return {
+    productos,
+    total: count,
+    pagina,
+    totalPaginas: Math.ceil(count / porPagina),
+  };
+}
+
+export async function modificarProducto(id: number, p: Partial<Omit<Producto, 'id'>>): Promise<void> {
+  const db = await getDb();
+  const campos = Object.keys(p) as (keyof typeof p)[];
+  if (campos.length === 0) return;
+  const sets = campos.map((c, i) => `${c} = $${i + 1}`).join(', ');
+  const valores = campos.map((c) => p[c]);
+  await db.execute(
+    `UPDATE products SET ${sets} WHERE id = $${campos.length + 1}`,
+    [...valores, id]
+  );
+}
+
 export async function eliminarProducto(id: number): Promise<void> {
   const db = await getDb();
   await db.execute('DELETE FROM products WHERE id = $1', [id]);

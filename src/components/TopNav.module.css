@@ -1,0 +1,23 @@
+/* Estilos específicos del TopNav */
+.search-input:focus {
+  box-shadow: 0 0 0 2px rgba(0, 88, 190, 0.2);
+}
+
+.notification-badge {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
