@@ -1,7 +1,7 @@
 import "./App.css";
 import { useAtom } from "jotai";
 import { userAtom } from "./store/UserAtom";
-import  Login  from "./components/Login";
+import  Login  from "./components/Login/Login";
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Sidebar from "./components/Sidebar";
 import TopNav from "./components/TopNav";
@@ -29,7 +29,6 @@ function App() {
               </Routes>
             </div>
           </main>
-          <FAB />
         </div>
       </BrowserRouter>
     );
