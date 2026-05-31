@@ -141,9 +141,7 @@ const Pos: React.FC = () => {
     }));
     
     try {
-      console.log('Registrando venta con items:');
       const factura = await registrarVenta(items);
-      console.log('terminadisima venta con items:');
       setLastInvoice(factura);
       setShowInvoice(true);
       
