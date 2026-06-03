@@ -85,71 +85,28 @@ async function withRetry<T>(
   throw lastError || new Error('Operation failed after retries');
 }
 
-
-
-async function validarYPrepararVenta(
+export async function registrarVenta(
   items: { product_id: number; quantity: number; price: number }[]
-): Promise<{
-  isValid: boolean;
-  total: number;
-  error?: string;
-}> {
-  const db = await getDb();
-  
-  for (const item of items) {
-    const stockCheck = await db.select<{ stock: number }[]>(
-      'SELECT stock FROM products WHERE id = ?',
-      [item.product_id]
-    );
-    
-    if (!stockCheck.length) {
-      return {
-        isValid: false,
-        total: 0,
-        error: `Producto ID ${item.product_id} no encontrado`
-      };
-    }
-    
-    if (stockCheck[0].stock < item.quantity) {
-      return {
-        isValid: false,
-        total: 0,
-        error: `Stock insuficiente para producto ID: ${item.product_id}. Disponible: ${stockCheck[0].stock}, Requerido: ${item.quantity}`
-      };
-    }
-  }
-  
-  const total = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-  
-  return {
-    isValid: true,
-    total,
-  };
-}
-
-async function ejecutarTransaccionVenta(
-  items: { product_id: number; quantity: number; price: number }[],
-  total: number
 ): Promise<Factura> {
-  return enqueueOperation(() =>
+  return enqueueOperation(() => 
     withRetry(async () => {
       const db = await getDb();
       
+      for (const item of items) {
+        const stockCheck = await db.select<{ stock: number }[]>(
+          'SELECT stock FROM products WHERE id = ?',
+          [item.product_id]
+        );
+        
+        if (!stockCheck.length || stockCheck[0].stock < item.quantity) {
+          throw new Error(`Stock insuficiente para producto ID: ${item.product_id}`);
+        }
+      }
+      
+      const total = items.reduce((sum, item) => sum + (item.quantity * item.price), 0);
+      
       try {
         await db.execute('BEGIN IMMEDIATE');
-        
-        for (const item of items) {
-          const updateResult = await db.execute(
-            `UPDATE products 
-             SET stock = stock - ? 
-             WHERE id = ? AND stock >= ?`,
-            [item.quantity, item.product_id, item.quantity]
-          );
-          
-          if (updateResult.rowsAffected === 0) {
-            throw new Error(`Stock insuficiente para producto ID: ${item.product_id}`);
-          }
-        }
         
         const result = await db.execute(
           `INSERT INTO sales (sale_date, total) 
@@ -165,28 +122,29 @@ async function ejecutarTransaccionVenta(
              VALUES (?, ?, ?, ?)`,
             [saleId, item.product_id, item.quantity, item.quantity * item.price]
           );
+          
+          await actualizarStock(item.product_id, -item.quantity);
         }
         
         await db.execute('COMMIT');
         
-        const [venta, itemsConNombre] = await Promise.all([
-          db.select<Venta[]>(
-            'SELECT * FROM sales WHERE id = ?',
-            [saleId]
-          ),
-          db.select<ItemVenta[]>(
-            `SELECT 
-              si.product_id,
-              p.name as product_name,
-              p.price as price,
-              si.quantity,
-              si.subtotal
-             FROM sale_items si
-             JOIN products p ON p.id = si.product_id
-             WHERE si.sale_id = ?`,
-            [saleId]
-          )
-        ]);
+        const venta = await db.select<Venta[]>(
+          'SELECT * FROM sales WHERE id = ?',
+          [saleId]
+        );
+        
+        const itemsConNombre = await db.select<ItemVenta[]>(
+          `SELECT 
+            si.product_id,
+            p.name as product_name,
+            p.price as price,
+            si.quantity,
+            si.subtotal
+           FROM sale_items si
+           JOIN products p ON p.id = si.product_id
+           WHERE si.sale_id = ?`,
+          [saleId]
+        );
         
         return {
           venta: venta[0],
@@ -203,18 +161,6 @@ async function ejecutarTransaccionVenta(
       }
     })
   );
-}
-
-export async function registrarVenta(
-  items: { product_id: number; quantity: number; price: number }[]
-): Promise<Factura> {
-  const validation = await validarYPrepararVenta(items);
-  
-  if (!validation.isValid) {
-    throw new Error(validation.error);
-  }
-  
-  return ejecutarTransaccionVenta(items, validation.total);
 }
 
 export async function obtenerVentas(
