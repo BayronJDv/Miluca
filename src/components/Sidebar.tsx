@@ -4,9 +4,10 @@ const menuItems = [
   { path: '/', label: 'Dashboard', icon: 'dashboard' },
   { path: '/pos', label: 'POS', icon: 'point_of_sale' },
   { path: '/inventario', label: 'Inventario', icon: 'inventory_2' },
-  { path: '/bitacora', label: 'Bitácora', icon: 'history_edu' },
   { path: '/proveedores', label: 'Proveedores', icon: 'local_shipping' },
   { path: '/compras', label: 'Compras', icon: 'shopping_cart' },
+  { path: '/historial-compras', label: 'Historial Compras', icon: 'receipt_long' },
+  { path: '/historial-ventas', label: 'Historial Ventas', icon: 'receipt' },
   { path: '/reportes', label: 'Reportes', icon: 'analytics' },
   { path: '/configuracion', label: 'Configuración', icon: 'settings' },
 ];

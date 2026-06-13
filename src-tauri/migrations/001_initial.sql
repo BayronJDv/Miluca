@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS products (
 CREATE TABLE IF NOT EXISTS suppliers (
   id           INTEGER PRIMARY KEY AUTOINCREMENT,
   name         TEXT NOT NULL,
+  photo_route  TEXT,
   contact_info TEXT
 );
 
@@ -115,3 +116,6 @@ VALUES ('admin',  'admin123',  'admin');
 
 INSERT OR IGNORE INTO users (username, password, role)
 VALUES ('seller', 'seller123', 'seller');
+
+INSERT OR IGNORE INTO suppliers (name, photo_route, contact_info)
+VALUES ('Generico', '/suppliers/generico.jpg', '315000000');

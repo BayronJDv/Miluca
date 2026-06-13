@@ -2,12 +2,17 @@
 import { colors } from "./colors";
 import { Icon } from "./Icon";
 
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
 interface SelectProps {
   label?: string;
   placeholder?: string;
   value: string;
   onChange: (value: string) => void;
-  options: string[];
+  options: SelectOption[];
   icon?: string;
 }
 
@@ -53,8 +58,8 @@ export const Select = ({ label, placeholder, value, onChange, options, icon }: S
           {placeholder || "Seleccionar"}
         </option>
         {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
+          <option key={option.value} value={option.value}>
+            {option.label}
           </option>
         ))}
       </select>
