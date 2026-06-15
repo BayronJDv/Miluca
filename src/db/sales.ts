@@ -206,6 +206,33 @@ export async function obtenerNumeroTransaccionesHoy(
   });
 }
 
+export interface VentaPorDia {
+  fecha: string;
+  total_ventas: number;
+  num_ventas: number;
+  ganancia: number;
+}
+
+export async function obtenerVentasPorDia(
+  fechaInicio: string,
+  fechaFin: string
+): Promise<VentaPorDia[]> {
+  return enqueueGlobalOperation(async () => {
+    const db = await getDb();
+    return db.select<VentaPorDia[]>(
+      `SELECT date(sale_date, 'localtime') as fecha,
+              COALESCE(SUM(total), 0) as total_ventas,
+              COUNT(*) as num_ventas,
+              COALESCE(SUM(profit), 0) as ganancia
+       FROM sales
+       WHERE date(sale_date, 'localtime') >= ? AND date(sale_date, 'localtime') <= ?
+       GROUP BY date(sale_date, 'localtime')
+       ORDER BY fecha ASC`,
+      [fechaInicio, fechaFin]
+    );
+  });
+}
+
 export async function obtenerFactura(id: number): Promise<Factura | null> {
   return enqueueGlobalOperation(async () => {
     const db = await getDb();
@@ -234,5 +261,33 @@ export async function obtenerFactura(id: number): Promise<Factura | null> {
       venta: ventas[0],
       items
     };
+  });
+}
+
+export interface ProductoMasVendido {
+  product_id: number;
+  name: string;
+  code: string;
+  total_vendido: number;
+  total_ingresos: number;
+}
+
+export async function obtenerProductosMasVendidos(
+  limite: number = 5
+): Promise<ProductoMasVendido[]> {
+  return enqueueGlobalOperation(async () => {
+    const db = await getDb();
+    return db.select<ProductoMasVendido[]>(
+      `SELECT
+        p.id as product_id, p.name, p.code,
+        COALESCE(SUM(si.quantity), 0) as total_vendido,
+        COALESCE(SUM(si.subtotal), 0) as total_ingresos
+       FROM sale_items si
+       JOIN products p ON p.id = si.product_id
+       GROUP BY si.product_id
+       ORDER BY total_vendido DESC
+       LIMIT ?`,
+      [limite]
+    );
   });
 }

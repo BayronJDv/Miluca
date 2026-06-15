@@ -50,6 +50,16 @@ fn restore_database(app: tauri::AppHandle, backup_path: String) -> Result<(), St
 }
 
 #[tauri::command]
+fn save_csv_file(path: String, content: String) -> Result<(), String> {
+    fs::write(&path, &content).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn close_app(app: tauri::AppHandle) {
+    app.exit(0);
+}
+
+#[tauri::command]
 fn get_supplier_image_base64(app: tauri::AppHandle, path: String) -> Result<String, String> {
     let suppliers_dir = get_suppliers_dir(&app);
     let filename = path.trim_start_matches("/suppliers/");
@@ -104,7 +114,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             save_supplier_image,
             get_supplier_image_base64,
-            restore_database
+            restore_database,
+            save_csv_file,
+            close_app
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

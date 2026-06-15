@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import KPICard from '../components/KPICard/KPICard';
 import StockAlerts from '../components/StockAlerts/StockAlerts';
 import QuickAccess from '../components/QuickAccess/QuickAccess';
+import TopProductos from '../components/TopProductos/TopProductos';
 import { obtenerTotalVentasHoy, obtenerNumeroTransaccionesHoy, obtenerProfitHoy } from '../db/sales';
 import { obtenerTotalCompras } from '../db/purchases';
 import styles from './Home.module.css';
@@ -178,6 +179,7 @@ export default function Home() {
         <StockAlerts />
         <div className="space-y-lg">
           <QuickAccess />
+          <TopProductos />
         </div>
       </div>
     </div>

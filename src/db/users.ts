@@ -16,3 +16,15 @@ export async function Login(u: User): Promise<Omit<User, 'password'> | null> {
   if (rows.length === 0) return null;
   return { id: rows[0].id, username: rows[0].username, rol: rows[0].role };
 }
+
+export async function listUsers(): Promise<{ id: number; username: string; role: string }[]> {
+  const db = await getDb();
+  return await db.select<{ id: number; username: string; role: string }[]>(
+    'SELECT id, username, role FROM users'
+  );
+}
+
+export async function changePassword(userId: number, newPassword: string): Promise<void> {
+  const db = await getDb();
+  await db.execute('UPDATE users SET password = $1 WHERE id = $2', [newPassword, userId]);
+}

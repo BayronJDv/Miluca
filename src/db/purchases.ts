@@ -141,6 +141,29 @@ export async function obtenerTotalCompras(
   });
 }
 
+export interface CompraPorDia {
+  fecha: string;
+  total_compras: number;
+}
+
+export async function obtenerComprasPorDia(
+  fechaInicio: string,
+  fechaFin: string
+): Promise<CompraPorDia[]> {
+  return enqueueGlobalOperation(async () => {
+    const db = await getDb();
+    return db.select<CompraPorDia[]>(
+      `SELECT date(purchase_date, 'localtime') as fecha,
+              COALESCE(SUM(total_cost), 0) as total_compras
+       FROM purchases
+       WHERE date(purchase_date, 'localtime') >= ? AND date(purchase_date, 'localtime') <= ?
+       GROUP BY date(purchase_date, 'localtime')
+       ORDER BY fecha ASC`,
+      [fechaInicio, fechaFin]
+    );
+  });
+}
+
 export async function obtenerCompra(id: number): Promise<CompraFactura | null> {
   return enqueueGlobalOperation(async () => {
     const db = await getDb();

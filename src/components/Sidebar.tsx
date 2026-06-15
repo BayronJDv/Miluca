@@ -1,4 +1,6 @@
 import { NavLink } from 'react-router-dom';
+import { invoke } from '@tauri-apps/api/core';
+import { confirm } from '@tauri-apps/plugin-dialog';
 
 const menuItems = [
   { path: '/', label: 'Dashboard', icon: 'dashboard' },
@@ -35,6 +37,18 @@ function Sidebar() {
         ))}
       </nav>
       {/* Botón cerrar sesión ... */}
+      <button
+        onClick={async () => {
+          const confirmed = await confirm('¿Estás seguro de que deseas cerrar el programa?', { title: 'Cerrar programa', kind: 'warning' });
+          if (confirmed) {
+            invoke('close_app');
+          }
+        }}
+        className="mt-auto flex items-center justify-center gap-md p-sm bg-red-600 hover:bg-red-700 text-white rounded-md transition-all duration-200"
+      >
+        <span className="material-symbols-outlined">power_settings_new</span>
+        <span className="font-body-md text-body-md">Cerrar programa</span>
+      </button>
     </aside>
   );
 }
