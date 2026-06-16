@@ -1,0 +1,1 @@
+ALTER TABLE sales ADD COLUMN profit REAL NOT NULL DEFAULT 0 CHECK (profit >= 0);

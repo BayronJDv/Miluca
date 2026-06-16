@@ -11,12 +11,18 @@ importers:
       '@tauri-apps/api':
         specifier: ^2
         version: 2.11.0
+      '@tauri-apps/plugin-dialog':
+        specifier: ^2.7.1
+        version: 2.7.1
       '@tauri-apps/plugin-opener':
         specifier: ^2
         version: 2.5.4
       '@tauri-apps/plugin-sql':
         specifier: ~2
         version: 2.4.0
+      date-fns:
+        specifier: ^4.4.0
+        version: 4.4.0
       jotai:
         specifier: ^2.20.0
         version: 2.20.0(@babel/core@7.29.7)(@babel/template@7.29.7)(@types/react@19.2.15)(react@19.2.6)
@@ -26,6 +32,9 @@ importers:
       react:
         specifier: ^19.1.0
         version: 19.2.6
+      react-datepicker:
+        specifier: ^9.1.0
+        version: 9.1.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       react-dom:
         specifier: ^19.1.0
         version: 19.2.6(react@19.2.6)
@@ -42,6 +51,9 @@ importers:
       '@types/react':
         specifier: ^19.1.8
         version: 19.2.15
+      '@types/react-datepicker':
+        specifier: ^7.0.0
+        version: 7.0.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@types/react-dom':
         specifier: ^19.1.6
         version: 19.2.3(@types/react@19.2.15)
@@ -295,6 +307,27 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@floating-ui/core@1.7.5':
+    resolution: {integrity: sha512-1Ih4WTWyw0+lKyFMcBHGbb5U5FtuHJuujoyyr5zTaWS5EYMeT6Jb2AuDeftsCsEuchO+mM2ij5+q9crhydzLhQ==}
+
+  '@floating-ui/dom@1.7.6':
+    resolution: {integrity: sha512-9gZSAI5XM36880PPMm//9dfiEngYoC6Am2izES1FF406YFsjvyBMmeJ2g4SAju3xWwtuynNRFL2s9hgxpLI5SQ==}
+
+  '@floating-ui/react-dom@2.1.8':
+    resolution: {integrity: sha512-cC52bHwM/n/CxS87FH0yWdngEZrjdtLW/qVruo68qg+prK7ZQ4YGdut2GyDVpoGeAYe/h899rVeOVm6Oi40k2A==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+
+  '@floating-ui/react@0.27.19':
+    resolution: {integrity: sha512-31B8h5mm8YxotlE7/AU/PhNAl8eWxAmjL/v2QOxroDNkTFLk3Uu82u63N3b6TXa4EGJeeZLVcd/9AlNlVqzeog==}
+    peerDependencies:
+      react: '>=17.0.0'
+      react-dom: '>=17.0.0'
+
+  '@floating-ui/utils@0.2.11':
+    resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -626,6 +659,9 @@ packages:
     engines: {node: '>= 10'}
     hasBin: true
 
+  '@tauri-apps/plugin-dialog@2.7.1':
+    resolution: {integrity: sha512-OK1UBXYt+ojcmxMktzzuyonYIFta8CmAASpX+CA+DTGK24KlHjhYI6x2iOJ/TjZF4N7/ACK1oFmEOjIY9IhzOQ==}
+
   '@tauri-apps/plugin-opener@2.5.4':
     resolution: {integrity: sha512-1HnPkb+AmgO29HBazm4uPLKB+r7zzcTBW1d0fyYp1uP+jwtpoiNDGKMMzz58SFp49nOIrxdE3aUJtT57lfO9CQ==}
 
@@ -646,6 +682,10 @@ packages:
 
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
+
+  '@types/react-datepicker@7.0.0':
+    resolution: {integrity: sha512-4tWwOUq589tozyQPBVEqGNng5DaZkomx5IVNuur868yYdgjH6RaL373/HKiVt1IDoNNXYiTGspm1F7kjrarM8Q==}
+    deprecated: This is a stub types definition. react-datepicker provides its own type definitions, so you do not need this installed.
 
   '@types/react-dom@19.2.3':
     resolution: {integrity: sha512-jp2L/eY6fn+KgVVQAOqYItbF0VY/YApe5Mz2F0aykSO8gx31bYCZyvSeYxCHKvzHG5eZjc+zyaS5BrBWya2+kQ==}
@@ -674,6 +714,10 @@ packages:
   caniuse-lite@1.0.30001793:
     resolution: {integrity: sha512-iwSsYWaCOoh26cV8NwNRViHlrfUvYsHDfRVcbtmw0Kg6PJIZZXwMkj1442FYLBGkeUf1juAsU3DTfxW579mrPA==}
 
+  clsx@2.1.1:
+    resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
+    engines: {node: '>=6'}
+
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
 
@@ -683,6 +727,9 @@ packages:
 
   csstype@3.2.3:
     resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
+
+  date-fns@4.4.0:
+    resolution: {integrity: sha512-+1UMbeh68lH1SegH83CGWwpb6OHHbpSgr3+s5Eww5M4CAgswBpoWS0AjTOfEJ33HiYKz1hdj/KTFprzXHmq/6w==}
 
   debug@4.4.3:
     resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
@@ -883,6 +930,16 @@ packages:
   prop-types@15.8.1:
     resolution: {integrity: sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==}
 
+  react-datepicker@9.1.0:
+    resolution: {integrity: sha512-lOp+m5bc+ttgtB5MHEjwiVu4nlp4CvJLS/PG1OiOe5pmg9kV73pEqO8H0Geqvg2E8gjqTaL9eRhSe+ZpeKP3nA==}
+    peerDependencies:
+      date-fns-tz: ^3.0.0
+      react: ^16.9.0 || ^17 || ^18 || ^19 || ^19.0.0-rc
+      react-dom: ^16.9.0 || ^17 || ^18 || ^19 || ^19.0.0-rc
+    peerDependenciesMeta:
+      date-fns-tz:
+        optional: true
+
   react-dom@19.2.6:
     resolution: {integrity: sha512-0prMI+hvBbPjsWnxDLxlCGyM8PN6UuWjEUCYmZhO67xIV9Xasa/r/vDnq+Xyq4Lo27g8QSbO5YzARu0D1Sps3g==}
     peerDependencies:
@@ -934,6 +991,9 @@ packages:
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
+
+  tabbable@6.4.0:
+    resolution: {integrity: sha512-05PUHKSNE8ou2dwIxTngl4EzcnsCDZGJ/iCLtDflR/SHB/ny14rXc+qU5P4mG9JkusiV7EivzY9Mhm55AzAvCg==}
 
   tailwindcss@4.3.0:
     resolution: {integrity: sha512-y6nxMGB1nMW9R6k96e5gdIFzcfL/gTJRNaqGes1YvkLnPVXzWgbqFF2yLC0T8G774n24cx3Pe8XrKoniCOAH+Q==}
@@ -1192,6 +1252,31 @@ snapshots:
   '@esbuild/win32-x64@0.27.7':
     optional: true
 
+  '@floating-ui/core@1.7.5':
+    dependencies:
+      '@floating-ui/utils': 0.2.11
+
+  '@floating-ui/dom@1.7.6':
+    dependencies:
+      '@floating-ui/core': 1.7.5
+      '@floating-ui/utils': 0.2.11
+
+  '@floating-ui/react-dom@2.1.8(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+    dependencies:
+      '@floating-ui/dom': 1.7.6
+      react: 19.2.6
+      react-dom: 19.2.6(react@19.2.6)
+
+  '@floating-ui/react@0.27.19(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+    dependencies:
+      '@floating-ui/react-dom': 2.1.8(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@floating-ui/utils': 0.2.11
+      react: 19.2.6
+      react-dom: 19.2.6(react@19.2.6)
+      tabbable: 6.4.0
+
+  '@floating-ui/utils@0.2.11': {}
+
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
@@ -1405,6 +1490,10 @@ snapshots:
       '@tauri-apps/cli-win32-ia32-msvc': 2.11.2
       '@tauri-apps/cli-win32-x64-msvc': 2.11.2
 
+  '@tauri-apps/plugin-dialog@2.7.1':
+    dependencies:
+      '@tauri-apps/api': 2.11.0
+
   '@tauri-apps/plugin-opener@2.5.4':
     dependencies:
       '@tauri-apps/api': 2.11.0
@@ -1435,6 +1524,14 @@ snapshots:
       '@babel/types': 7.29.7
 
   '@types/estree@1.0.8': {}
+
+  '@types/react-datepicker@7.0.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+    dependencies:
+      react-datepicker: 9.1.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+    transitivePeerDependencies:
+      - date-fns-tz
+      - react
+      - react-dom
 
   '@types/react-dom@19.2.3(@types/react@19.2.15)':
     dependencies:
@@ -1468,11 +1565,15 @@ snapshots:
 
   caniuse-lite@1.0.30001793: {}
 
+  clsx@2.1.1: {}
+
   convert-source-map@2.0.0: {}
 
   cookie@1.1.1: {}
 
   csstype@3.2.3: {}
+
+  date-fns@4.4.0: {}
 
   debug@4.4.3:
     dependencies:
@@ -1629,6 +1730,14 @@ snapshots:
       object-assign: 4.1.1
       react-is: 16.13.1
 
+  react-datepicker@9.1.0(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
+    dependencies:
+      '@floating-ui/react': 0.27.19(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      clsx: 2.1.1
+      date-fns: 4.4.0
+      react: 19.2.6
+      react-dom: 19.2.6(react@19.2.6)
+
   react-dom@19.2.6(react@19.2.6):
     dependencies:
       react: 19.2.6
@@ -1692,6 +1801,8 @@ snapshots:
   set-cookie-parser@2.7.2: {}
 
   source-map-js@1.2.1: {}
+
+  tabbable@6.4.0: {}
 
   tailwindcss@4.3.0: {}
 

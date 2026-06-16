@@ -1,63 +1,170 @@
+import { useState, useEffect, useCallback } from 'react';
 import KPICard from '../components/KPICard/KPICard';
 import StockAlerts from '../components/StockAlerts/StockAlerts';
 import QuickAccess from '../components/QuickAccess/QuickAccess';
-import SummaryCard from '../components/SummaryCard/SummaryCard';
+import TopProductos from '../components/TopProductos/TopProductos';
+import { obtenerTotalVentasHoy, obtenerNumeroTransaccionesHoy, obtenerProfitHoy } from '../db/sales';
+import { obtenerTotalCompras } from '../db/purchases';
 import styles from './Home.module.css';
 
-const kpiData = [
-  {
-    title: 'Total Ventas',
-    value: '$45,230.00',
-    icon: 'monetization_on',
-    trend: '+12.5%',
-    trendUp: true,
-    variant: 'primary'
-  },
-  {
-    title: 'Transacciones',
-    value: '1,248',
-    icon: 'receipt_long',
-    trend: 'Hoy: 84',
-    trendUp: null,
-    variant: 'secondary'
-  },
-  {
-    title: 'Gastos Registrados',
-    value: '$12,840.50',
-    icon: 'payments',
-    trend: '+4%',
-    trendUp: false,
-    variant: 'error'
-  },
-  {
-    title: 'Resultado Neto',
-    value: '$32,389.50',
-    icon: 'account_balance_wallet',
-    trend: null,
-    trendUp: null,
-    variant: 'neutral'
-  }
+type Periodo = 'day' | 'week' | 'month';
+
+const periodos: { key: Periodo; label: string }[] = [
+  { key: 'day', label: 'Hoy' },
+  { key: 'week', label: 'Semana' },
+  { key: 'month', label: 'Mes' },
 ];
 
+function formatCurrency(value: number): string {
+  return `$${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function toLocalDateStr(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function getDateRange(period: Periodo): { fechaInicio: string; fechaFin: string; titulo: string } {
+  const now = new Date();
+
+  if (period === 'day') {
+    const dateStr = toLocalDateStr(now);
+    const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+    const formatted = now.toLocaleDateString('es-ES', options);
+    return { fechaInicio: dateStr, fechaFin: dateStr, titulo: `Hoy - ${formatted}` };
+  }
+
+  if (period === 'week') {
+    const dayOfWeek = now.getDay();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - ((dayOfWeek + 6) % 7));
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const fechaInicio = toLocalDateStr(monday);
+    const fechaFin = toLocalDateStr(sunday);
+    const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+    return {
+      fechaInicio,
+      fechaFin,
+      titulo: `Semana - ${monday.toLocaleDateString('es-ES', opts)} - ${sunday.toLocaleDateString('es-ES', opts)}`,
+    };
+  }
+
+  const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const fechaInicio = toLocalDateStr(firstDay);
+  const fechaFin = toLocalDateStr(lastDay);
+  const opts: Intl.DateTimeFormatOptions = { month: 'long', year: 'numeric' };
+  return {
+    fechaInicio,
+    fechaFin,
+    titulo: `Mes - ${now.toLocaleDateString('es-ES', opts)}`,
+  };
+}
+
 export default function Home() {
+  const [periodo, setPeriodo] = useState<Periodo>('day');
+  const [totalVentas, setTotalVentas] = useState<number>(0);
+  const [numTransacciones, setNumTransacciones] = useState<number>(0);
+  const [profit, setProfit] = useState<number>(0);
+  const [totalCompras, setTotalCompras] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = useCallback(async () => {
+    const { fechaInicio, fechaFin } = getDateRange(periodo);
+    setLoading(true);
+    try {
+      const [total, count, profitVal, compras] = await Promise.all([
+        obtenerTotalVentasHoy(fechaInicio, fechaFin),
+        obtenerNumeroTransaccionesHoy(fechaInicio, fechaFin),
+        obtenerProfitHoy(fechaInicio, fechaFin),
+        obtenerTotalCompras(fechaInicio, fechaFin),
+      ]);
+      setTotalVentas(total);
+      setNumTransacciones(count);
+      setProfit(profitVal);
+      setTotalCompras(compras);
+    } catch (error) {
+      console.error('Error cargando datos del dashboard:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [periodo]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const { titulo } = getDateRange(periodo);
+
+  const kpiData = [
+    {
+      title: 'Total Ventas',
+      value: loading ? 'Cargando...' : formatCurrency(totalVentas),
+      icon: 'monetization_on',
+      trend: null,
+      trendUp: null,
+      variant: 'primary' as const,
+    },
+    {
+      title: 'Transacciones',
+      value: loading ? '...' : String(numTransacciones),
+      icon: 'receipt_long',
+      trend: null,
+      trendUp: null,
+      variant: 'secondary' as const,
+    },
+    {
+      title: 'Profit',
+      value: loading ? 'Cargando...' : formatCurrency(profit),
+      icon: 'trending_up',
+      trend: null,
+      trendUp: null,
+      variant: 'neutral' as const,
+    },
+    {
+      title: 'Egresos (Compras)',
+      value: loading ? 'Cargando...' : formatCurrency(totalCompras),
+      icon: 'shopping_cart',
+      trend: null,
+      trendUp: null,
+      variant: 'error' as const,
+    },
+  ];
+
   return (
     <div className={styles.dashboard}>
       {/* Dashboard Header */}
       <div className="flex justify-between items-end mb-lg">
         <div>
           <h2 className="font-headline-md text-headline-md text-on-surface">Panel de Control</h2>
-          <p className="text-secondary font-body-md text-body-md">Bienvenido de nuevo. Aquí tienes el resumen operativo de hoy.</p>
+          <p className="text-secondary font-body-md text-body-md">Bienvenido de nuevo. Aquí tienes el resumen operativo.</p>
         </div>
-        <div className="flex gap-md">
-          <button className="flex items-center gap-sm px-md py-sm bg-surface-container-high text-on-surface rounded-lg hover:bg-surface-container-highest transition-colors">
-            <span className="material-symbols-outlined text-sm">calendar_today</span>
-            <span className="font-label-md text-label-md">Últimos 30 días</span>
-          </button>
-          <button className="flex items-center gap-sm px-md py-sm bg-primary text-white rounded-lg hover:opacity-90 transition-opacity">
-            <span className="material-symbols-outlined text-sm">download</span>
-            <span className="font-label-md text-label-md">Exportar</span>
-          </button>
+
+        {/* Period Selector */}
+        <div className="flex rounded-lg bg-surface-container-high p-xs gap-xs">
+          {periodos.map((p) => (
+            <button
+              key={p.key}
+              onClick={() => setPeriodo(p.key)}
+              className={`px-md py-sm rounded-md text-label-md font-label-md transition-colors ${
+                periodo === p.key
+                  ? 'bg-primary text-on-primary shadow-sm'
+                  : 'text-on-surface hover:bg-surface-container-highest'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
+      </div>
+
+      {/* Period Label */}
+      <div className="flex items-center gap-sm mb-lg">
+        <span className="material-symbols-outlined text-sm text-secondary">calendar_today</span>
+        <span className="font-body-md text-body-md text-secondary">{titulo}</span>
       </div>
 
       {/* KPI Cards Grid */}
@@ -72,10 +179,12 @@ export default function Home() {
         <StockAlerts />
         <div className="space-y-lg">
           <QuickAccess />
-          <SummaryCard />
+          <TopProductos />
         </div>
       </div>
     </div>
   );
 }
+
+
 

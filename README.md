@@ -5,6 +5,7 @@ Aplicación desktop con Tauri + React + TypeScript.
 ## Prerrequisitos
 
 - [Rust](https://rustup.rs/)
+- [Tauri](https://v2.tauri.app/es/start/prerequisites/)
 - [Node.js](https://nodejs.org/) (v18+)
 - [pnpm](https://pnpm.io/) (o npm/yarn)
 

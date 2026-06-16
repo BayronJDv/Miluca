@@ -1,4 +1,5 @@
 import { getDb } from './database';
+import Database from '@tauri-apps/plugin-sql';
 
 export interface Producto {
   id?: number;
@@ -90,8 +91,8 @@ export async function eliminarProducto(id: number): Promise<void> {
   await db.execute('DELETE FROM products WHERE id = $1', [id]);
 }
 
-export async function actualizarStock(productoId: number, cantidad: number): Promise<void> {
-  const db = await getDb();
+export async function actualizarStock(productoId: number, cantidad: number, dbParam?: Database): Promise<void> {
+  const db = dbParam || await getDb();
   await db.execute(
     'UPDATE products SET stock = stock + $1 WHERE id = $2 AND stock + $1 >= 0',
     [cantidad, productoId]

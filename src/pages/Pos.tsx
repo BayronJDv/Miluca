@@ -437,6 +437,7 @@ const Pos: React.FC = () => {
               <p><strong>Factura #:</strong> {lastInvoice.venta.id}</p>
               <p><strong>Fecha:</strong> {new Date(lastInvoice.venta.sale_date).toLocaleString()}</p>
               <p><strong>Total:</strong> {formatPrice(lastInvoice.venta.total)}</p>
+              <p><strong>Ganancia:</strong> {formatPrice(lastInvoice.venta.profit)}</p>
             </div>
             
             <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 16 }}>
