@@ -1,5 +1,7 @@
 import { getDb } from './database';
 import Database from '@tauri-apps/plugin-sql';
+import { registrarModificacion } from './edit_history';
+import { verificarYCrearNotificacion } from './product_notifications';
 
 export interface Producto {
   id?: number;
@@ -8,15 +10,14 @@ export interface Producto {
   price: number;
   cost: number;
   stock: number;
-  //min_stock?: number;
-  //unit?: string;
+  alert_stock?: number; // Mantenido y ahora utilizado de manera activa
 }
 
 export async function crearProducto(p: Producto): Promise<void> {
   const db = await getDb();
   await db.execute(
-    'INSERT INTO products (name, code, price, cost, stock) VALUES ($1, $2, $3, $4, $5)',
-    [p.name, p.code, p.price, p.cost, p.stock]
+    'INSERT INTO products (name, code, price, cost, stock, alert_stock) VALUES ($1, $2, $3, $4, $5, $6)',
+    [p.name, p.code, p.price, p.cost, p.stock, p.alert_stock ?? 5]
   );
 }
 
@@ -72,18 +73,74 @@ export async function buscarProductosPaginado(
   };
 }
 
-export async function modificarProducto(id: number, p: Partial<Omit<Producto, 'id'>>): Promise<void> {
-  const db = await getDb();
+export async function modificarProducto(
+  id: number, 
+  p: Partial<Omit<Producto, 'id'>>, 
+  modificationReason: string, 
+  modifiedBy: number | null = null
+): Promise<{ success: boolean; message: string; notificationResult?: any }> {
+  
   const campos = Object.keys(p) as (keyof typeof p)[];
-  if (campos.length === 0) return;
-  
-  const sets = campos.map((c, i) => `${c} = $${i + 1}`).join(', ');
-  const valores = campos.map((c) => p[c]);
-  
-  await db.execute(
-    `UPDATE products SET ${sets} WHERE id = $${campos.length + 1}`,
-    [...valores, id]
-  );
+  if (campos.length === 0) {
+    return { success: false, message: "No se enviaron campos para modificar." };
+  }
+
+  const db = await getDb();
+
+  try {
+    // 1. OBTENER ESTADO PREVIO
+    const camposSelect = campos.join(', ');
+    const productosViejos = await db.select<any[]>(
+      `SELECT ${camposSelect} FROM products WHERE id = $1`,
+      [id]
+    );
+
+    if (!productosViejos || productosViejos.length === 0) {
+      return { success: false, message: `El producto con ID ${id} no existe.` };
+    }
+
+    const estadoAnterior = productosViejos[0];
+
+    // 2. CONSTRUIR LA QUERY DINÁMICA DE ACTUALIZACIÓN
+    const sets = campos.map((c, i) => `${c} = $${i + 1}`).join(', ');
+    const valores = campos.map((c) => p[c]);
+
+    await db.execute(
+      `UPDATE products SET ${sets} WHERE id = $${campos.length + 1}`,
+      [...valores, id]
+    );
+
+    // 3. REGISTRAR EN EL HISTORIAL
+    await registrarModificacion(
+      id,
+      modificationReason,
+      estadoAnterior, 
+      p,              
+      modifiedBy,
+      db
+    );
+
+    // 4. VERIFICAR Y ACTUALIZAR ALERTAS DE STOCK (Se disparará dinámicamente según el alert_stock modificado)
+    const resultadoNotificacion = await verificarYCrearNotificacion(id, db);
+
+    let mensajeFinal = "¡Producto actualizado e historial registrado con éxito!";
+    if (resultadoNotificacion.success) {
+      mensajeFinal += ` Además: ${resultadoNotificacion.message}`;
+    }
+
+    return { 
+      success: true, 
+      message: mensajeFinal,
+      notificationResult: resultadoNotificacion 
+    };
+
+  } catch (error) {
+    console.error("Error en modificarProducto:", error);
+    return { 
+      success: false, 
+      message: `Error en el proceso de modificación: ${String(error)}` 
+    };
+  }
 }
 
 export async function eliminarProducto(id: number): Promise<void> {

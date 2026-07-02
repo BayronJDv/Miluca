@@ -549,7 +549,6 @@ const Compras: React.FC = () => {
                   : lastPurchase.compra.purchase_date.replace(' ', 'T') + 'Z'
                 ).toLocaleString('es-CO', { timeZone: 'America/Bogota' })
               }</p>
-              <p><strong>Proveedor:</strong> {lastPurchase.compra.supplier_name || 'No especificado'}</p>
               <p><strong>Total:</strong> {formatPrice(lastPurchase.compra.total_cost)}</p>
             </div>
 

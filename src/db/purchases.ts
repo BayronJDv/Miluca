@@ -1,5 +1,6 @@
 import { getDb, enqueueGlobalOperation, executeInTransaction } from './database';
 import { actualizarStock } from './products';
+import { verificarYCrearNotificacion } from './product_notifications';
 
 export interface Compra {
   id?: number;
@@ -46,6 +47,7 @@ export async function registrarCompra(
 
       // Pass 'db' explicitly to ensure we use the same connection for the transaction
       await actualizarStock(item.product_id, item.quantity, db);
+      await verificarYCrearNotificacion(item.product_id, db);
     }
 
     const compra = await db.select<Compra[]>(

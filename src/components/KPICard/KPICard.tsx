@@ -1,5 +1,13 @@
 import PropTypes from 'prop-types';
-import styles from './KPICard.module.css';
+
+interface KPICardProps {
+  title: string;
+  value: string;
+  icon: string;
+  trend?: string;
+  trendUp?: boolean;
+  variant?: 'primary' | 'secondary' | 'error' | 'neutral';
+}
 
 const variantConfig = {
   primary: {
@@ -28,8 +36,15 @@ const variantConfig = {
   }
 };
 
-function KPICard({ title, value, icon, trend, trendUp, variant = 'primary' }) {
-  const config = variantConfig[variant];
+function KPICard({ 
+  title, 
+  value, 
+  icon, 
+  trend, 
+  trendUp, 
+  variant = 'primary' 
+}: KPICardProps) {
+  const config = variantConfig[variant] || variantConfig.primary;
 
   return (
     <div className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0] hover:border-primary transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">

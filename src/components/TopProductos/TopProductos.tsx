@@ -7,6 +7,7 @@ const rankColors = [
   { bg: '#CD7F32', text: '#fff', label: '3' },
   { bg: '#E2E8F0', text: '#64748B', label: '4' },
   { bg: '#E2E8F0', text: '#64748B', label: '5' },
+  { bg: '#E2E8F0', text: '#64748B', label: '6' },
 ];
 
 export default function TopProductos() {
@@ -16,7 +17,7 @@ export default function TopProductos() {
   useEffect(() => {
     (async () => {
       try {
-        const data = await obtenerProductosMasVendidos(5);
+        const data = await obtenerProductosMasVendidos(6);
         setProductos(data);
       } catch (error) {
         console.error('Error al cargar productos más vendidos:', error);
@@ -33,7 +34,7 @@ export default function TopProductos() {
     <section className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0]">
       <div className="flex items-center gap-md mb-xl">
         <span className="material-symbols-outlined text-warning">star</span>
-        <h3 className="font-headline-sm text-headline-sm">Top 5 Productos Más Vendidos</h3>
+        <h3 className="font-headline-sm text-headline-sm">Top 6 Productos Más Vendidos</h3>
       </div>
 
       {loading ? (

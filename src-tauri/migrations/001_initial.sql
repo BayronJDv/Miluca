@@ -21,12 +21,13 @@ CREATE TABLE IF NOT EXISTS users (
 -- TABLA: products
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS products (
-  id        INTEGER PRIMARY KEY AUTOINCREMENT,
-  name      TEXT    NOT NULL,
-  code      TEXT    NOT NULL UNIQUE,
-  price     REAL    NOT NULL CHECK (price     >= 0),
-  cost      REAL    NOT NULL CHECK (cost      >= 0),
-  stock     REAL    NOT NULL DEFAULT 0 CHECK (stock     >= 0)
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  name         TEXT    NOT NULL,
+  code         TEXT    NOT NULL UNIQUE,
+  price        REAL    NOT NULL CHECK (price     >= 0),
+  cost         REAL    NOT NULL CHECK (cost      >= 0),
+  stock        REAL    NOT NULL DEFAULT 0 CHECK (stock     >= 0),
+  alert_stock  REAL    NOT NULL DEFAULT 1 CHECK (alert_stock     >= 0)
 );
 
 -- ─────────────────────────────────────────────────────────────
@@ -80,6 +81,39 @@ CREATE TABLE IF NOT EXISTS purchase_items (
   quantity    REAL    NOT NULL CHECK (quantity > 0),
   cost        REAL    NOT NULL CHECK (cost    >= 0)
 );
+
+-- =============================================================
+-- TABLA: edit_history (historial de modificaciones)
+-- =============================================================
+CREATE TABLE IF NOT EXISTS edit_history (
+  id                      INTEGER PRIMARY KEY AUTOINCREMENT,
+  product_id              INTEGER NOT NULL REFERENCES products (id) ON DELETE CASCADE,
+  modification_reason     TEXT    NOT NULL,
+  modification_date       TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  -- Copia de los campos anteriores (antes de la modificación)
+  previous_name           TEXT,
+  previous_price          REAL    CHECK (previous_price >= 0),
+  previous_cost           REAL    CHECK (previous_cost >= 0),
+  previous_stock          REAL    CHECK (previous_stock >= 0),
+  -- Nuevos valores (después de la modificación)
+  new_name                TEXT,
+  new_price               REAL    CHECK (new_price >= 0),
+  new_cost                REAL    CHECK (new_cost >= 0),
+  new_stock               REAL    CHECK (new_stock >= 0),
+  -- Usuario que realizó la modificación (opcional)
+  modified_by             INTEGER REFERENCES users (id) ON DELETE SET NULL
+);
+
+-- =============================================================
+-- TABLA: stock_notifications (sistema de notificaciones de bajo stock)
+-- =============================================================
+CREATE TABLE IF NOT EXISTS stock_notifications (
+  id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+  product_id           INTEGER NOT NULL REFERENCES products (id) ON DELETE CASCADE,
+  start_date           TEXT    NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  view_date            TEXT
+);
+
 
 -- =============================================================
 -- ÍNDICES

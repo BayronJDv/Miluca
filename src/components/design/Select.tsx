@@ -1,6 +1,5 @@
-// components/Login/Select.tsx
 import { colors } from "./colors";
-import { Icon } from "./Icon";
+import { Icon, IconName } from "./Icon"; // Importar IconName
 
 interface SelectOption {
   value: string;
@@ -13,7 +12,7 @@ interface SelectProps {
   value: string;
   onChange: (value: string) => void;
   options: SelectOption[];
-  icon?: string;
+  icon?: IconName;
 }
 
 export const Select = ({ label, placeholder, value, onChange, options, icon }: SelectProps) => (
@@ -74,7 +73,7 @@ export const Select = ({ label, placeholder, value, onChange, options, icon }: S
           pointerEvents: "none",
         }}
       >
-        <Icon name="chevron-down" size={16} />
+        <Icon name="chevron_down" size={16} />
       </span>
     </div>
   </div>

@@ -1,6 +1,8 @@
 import { NavLink } from 'react-router-dom';
 import { invoke } from '@tauri-apps/api/core';
 import { confirm } from '@tauri-apps/plugin-dialog';
+import { isAdminAtom } from '../store/UserAtom';
+import { useAtomValue } from 'jotai';
 
 const menuItems = [
   { path: '/', label: 'Dashboard', icon: 'dashboard' },
@@ -8,18 +10,21 @@ const menuItems = [
   { path: '/inventario', label: 'Inventario', icon: 'inventory_2' },
   { path: '/proveedores', label: 'Proveedores', icon: 'local_shipping' },
   { path: '/compras', label: 'Compras', icon: 'shopping_cart' },
+  { path: '/analisis', label: 'Análisis', icon: 'bar_chart', adminOnly: true },
   { path: '/historial-compras', label: 'Historial Compras', icon: 'receipt_long' },
   { path: '/historial-ventas', label: 'Historial Ventas', icon: 'receipt' },
-  { path: '/reportes', label: 'Reportes', icon: 'analytics' },
-  { path: '/configuracion', label: 'Configuración', icon: 'settings' },
+  { path: '/historial-ediciones', label: 'Historial Ediciones', icon: 'receipt_long', adminOnly: true },
+  { path: '/reportes', label: 'Reportes', icon: 'analytics', adminOnly: true },
+  { path: '/configuracion', label: 'Configuración', icon: 'settings', adminOnly: true },  
 ];
 
 function Sidebar() {
+  const isAdmin = useAtomValue(isAdminAtom);
   return (
     <aside className="w-64 h-screen fixed left-0 top-0 bg-[#1E293B] flex flex-col py-lg px-md z-50">
       {/* Logo ... */}
       <nav className="flex-1 space-y-1">
-        {menuItems.map((item) => (
+        {menuItems.filter((item) => !item.adminOnly || isAdmin).map((item) => (
           <NavLink
             key={item.path}
             to={item.path}

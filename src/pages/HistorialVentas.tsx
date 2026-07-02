@@ -5,6 +5,8 @@ import { Icon } from '../components/design/Icon';
 import { obtenerVentas, obtenerFactura, Venta, ItemVenta } from '../db/sales';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { useAtomValue } from 'jotai';
+import { isAdminAtom } from '../store/UserAtom';
 
 const HistorialVentas: React.FC = () => {
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
@@ -14,6 +16,7 @@ const HistorialVentas: React.FC = () => {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [detallesCache, setDetallesCache] = useState<Record<number, ItemVenta[]>>({});
   const [loadingDetalle, setLoadingDetalle] = useState<number | null>(null);
+  const isAdmin = useAtomValue(isAdminAtom);
 
   const cargarVentas = useCallback(async () => {
     setLoading(true);
@@ -85,6 +88,16 @@ const HistorialVentas: React.FC = () => {
     }
   };
 
+  // Definir los headers basados en el rol
+  const getTableHeaders = () => {
+    const headers = ["ID VENTA", "FECHA", "TOTAL"];
+    if (isAdmin) {
+      headers.push("GANANCIA");
+    }
+    headers.push("ACCIÓN");
+    return headers;
+  };
+
   return (
     <div className="fade-up">
       <PageHeader
@@ -132,10 +145,14 @@ const HistorialVentas: React.FC = () => {
           <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 650 }}>
             <thead>
               <tr style={{ background: colors.surfaceLow }}>
-                {["ID VENTA", "FECHA", "TOTAL", "GANANCIA", "ACCIÓN"].map(header => (
+                {getTableHeaders().map(header => (
                   <th key={header} style={{ 
-                    padding: "12px 16px", textAlign: header === "TOTAL" || header === "GANANCIA" ? "right" : "left", fontSize: 11, 
-                    fontWeight: 700, letterSpacing: "0.05em", color: colors.secondary, 
+                    padding: "12px 16px", 
+                    textAlign: header === "TOTAL" || header === "GANANCIA" ? "right" : "left", 
+                    fontSize: 11, 
+                    fontWeight: 700, 
+                    letterSpacing: "0.05em", 
+                    color: colors.secondary, 
                     whiteSpace: "nowrap" 
                   }}>
                     {header}
@@ -156,9 +173,12 @@ const HistorialVentas: React.FC = () => {
                     <td style={{ padding: "14px 16px", fontSize: 14, fontWeight: 700, textAlign: "right" }}>
                       {formatPrice(row.total)}
                     </td>
-                    <td style={{ padding: "14px 16px", fontSize: 14, fontWeight: 700, textAlign: "right", color: colors.primary }}>
-                      {formatPrice(row.profit)}
-                    </td>
+                    {/* Mostrar ganancia solo si es admin */}
+                    {isAdmin && (
+                      <td style={{ padding: "14px 16px", fontSize: 14, fontWeight: 700, textAlign: "right", color: colors.primary }}>
+                        {formatPrice(row.profit)}
+                      </td>
+                    )}
                     <td style={{ padding: "14px 16px" }}>
                       <button 
                         onClick={() => row.id && handleToggleExpand(row.id)}
@@ -177,7 +197,7 @@ const HistorialVentas: React.FC = () => {
                   {/* Fila expandida con detalles */}
                   {expandedId === row.id && (
                     <tr style={{ background: colors.surfaceLowest }}>
-                      <td colSpan={5} style={{ padding: "16px 24px", borderTop: `1px solid ${colors.surfaceContainer}` }}>
+                      <td colSpan={isAdmin ? 5 : 4} style={{ padding: "16px 24px", borderTop: `1px solid ${colors.surfaceContainer}` }}>
                         <div style={{ 
                           background: "#fff", border: `1px solid ${colors.outlineVariant}`,
                           borderRadius: 8, overflow: "hidden"

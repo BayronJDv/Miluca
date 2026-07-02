@@ -1,5 +1,3 @@
-import styles from './FAB.module.css';
-
 function FAB() {
   const handleClick = () => {
     console.log('FAB Clicked - Acción rápida');

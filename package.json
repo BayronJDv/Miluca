@@ -1,7 +1,7 @@
 {
   "name": "gualcala",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -26,6 +26,7 @@
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.0",
     "@tauri-apps/cli": "^2",
+    "@types/prop-types": "^15.7.15",
     "@types/react": "^19.1.8",
     "@types/react-datepicker": "^7.0.0",
     "@types/react-dom": "^19.1.6",

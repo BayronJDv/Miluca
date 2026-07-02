@@ -1,5 +1,6 @@
 import { getDb, enqueueGlobalOperation, executeInTransaction } from './database';
 import { actualizarStock } from './products';
+import { verificarYCrearNotificacion } from './product_notifications';
 
 export interface Venta {
   id?: number;
@@ -73,6 +74,7 @@ export async function registrarVenta(
       
       // Crucial: Pass the SAME transaction database connection to avoid locks
       await actualizarStock(item.product_id, -item.quantity, db);
+      await verificarYCrearNotificacion(item.product_id, db)
     }
     
     // 5. Fetch resulting invoice to return

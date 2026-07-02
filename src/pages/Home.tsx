@@ -6,6 +6,8 @@ import TopProductos from '../components/TopProductos/TopProductos';
 import { obtenerTotalVentasHoy, obtenerNumeroTransaccionesHoy, obtenerProfitHoy } from '../db/sales';
 import { obtenerTotalCompras } from '../db/purchases';
 import styles from './Home.module.css';
+import { isAdminAtom } from '../store/UserAtom';
+import { useAtomValue } from 'jotai';
 
 type Periodo = 'day' | 'week' | 'month';
 
@@ -65,6 +67,8 @@ function getDateRange(period: Periodo): { fechaInicio: string; fechaFin: string;
 }
 
 export default function Home() {
+  const isAdmin = useAtomValue(isAdminAtom);
+
   const [periodo, setPeriodo] = useState<Periodo>('day');
   const [totalVentas, setTotalVentas] = useState<number>(0);
   const [numTransacciones, setNumTransacciones] = useState<number>(0);
@@ -73,25 +77,29 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   const loadData = useCallback(async () => {
-    const { fechaInicio, fechaFin } = getDateRange(periodo);
-    setLoading(true);
-    try {
-      const [total, count, profitVal, compras] = await Promise.all([
-        obtenerTotalVentasHoy(fechaInicio, fechaFin),
-        obtenerNumeroTransaccionesHoy(fechaInicio, fechaFin),
-        obtenerProfitHoy(fechaInicio, fechaFin),
-        obtenerTotalCompras(fechaInicio, fechaFin),
-      ]);
-      setTotalVentas(total);
-      setNumTransacciones(count);
-      setProfit(profitVal);
-      setTotalCompras(compras);
-    } catch (error) {
-      console.error('Error cargando datos del dashboard:', error);
-    } finally {
+    if (!isAdmin) {
       setLoading(false);
+      return;
     }
-  }, [periodo]);
+    const { fechaInicio, fechaFin } = getDateRange(periodo);
+      setLoading(true);
+      try {
+        const [total, count, profitVal, compras] = await Promise.all([
+          obtenerTotalVentasHoy(fechaInicio, fechaFin),
+          obtenerNumeroTransaccionesHoy(fechaInicio, fechaFin),
+          obtenerProfitHoy(fechaInicio, fechaFin),
+          obtenerTotalCompras(fechaInicio, fechaFin),
+        ]);
+        setTotalVentas(total);
+        setNumTransacciones(count);
+        setProfit(profitVal);
+        setTotalCompras(compras);
+      } catch (error) {
+        console.error('Error cargando datos del dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    }, [periodo, isAdmin]);
 
   useEffect(() => {
     loadData();
@@ -99,40 +107,40 @@ export default function Home() {
 
   const { titulo } = getDateRange(periodo);
 
-  const kpiData = [
+  const kpiData = isAdmin ? [
     {
       title: 'Total Ventas',
       value: loading ? 'Cargando...' : formatCurrency(totalVentas),
       icon: 'monetization_on',
-      trend: null,
-      trendUp: null,
+      trend: undefined, // Cambiado de null a undefined
+      trendUp: undefined, // Cambiado de null a undefined
       variant: 'primary' as const,
     },
     {
       title: 'Transacciones',
       value: loading ? '...' : String(numTransacciones),
       icon: 'receipt_long',
-      trend: null,
-      trendUp: null,
+      trend: undefined, // Cambiado de null a undefined
+      trendUp: undefined, // Cambiado de null a undefined
       variant: 'secondary' as const,
     },
     {
-      title: 'Profit',
+      title: 'Granancias',
       value: loading ? 'Cargando...' : formatCurrency(profit),
       icon: 'trending_up',
-      trend: null,
-      trendUp: null,
+      trend: undefined, // Cambiado de null a undefined
+      trendUp: undefined, // Cambiado de null a undefined
       variant: 'neutral' as const,
     },
     {
       title: 'Egresos (Compras)',
       value: loading ? 'Cargando...' : formatCurrency(totalCompras),
       icon: 'shopping_cart',
-      trend: null,
-      trendUp: null,
+      trend: undefined, // Cambiado de null a undefined
+      trendUp: undefined, // Cambiado de null a undefined
       variant: 'error' as const,
     },
-  ];
+  ] : [];
 
   return (
     <div className={styles.dashboard}>
@@ -140,51 +148,54 @@ export default function Home() {
       <div className="flex justify-between items-end mb-lg">
         <div>
           <h2 className="font-headline-md text-headline-md text-on-surface">Panel de Control</h2>
-          <p className="text-secondary font-body-md text-body-md">Bienvenido de nuevo. Aquí tienes el resumen operativo.</p>
+          <p className="text-secondary font-body-md text-body-md">Bienvenido de nuevo. Aquí tienes el resumen operativo. usuario {isAdmin.toString()}</p>
         </div>
 
         {/* Period Selector */}
-        <div className="flex rounded-lg bg-surface-container-high p-xs gap-xs">
-          {periodos.map((p) => (
-            <button
-              key={p.key}
-              onClick={() => setPeriodo(p.key)}
-              className={`px-md py-sm rounded-md text-label-md font-label-md transition-colors ${
-                periodo === p.key
-                  ? 'bg-primary text-on-primary shadow-sm'
-                  : 'text-on-surface hover:bg-surface-container-highest'
-              }`}
-            >
-              {p.label}
-            </button>
+        {isAdmin && (
+          <div className="flex rounded-lg bg-surface-container-high p-xs gap-xs">
+            {periodos.map((p) => (
+              <button
+                key={p.key}
+                onClick={() => setPeriodo(p.key)}
+                className={`px-md py-sm rounded-md text-label-md font-label-md transition-colors ${
+                  periodo === p.key
+                    ? 'bg-primary text-on-primary shadow-sm'
+                    : 'text-on-surface hover:bg-surface-container-highest'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Period Label*/}
+      {isAdmin && (
+        <div className="flex items-center gap-sm mb-lg">
+          <span className="material-symbols-outlined text-sm text-secondary">calendar_today</span>
+          <span className="font-body-md text-body-md text-secondary">{titulo}</span>
+        </div>
+      )}
+
+      {/* KPI Cards Grid*/}
+      {isAdmin && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-lg mb-lg">
+          {kpiData.map((kpi, index) => (
+            <KPICard key={index} {...kpi} />
           ))}
         </div>
-      </div>
-
-      {/* Period Label */}
-      <div className="flex items-center gap-sm mb-lg">
-        <span className="material-symbols-outlined text-sm text-secondary">calendar_today</span>
-        <span className="font-body-md text-body-md text-secondary">{titulo}</span>
-      </div>
-
-      {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-lg mb-lg">
-        {kpiData.map((kpi, index) => (
-          <KPICard key={index} {...kpi} />
-        ))}
-      </div>
+      )}
 
       {/* Bottom Section: 2 Columns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-lg">
-        <StockAlerts />
+        <TopProductos />
         <div className="space-y-lg">
           <QuickAccess />
-          <TopProductos />
+          <StockAlerts />
         </div>
       </div>
     </div>
   );
 }
-
-
-

@@ -1,17 +1,13 @@
 import { useState } from "react";
 import { useAtom } from "jotai";
-import { userAtom } from "../../store/UserAtom";
+import { userAtom, User } from "../../store/UserAtom";
 import { Login as LoginUser } from "../../db/users";
 import { Input } from "../design/Input";
 import { Icon } from "../design/Icon";
 import { colors } from "../design/colors";
 import "./Login.css";
 
-interface LoginProps {
-  onLogin?: () => void; // Opcional, por si necesitas callback adicional
-}
-
-export default function Login({ onLogin }: LoginProps) {
+export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -20,27 +16,32 @@ export default function Login({ onLogin }: LoginProps) {
   const [, setUser] = useAtom(userAtom);
 
   const handleSubmit = async () => {
-    if (!username || !password) return;
+  if (!username || !password) return;
+  
+  setLoading(true);
+  setError(false);
+  
+  try {
+    const userData = await LoginUser({ username, password });
     
-    setLoading(true);
-    setError(false);
-    
-    try {
-      const user = await LoginUser({ username, password });
-      
-      if (user) {
-        setUser(user);
-        onLogin?.(); // Ejecutar callback si existe
-      } else {
-        setError(true);
-      }
-    } catch (err) {
-      console.error("Login error:", err);
+    if (userData && userData.id !== undefined) {
+      const user: User = {
+        id: userData.id, 
+        username: userData.username,
+        rol: userData.rol as 'admin' | 'seller'
+      };
+      setUser(user);
+    } else {
       setError(true);
-    } finally {
-      setLoading(false);
     }
-  };
+  } catch (err) {
+    console.error("Login error:", err);
+    setError(true);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -133,9 +134,6 @@ export default function Login({ onLogin }: LoginProps) {
                 <label style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", color: colors.onSurfaceVariant }}>
                   Contraseña
                 </label>
-                <a href="#" style={{ fontSize: 12, color: colors.primary, fontWeight: 600 }}>
-                  ¿Olvidó su contraseña?
-                </a>
               </div>
               
               <div style={{ position: "relative" }}>
@@ -212,19 +210,6 @@ export default function Login({ onLogin }: LoginProps) {
             )}
             {loading ? "Verificando..." : "Ingresar"}
           </button>
-
-          {/* Separador */}
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ flex: 1, height: 1, background: colors.outlineVariant }} />
-            <span style={{ fontSize: 11, color: colors.outline, fontWeight: 600 }}>o</span>
-            <div style={{ flex: 1, height: 1, background: colors.outlineVariant }} />
-          </div>
-          
-          {/* Términos */}
-          <p style={{ textAlign: "center", fontSize: 12, color: colors.secondary }}>
-            Al ingresar, acepta nuestros <a href="#" style={{ color: colors.primary }}>Términos de Servicio</a> y{" "}
-            <a href="#" style={{ color: colors.primary }}>Política de Privacidad</a>.
-          </p>
         </div>
       </main>
     </div>

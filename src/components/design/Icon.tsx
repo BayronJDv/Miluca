@@ -29,6 +29,7 @@ const paths = {
   check: "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z",
   warning: "M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z",
   download: "M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z",
+  chevron_down: "M7 10l5 5 5-5z",
   calendar: "M20 3h-1V1h-2v2H7V1H5v2H4a2 2 0 00-2 2v16a2 2 0 002 2h16a2 2 0 002-2V5a2 2 0 00-2-2zm0 18H4V8h16v13z",
   barcode: "M2 4v3h2V4h3V2H4a2 2 0 00-2 2zm3 16H2v-3H0v3a2 2 0 002 2h3v-2zm14 2h3a2 2 0 002-2v-3h-2v3h-3v2zm3-18h-3V2h3a2 2 0 012 2v3h-2V4zM7 7v10h2V7H7zm4 0v10h1V7h-1zm3 0v10h3V7h-3z",
   wallet: "M21 18v1a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v1h-9a2 2 0 00-2 2v8a2 2 0 002 2h9zm-9-2h10V8H12v8zm4-2.5a1.5 1.5 0 110-3 1.5 1.5 0 010 3z",
@@ -50,6 +51,8 @@ const paths = {
   menu: "M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z",
   login: "M11 7L9.6 8.4l2.6 2.6H2v2h10.2l-2.6 2.6L11 17l5-5-5-5zm9 12h-8v2h8a2 2 0 002-2V5a2 2 0 00-2-2h-8v2h8v14z",
   confirm: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z",
+  local_shipping: "M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2a3 3 0 006 0h6a3 3 0 006 0h2v-5l-3-4zM6 18.5A1.5 1.5 0 114.5 17 1.5 1.5 0 016 18.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1 9A1.5 1.5 0 1117 17a1.5 1.5 0 011.5 1.5z",
+  attach_money: "M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z",
 };
 
 export const Icon = ({ name, size = 20, color = "currentColor", style = {} }: IconProps) => {
@@ -59,3 +62,5 @@ export const Icon = ({ name, size = 20, color = "currentColor", style = {} }: Ic
     </svg>
   );
 };
+
+export type IconName = keyof typeof paths;

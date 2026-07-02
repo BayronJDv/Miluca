@@ -3,9 +3,11 @@ import PageHeader from '../components/design/PageHeader';
 import { Input } from '../components/design/Input';
 // import { Chip } from '../components/design/Chip';  Esto sirve para la eleccion multiple, pero todavia no la tenemos en sql
 import { colors } from '../components/design/colors';
-import { Icon } from '../components/design/Icon';
+import { Icon, IconName } from '../components/design/Icon';
 import Btn from '../components/design/Btn';
 import { crearProducto, obtenerProductos, modificarProducto, eliminarProducto, Producto } from '../db/products';
+import { userIdAtom } from '../store/UserAtom';
+import { useAtomValue } from 'jotai';
 
 interface FormData {
   name: string;
@@ -13,10 +15,11 @@ interface FormData {
   price: string;
   cost: string;
   stock: string;
+  alert_stock: string;
 }
 
 interface StatCard {
-  icon: string;
+  icon: IconName;
   label: string;
   value: string;
   valueColor?: string;
@@ -29,7 +32,9 @@ const ModalContent = memo(({
   onInputChange, 
   onSave, 
   onClose,
-  isEditing = false
+  isEditing = false,
+  razonModificacion = "",
+  onRazonChange
 }: { 
   title: string;
   subtitle: string;
@@ -38,6 +43,8 @@ const ModalContent = memo(({
   onSave: () => void;
   onClose: () => void;
   isEditing?: boolean;
+  razonModificacion?: string;
+  onRazonChange?: (value: string) => void;
 }) => {
   const handleNameChange = useCallback((value: string) => {
     onInputChange('name', value);
@@ -58,6 +65,10 @@ const ModalContent = memo(({
   const handleStockChange = useCallback((value: string) => {
     onInputChange('stock', value);
   }, [onInputChange]);
+
+  const handleAlertStockChange = useCallback((value: string) => {
+    onInputChange('alert_stock', value);
+  }, [onInputChange]); // <-- Añadido
 
   const gainPercentage = useMemo(() => {
     const cost = parseFloat(formData.cost);
@@ -185,7 +196,6 @@ const ModalContent = memo(({
                 }}>$</span>
                 <Input
                   type="number"
-                  step="0.01"
                   placeholder="0.00"
                   value={formData.cost}
                   onChange={handleCostChange}
@@ -205,7 +215,6 @@ const ModalContent = memo(({
                 }}>$</span>
                 <Input
                   type="number"
-                  step="0.01"
                   placeholder="0.00"
                   value={formData.price}
                   onChange={handlePriceChange}
@@ -237,18 +246,45 @@ const ModalContent = memo(({
           </div>
         </div>
 
-        {/* Stock */}
-        <div style={{ marginBottom: 4 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: colors.secondary, display: "block", marginBottom: 6 }}>
-            Stock {isEditing ? "Actual" : "Inicial"} <span style={{ color: colors.red }}>*</span>
-          </label>
-          <Input
-            type="number"
-            placeholder="0"
-            value={formData.stock}
-            onChange={handleStockChange}
-          />
+        {/* Distribución de Stock (Fila con dos columnas para Stock y Stock Mínimo) */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 4 }}>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: colors.secondary, display: "block", marginBottom: 6 }}>
+              Stock {isEditing ? "Actual" : "Inicial"} <span style={{ color: colors.red }}>*</span>
+            </label>
+            <Input
+              type="number"
+              placeholder="0"
+              value={formData.stock}
+              onChange={handleStockChange}
+            />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 600, color: colors.secondary, display: "block", marginBottom: 6 }}>
+              Stock Mínimo Alerta <span style={{ color: colors.red }}>*</span>
+            </label>
+            <Input
+              type="number"
+              placeholder="Ej. 5"
+              value={formData.alert_stock}
+              onChange={handleAlertStockChange}
+            />
+          </div>
         </div>
+
+        {/* Razon modificacion*/}
+        {isEditing && (
+          <div style={{ marginTop: 16, marginBottom: 4 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: colors.secondary, display: "block", marginBottom: 6 }}>
+              Razón de la modificación <span style={{ color: colors.red }}>*</span>
+            </label>
+            <Input
+              placeholder="Ej. Corrección de precio / Ajuste de inventario físico"
+              value={razonModificacion}
+              onChange={(value) => onRazonChange && onRazonChange(value)}
+            />
+          </div>
+        )}
       </div>
 
       {/* Modal Footer */}
@@ -272,14 +308,16 @@ const Inventario: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
   const [editingProduct, setEditingProduct] = useState<Producto | null>(null);
   const [form, setForm] = useState<FormData>({ 
-    name: "", code: "", price: "", cost: "", stock: "" 
+    name: "", code: "", price: "", cost: "", stock: "", alert_stock: "5" // Por defecto 5
   });
   const [editForm, setEditForm] = useState<FormData>({ 
-    name: "", code: "", price: "", cost: "", stock: "" 
+    name: "", code: "", price: "", cost: "", stock: "", alert_stock: "" 
   });
   const [items, setItems] = useState<Producto[]>([]);
-  const [loading, setLoading] = useState(true);
-
+  const [, setLoading] = useState(true);
+  const [razonModificacion, setRazonModificacion] = useState<string>("");
+  const userId = useAtomValue(userIdAtom);
+  
   useEffect(() => {
     cargarProductos();
   }, []);
@@ -304,14 +342,15 @@ const Inventario: React.FC = () => {
     [items]
   );
 
+  // Ahora dinámicamente evalúa usando el alert_stock de cada item, cayendo en 5 si no se define.
   const lowStockCount = useMemo(() => 
-    items.filter(item => item.stock < 5).length,
+    items.filter(item => item.stock < (item.alert_stock ?? 5)).length,
     [items]
   );
 
   const stats: StatCard[] = [
     { icon: "inventory", label: "Total Productos", value: items.length.toLocaleString() },
-    { icon: "warning", label: "Stock Bajo (<5)", value: lowStockCount.toString(), valueColor: colors.red },
+    { icon: "warning", label: "Productos Stock Bajo", value: lowStockCount.toString(), valueColor: colors.red },
     { icon: "wallet", label: "Valor Inventario", value: "$" + totalValue.toLocaleString("es-CO", { minimumFractionDigits: 2 }) },
     { icon: "history", label: "Última Carga", value: "Hoy, 09:15" },
   ];
@@ -325,7 +364,7 @@ const Inventario: React.FC = () => {
   }, []);
 
   const handleCreateProduct = useCallback(async () => {
-    if (!form.name || !form.code || !form.price || !form.cost || !form.stock) {
+    if (!form.name || !form.code || !form.price || !form.cost || !form.stock || !form.alert_stock) {
       alert('Por favor complete todos los campos');
       return;
     }
@@ -335,21 +374,27 @@ const Inventario: React.FC = () => {
       code: form.code,
       price: parseFloat(form.price),
       cost: parseFloat(form.cost),
-      stock: parseInt(form.stock)
+      stock: parseInt(form.stock),
+      alert_stock: parseInt(form.alert_stock) // <-- Añadido
     };
 
     await crearProducto(newProduct);
     await cargarProductos();
     
     setShowModal(false);
-    setForm({ name: "", code: "", price: "", cost: "", stock: "" });
+    setForm({ name: "", code: "", price: "", cost: "", stock: "", alert_stock: "5" });
   }, [form]);
 
   const handleUpdateProduct = useCallback(async () => {
     if (!editingProduct || !editingProduct.id) return;
     
-    if (!editForm.name || !editForm.code || !editForm.price || !editForm.cost || !editForm.stock) {
+    if (!editForm.name || !editForm.code || !editForm.price || !editForm.cost || !editForm.stock || !editForm.alert_stock) {
       alert('Por favor complete todos los campos');
+      return;
+    }
+    
+    if (!razonModificacion.trim()) {
+      alert('Por favor ingrese la razón de la modificación');
       return;
     }
 
@@ -358,16 +403,19 @@ const Inventario: React.FC = () => {
       code: editForm.code,
       price: parseFloat(editForm.price),
       cost: parseFloat(editForm.cost),
-      stock: parseInt(editForm.stock)
+      stock: parseInt(editForm.stock),
+      alert_stock: parseInt(editForm.alert_stock) // <-- Añadido
     };
-
-    await modificarProducto(editingProduct.id, updatedProduct);
+    
+    console.log("PRODUCTO MODIFICADO, SU RAZON FUE:", razonModificacion);
+    await modificarProducto(editingProduct.id, updatedProduct, razonModificacion, userId);
     await cargarProductos();
     
     setShowEditModal(false);
     setEditingProduct(null);
-    setEditForm({ name: "", code: "", price: "", cost: "", stock: "" });
-  }, [editForm, editingProduct]);
+    setRazonModificacion(""); 
+    setEditForm({ name: "", code: "", price: "", cost: "", stock: "", alert_stock: "" });
+  }, [editForm, editingProduct, userId, razonModificacion]);
 
   const handleEdit = useCallback((product: Producto) => {
     setEditingProduct(product);
@@ -376,8 +424,10 @@ const Inventario: React.FC = () => {
       code: product.code,
       price: product.price.toString(),
       cost: product.cost.toString(),
-      stock: product.stock.toString()
+      stock: product.stock.toString(),
+      alert_stock: (product.alert_stock ?? 5).toString() // <-- Añadido
     });
+    setRazonModificacion(""); 
     setShowEditModal(true);
   }, []);
 
@@ -392,13 +442,14 @@ const Inventario: React.FC = () => {
   }, []);
 
   const handleDuplicate = useCallback(async (item: Producto) => {
-    const newCode = `${item.code}_COPY`;
+    const newCode = `${item.code}_COPY_${Date.now()}`; 
     const duplicatedProduct: Producto = {
       name: `${item.name} (Copia)`,
       code: newCode,
       price: item.price,
       cost: item.cost,
-      stock: item.stock
+      stock: item.stock,
+      alert_stock: item.alert_stock ?? 5 // <-- Añadido
     };
     
     await crearProducto(duplicatedProduct);
@@ -409,21 +460,24 @@ const Inventario: React.FC = () => {
     console.log('Ver historial:', code);
   }, []);
 
-  const getStockColor = useCallback((stock: number): string => {
-    if (stock === 0) return colors.red;
-    if (stock < 5) return colors.amber;
+  // Modificado para usar dinámicamente el stock de alerta propio del elemento
+  const getStockColor = useCallback((item: Producto): string => {
+    const limit = item.alert_stock ?? 5;
+    if (item.stock === 0) return colors.red;
+    if (item.stock < limit) return colors.amber;
     return colors.onSurface;
   }, []);
 
   const handleCloseModal = useCallback(() => {
     setShowModal(false);
-    setForm({ name: "", code: "", price: "", cost: "", stock: "" });
+    setForm({ name: "", code: "", price: "", cost: "", stock: "", alert_stock: "5" });
   }, []);
 
   const handleCloseEditModal = useCallback(() => {
     setShowEditModal(false);
     setEditingProduct(null);
-    setEditForm({ name: "", code: "", price: "", cost: "", stock: "" });
+    setRazonModificacion(""); 
+    setEditForm({ name: "", code: "", price: "", cost: "", stock: "", alert_stock: "" });
   }, []);
 
   return (
@@ -495,76 +549,79 @@ const Inventario: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((row) => (
-              <tr key={row.code} className="hover-row" style={{ borderTop: `1px solid ${colors.outlineVariant}` }}>
-                <td style={{ padding: "14px 16px" }}>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>{row.name}</div>
-                  {row.stock === 0 && (
-                    <div style={{ 
-                      fontSize: 11, color: colors.red, fontWeight: 700, 
-                      display: "flex", alignItems: "center", gap: 3, marginTop: 2 
-                    }}>
-                      <Icon name="warning" size={12} color={colors.red} /> SIN STOCK
+            {filtered.map((row) => {
+              const limit = row.alert_stock ?? 5;
+              return (
+                <tr key={row.id || row.code} className="hover-row" style={{ borderTop: `1px solid ${colors.outlineVariant}` }}>
+                  <td style={{ padding: "14px 16px" }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{row.name}</div>
+                    {row.stock === 0 && (
+                      <div style={{ 
+                        fontSize: 11, color: colors.red, fontWeight: 700, 
+                        display: "flex", alignItems: "center", gap: 3, marginTop: 2 
+                      }}>
+                        <Icon name="warning" size={12} color={colors.red} /> SIN STOCK
+                      </div>
+                    )}
+                    {row.stock > 0 && row.stock < limit && (
+                      <div style={{ 
+                        fontSize: 11, color: colors.amber, fontWeight: 700, 
+                        display: "flex", alignItems: "center", gap: 3, marginTop: 2 
+                      }}>
+                        <Icon name="warning" size={12} color={colors.amber} /> STOCK BAJO (&lt;{limit})
+                      </div>
+                    )}
+                  </td>
+                  <td style={{ padding: "14px 16px", fontSize: 13, color: colors.secondary }}>
+                    {row.code}
+                  </td>
+                  <td style={{ padding: "14px 16px", fontSize: 13, fontWeight: 700 }}>
+                    ${row.price.toFixed(2)}
+                  </td>
+                  <td style={{ padding: "14px 16px", fontSize: 13 }}>
+                    ${row.cost.toFixed(2)}
+                  </td>
+                  <td style={{ 
+                    padding: "14px 16px", fontSize: 14, fontWeight: 700, 
+                    color: getStockColor(row) 
+                  }}>
+                    {row.stock}
+                  </td>
+                  <td style={{ padding: "14px 16px" }}>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button 
+                        onClick={() => handleEdit(row)}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: colors.outline, display: "flex" }}
+                        title="Editar"
+                      >
+                        <Icon name="edit" size={18} />
+                      </button>
+                      <button 
+                        onClick={() => handleDuplicate(row)}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: colors.outline, display: "flex" }}
+                        title="Duplicar"
+                      >
+                        <Icon name="copy" size={18} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(row)}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: colors.outline, display: "flex" }}
+                        title="Eliminar"
+                      >
+                        <Icon name="trash" size={18} />
+                      </button>
+                      <button 
+                        onClick={() => handleHistory(row.code)}
+                        style={{ background: "none", border: "none", cursor: "pointer", color: colors.outline, display: "flex" }}
+                        title="Historial"
+                      >
+                        <Icon name="history" size={18} />
+                      </button>
                     </div>
-                  )}
-                  {row.stock > 0 && row.stock < 5 && (
-                    <div style={{ 
-                      fontSize: 11, color: colors.amber, fontWeight: 700, 
-                      display: "flex", alignItems: "center", gap: 3, marginTop: 2 
-                    }}>
-                      <Icon name="warning" size={12} color={colors.amber} /> STOCK BAJO
-                    </div>
-                  )}
-                </td>
-                <td style={{ padding: "14px 16px", fontSize: 13, color: colors.secondary }}>
-                  {row.code}
-                </td>
-                <td style={{ padding: "14px 16px", fontSize: 13, fontWeight: 700 }}>
-                  ${row.price.toFixed(2)}
-                </td>
-                <td style={{ padding: "14px 16px", fontSize: 13 }}>
-                  ${row.cost.toFixed(2)}
-                </td>
-                <td style={{ 
-                  padding: "14px 16px", fontSize: 14, fontWeight: 700, 
-                  color: getStockColor(row.stock) 
-                }}>
-                  {row.stock}
-                </td>
-                <td style={{ padding: "14px 16px" }}>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button 
-                      onClick={() => handleEdit(row)}
-                      style={{ background: "none", border: "none", cursor: "pointer", color: colors.outline, display: "flex" }}
-                      title="Editar"
-                    >
-                      <Icon name="edit" size={18} />
-                    </button>
-                    <button 
-                      onClick={() => handleDuplicate(row)}
-                      style={{ background: "none", border: "none", cursor: "pointer", color: colors.outline, display: "flex" }}
-                      title="Duplicar"
-                    >
-                      <Icon name="copy" size={18} />
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(row)}
-                      style={{ background: "none", border: "none", cursor: "pointer", color: colors.outline, display: "flex" }}
-                      title="Eliminar"
-                    >
-                      <Icon name="delete" size={18} />
-                    </button>
-                    <button 
-                      onClick={() => handleHistory(row.code)}
-                      style={{ background: "none", border: "none", cursor: "pointer", color: colors.outline, display: "flex" }}
-                      title="Historial"
-                    >
-                      <Icon name="history" size={18} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
         
@@ -611,6 +668,8 @@ const Inventario: React.FC = () => {
             onSave={handleUpdateProduct}
             onClose={handleCloseEditModal}
             isEditing={true}
+            razonModificacion={razonModificacion}
+            onRazonChange={setRazonModificacion} 
           />
         </div>
       )}

@@ -1,11 +1,11 @@
 import React from 'react';
 import { colors } from "./colors";
-import { Icon } from "./Icon";
+import { Icon, IconName } from "./Icon";
 
 interface BtnProps {
   children: React.ReactNode;
   variant?: 'primary' | 'ghost' | 'danger';
-  icon?: string;
+  icon?: IconName;
   onClick?: () => void;
   style?: React.CSSProperties;
   disabled?: boolean;

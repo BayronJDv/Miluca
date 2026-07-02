@@ -11,6 +11,7 @@ interface CartItem {
   price: number;
   qty: number;
   product_id: number;
+  product_stock: number;
 }
 
 const Pos: React.FC = () => {
@@ -43,19 +44,23 @@ const Pos: React.FC = () => {
     }
   }, []);
 
+  // CORREGIDO: Validación de stock fuera del modificador de estado
   const addToCart = useCallback((product: Producto) => {
     if (product.stock <= 0) {
       alert('Producto sin stock disponible');
       return;
     }
     
+    // Buscamos si ya existe en el estado actual antes de modificarlo
+    const existing = cart.find(item => item.product_id === product.id);
+    if (existing && existing.qty + 1 > product.stock) {
+      alert(`Stock insuficiente. Solo hay ${product.stock} unidades disponibles`);
+      return;
+    }
+    
     setCart(prev => {
-      const existing = prev.find(item => item.product_id === product.id);
-      if (existing) {
-        if (existing.qty + 1 > product.stock) {
-          alert(`Stock insuficiente. Solo hay ${product.stock} unidades`);
-          return prev;
-        }
+      const isExisting = prev.some(item => item.product_id === product.id);
+      if (isExisting) {
         return prev.map(item =>
           item.product_id === product.id
             ? { ...item, qty: item.qty + 1 }
@@ -67,32 +72,35 @@ const Pos: React.FC = () => {
         product_id: product.id!,
         name: product.name,
         price: product.price,
-        qty: 1
+        qty: 1,
+        product_stock: product.stock
       }];
     });
-  }, []);
+  }, [cart]); // Añadido cart como dependencia
 
+  // CORREGIDO: Validación de incremento fuera del modificador de estado
   const updateQuantity = useCallback((productId: number, delta: number) => {
+    const item = cart.find(i => i.product_id === productId);
+    if (!item) return;
+
+    const newQty = item.qty + delta;
+
+    if (delta > 0 && newQty > item.product_stock) {
+      alert(`Stock insuficiente. Solo hay ${item.product_stock}`);
+      return;
+    }
+
     setCart(prev => {
-      const item = prev.find(i => i.product_id === productId);
-      if (item) {
-        const newQty = item.qty + delta;
-        if (newQty < 1) return prev.filter(i => i.product_id !== productId);
-        if (delta > 0) {
-          const product = products.find(p => p.id === productId);
-          if (product && newQty > product.stock) {
-            alert(`Stock insuficiente. Máximo ${product.stock}`);
-            return prev;
-          }
-        }
+      if (newQty < 1) {
+        return prev.filter(i => i.product_id !== productId);
       }
-      return prev.map(item =>
-        item.product_id === productId
-          ? { ...item, qty: Math.max(1, item.qty + delta) }
-          : item
+      return prev.map(i =>
+        i.product_id === productId
+          ? { ...i, qty: newQty }
+          : i
       );
     });
-  }, [products]);
+  }, [cart]);
 
   const removeItem = useCallback((productId: number) => {
     setCart(prev => prev.filter(item => item.product_id !== productId));
@@ -153,7 +161,7 @@ const Pos: React.FC = () => {
       console.error('Error al registrar venta:', error);
       alert('Error al procesar la venta');
     }
-  }, [cart, total, receivedNumber]);
+  }, [cart, total, receivedNumber, products]);
 
   return (
     <div 
@@ -163,7 +171,7 @@ const Pos: React.FC = () => {
       {/* Left Panel - Mismo diseño visual que tenías */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14, overflow: "hidden" }}>
         
-        {/* Barcode Scanner - Ahora funcional */}
+        {/* Barcode Scanner */}
         <div style={{
           background: colors.surfaceLowest, 
           border: `2px dashed ${colors.primary}`, 
@@ -264,9 +272,6 @@ const Pos: React.FC = () => {
                 <div style={{ fontSize: 15, fontWeight: 700, color: colors.primary }}>
                   {formatPrice(product.price)}
                 </div>
-                <div style={{ fontSize: 11, color: product.stock < (product.min_stock || 2) ? colors.red : colors.secondary }}>
-                  Stock: {product.stock}
-                </div>
               </div>
             </div>
           ))}
@@ -279,7 +284,7 @@ const Pos: React.FC = () => {
         </div>
       </div>
 
-      {/* Right Panel: Cart - Mismo diseño pero con datos reales */}
+      {/* Right Panel: Cart */}
       <div style={{ 
         width: 320, display: "flex", flexDirection: "column", 
         background: colors.surfaceLowest, border: `1px solid ${colors.outlineVariant}`, 
@@ -354,7 +359,7 @@ const Pos: React.FC = () => {
           )}
         </div>
 
-        {/* Cart Footer con total y confirmación */}
+        {/* Cart Footer */}
         <div style={{ 
           padding: "16px 20px", background: colors.surfaceLow, 
           borderTop: `1px solid ${colors.outlineVariant}` 
@@ -421,7 +426,7 @@ const Pos: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal de Factura/Comprobante */}
+      {/* Modal de Factura */}
       {showInvoice && lastInvoice && (
         <div style={{
           position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
