@@ -28,3 +28,16 @@ export async function changePassword(userId: number, newPassword: string): Promi
   const db = await getDb();
   await db.execute('UPDATE users SET password = $1 WHERE id = $2', [newPassword, userId]);
 }
+
+export async function createUser(username: string, password: string, role: string): Promise<void> {
+  const db = await getDb();
+  await db.execute(
+    'INSERT INTO users (username, password, role) VALUES ($1, $2, $3)',
+    [username, password, role]
+  );
+}
+
+export async function deleteUser(userId: number): Promise<void> {
+  const db = await getDb();
+  await db.execute('DELETE FROM users WHERE id = $1', [userId]);
+}

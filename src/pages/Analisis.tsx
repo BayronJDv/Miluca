@@ -352,8 +352,8 @@ const AnalisisVentas: React.FC = () => {
           {/* Rankings top / bottom para la métrica activa */}
           {metricaConfig && (
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 28 }}>
-              <RankingPanel titulo={`🏆 ${metricaConfig.labelTop}`} items={topRanking} accent={metricaConfig.accent} />
-              <RankingPanel titulo={`⚠️ ${metricaConfig.labelBottom}`} items={bottomRanking} accent={metricaConfig.accent} />
+              <RankingPanel titulo={`${metricaConfig.labelTop}`} items={topRanking} accent={metricaConfig.accent} />
+              <RankingPanel titulo={`${metricaConfig.labelBottom}`} items={bottomRanking} accent={metricaConfig.accent} />
             </div>
           )}
 

@@ -1,6 +1,7 @@
 use base64::Engine;
 use std::fs;
-use std::path::PathBuf;
+use std::io::Read;
+use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 use tauri::Manager;
 use tauri_plugin_sql::{Migration, MigrationKind};
@@ -17,10 +18,9 @@ fn get_suppliers_dir(app: &tauri::AppHandle) -> PathBuf {
 
 #[tauri::command]
 fn save_supplier_image(app: tauri::AppHandle, data: String, ext: String) -> Result<String, String> {
-    let bytes =
-        base64::engine::general_purpose::STANDARD
-            .decode(&data)
-            .map_err(|e| e.to_string())?;
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(&data)
+        .map_err(|e| e.to_string())?;
 
     let timestamp = SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -35,17 +35,36 @@ fn save_supplier_image(app: tauri::AppHandle, data: String, ext: String) -> Resu
 
 #[tauri::command]
 fn restore_database(app: tauri::AppHandle, backup_path: String) -> Result<(), String> {
+    if backup_path.trim().is_empty() {
+        return Err("La ruta del archivo de backup no puede estar vacía".to_string());
+    }
+
+    let backup_path_obj = Path::new(&backup_path);
+    if !backup_path_obj.is_file() {
+        return Err("La ruta especificada no existe o no es un archivo válido".to_string());
+    }
+
+    let mut file = fs::File::open(backup_path_obj)
+        .map_err(|e| format!("No se pudo abrir el backup: {}", e))?;
+    
+    let mut header = [0u8; 16];
+    let bytes_read = file.read(&mut header).map_err(|e| e.to_string())?;
+    
+    if bytes_read < 16 || &header != b"SQLite format 3\x00" {
+        return Err("El archivo no es una base de datos SQLite válida (header incorrecto)".to_string());
+    }
+    drop(file); 
+
     let mut db_path = app
         .path()
         .app_data_dir()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| format!("Error al obtener directorio de datos: {}", e))?;
     db_path.push("mydatabase.db");
 
-    let temp_path = db_path.with_extension("db.tmp");
+    fs::copy(&backup_path, &db_path)
+        .map_err(|e| format!("Error crítico al sobreescribir la base de datos: {}", e))?;
 
-    fs::copy(&backup_path, &temp_path).map_err(|e| e.to_string())?;
-    fs::rename(&temp_path, &db_path).map_err(|e| e.to_string())?;
-
+    println!("Base de datos reemplazada exitosamente desde: {}", backup_path);
     Ok(())
 }
 
@@ -57,6 +76,11 @@ fn save_csv_file(path: String, content: String) -> Result<(), String> {
 #[tauri::command]
 fn close_app(app: tauri::AppHandle) {
     app.exit(0);
+}
+
+#[tauri::command]
+fn restart_app(app_handle: tauri::AppHandle) {
+    app_handle.restart(); 
 }
 
 #[tauri::command]
@@ -116,7 +140,8 @@ pub fn run() {
             get_supplier_image_base64,
             restore_database,
             save_csv_file,
-            close_app
+            close_app,
+            restart_app
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

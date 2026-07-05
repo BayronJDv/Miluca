@@ -1,13 +1,18 @@
 import { save, open } from '@tauri-apps/plugin-dialog';
 import { useState, useEffect } from 'react';
+import { useAtomValue } from 'jotai';
+import { invoke } from '@tauri-apps/api/core';
 import Btn from '../components/design/Btn';
 import PageHeader from '../components/design/PageHeader';
 import { Input } from '../components/design/Input';
 import { Select } from '../components/design/Select';
-import { getDb } from '../db/database';
-import { listUsers, changePassword } from '../db/users';
+import { listUsers, changePassword, createUser, deleteUser } from '../db/users';
+import { isAdminAtom } from '../store/UserAtom';
+import { getDb, closeDb } from '../db/database';
 
 export default function Configuracion() {
+  const isAdmin = useAtomValue(isAdminAtom);
+
   const [backingUp, setBackingUp] = useState(false);
   const [restoring, setRestoring] = useState(false);
 
@@ -17,8 +22,21 @@ export default function Configuracion() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [changing, setChanging] = useState(false);
 
-  useEffect(() => {
+  // Estados para la creación de un nuevo usuario
+  const [createUsername, setCreateUsername] = useState('');
+  const [createPassword, setCreatePassword] = useState('');
+  const [createRole, setCreateRole] = useState('seller');
+  const [creating, setCreating] = useState(false);
+
+  // Estado para la eliminación
+  const [deleting, setDeleting] = useState(false);
+
+  const refreshUsers = () => {
     listUsers().then(setUsers);
+  };
+
+  useEffect(() => {
+    refreshUsers();
   }, []);
 
   const handleChangePassword = async () => {
@@ -47,6 +65,50 @@ export default function Configuracion() {
     }
   };
 
+  const handleCreateUser = async () => {
+    if (!createUsername || !createPassword) {
+      alert('Completa el usuario y la contraseña.');
+      return;
+    }
+    setCreating(true);
+    try {
+      await createUser(createUsername, createPassword, createRole);
+      alert('Usuario creado exitosamente.');
+      setCreateUsername('');
+      setCreatePassword('');
+      setCreateRole('seller');
+      refreshUsers(); // Recargar lista de usuarios
+    } catch (err) {
+      alert('Error al crear el usuario: ' + err);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    if (!selectedUserId) {
+      alert('Selecciona un usuario para eliminar.');
+      return;
+    }
+    const userToDelete = users.find((u) => String(u.id) === selectedUserId);
+    const confirmed = window.confirm(
+      `¿Estás seguro de que deseas eliminar al usuario "${userToDelete?.username}"? Esta acción no se puede deshacer.`
+    );
+    if (!confirmed) return;
+
+    setDeleting(true);
+    try {
+      await deleteUser(Number(selectedUserId));
+      alert('Usuario eliminado exitosamente.');
+      setSelectedUserId('');
+      refreshUsers(); // Recargar lista de usuarios
+    } catch (err) {
+      alert('Error al eliminar el usuario: ' + err);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const handleBackup = async () => {
     const path = await save({
       filters: [{ name: 'Base de Datos', extensions: ['db'] }],
@@ -68,50 +130,86 @@ export default function Configuracion() {
   };
 
   const handleRestore = async () => {
-    const path = await open({
-      filters: [{ name: 'Base de Datos', extensions: ['db'] }],
-      multiple: false,
-    });
-    if (!path) return;
+  // 1. Seleccionar archivo .db (usando el plugin dialog)
+  const backupPath = await open({
+    filters: [{ name: 'Base de Datos', extensions: ['db'] }],
+    multiple: false,
+  });
+  if (!backupPath) return;
 
-    const confirmed = window.confirm(
-      '¿Estás seguro? Esta acción reemplazará TODOS los datos actuales ' +
-      'con los de la copia de seguridad. Esta operación no se puede deshacer.'
-    );
-    if (!confirmed) return;
+  // 2. Primera confirmación con advertencia clara
+  const confirmed = window.confirm(
+    'RESTAURACIÓN DE BASE DE DATOS\n\n' +
+    'Esta acción:\n' +
+    '• Reemplazará TODOS los datos actuales\n' +
+    '• Se creará un backup de seguridad automático\n' +
+    '• La aplicación se reiniciará automáticamente\n\n' +
+    '¿Estás seguro de continuar?'
+  );
+  if (!confirmed) return;
 
-    setRestoring(true);
-    try {
-      const db = await getDb();
-      const escaped = path.replace(/'/g, "''");
+  // 3. Segunda confirmación obligatoria escribiendo una palabra clave
+  const verification = window.prompt(
+    'ACCION CRÍTICA INTERRUMPIDA\n\n' +
+    'Para proceder definitivamente con la restauración, por favor escribe la palabra "RESTAURAR" en mayúsculas:'
+  );
+  
+  if (verification !== 'RESTAURAR') {
+    alert('Restauración cancelada. La palabra clave introducida no coincide.');
+    return;
+  }
 
-      await db.execute('PRAGMA foreign_keys = OFF');
-      await db.execute(`ATTACH DATABASE '${escaped}' AS backup_db`);
+  setRestoring(true);
+  try {
+    // 4. Cerrar la conexión a la base de datos desde JS/TS (libera los descriptores de archivo)
+    console.log('Cerrando conexión a la base de datos...');
+    // Nota: Asegúrate de que closeDb esté importada desde tu manejador de base de datos
+    await closeDb(); 
+    console.log('Base de datos cerrada correctamente');
 
-      const tables = await db.select<{ name: string }[]>(
-        "SELECT name FROM backup_db.sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
-      );
+    // 5. Invocar comando Rust para mover/reemplazar el archivo físico
+    console.log('Restaurando archivo de base de datos mediante Rust...');
+    await invoke('restore_database', { backupPath });
+    console.log('Archivo de base de datos reemplazado correctamente');
 
-      for (const { name } of tables) {
-        await db.execute(`DELETE FROM "${name}"`);
+    // 6. Alerta de éxito programando el cierre
+    alert('Base de datos restaurada exitosamente.\n\nLa aplicación se cerrará en 2 segundos...');
+
+    // 7. Esperar 2 segundos para que el usuario lea el aviso y apagar/reiniciar la app
+    setTimeout(async () => {
+      try {
+        await invoke('restart_app'); 
+      } catch (err) {
+        console.error('Error al reiniciar la app:', err);
+        // Fallback si falla el reinicio por completo: al menos refrescar la ventana actual
+        window.location.reload();
       }
+    }, 2000);
 
-      await db.execute('DELETE FROM sqlite_sequence');
-
-      for (const { name } of tables) {
-        await db.execute(`INSERT INTO "${name}" SELECT * FROM backup_db."${name}"`);
-      }
-
-      await db.execute('DETACH DATABASE backup_db');
-      await db.execute('PRAGMA foreign_keys = ON');
-
-      alert('Base de datos restaurada exitosamente.');
-    } catch (err) {
-      alert('Error al restaurar: ' + err);
-    } finally {
-      setRestoring(false);
+  } catch (err) {
+    console.error('Error en restore:', err);
+    
+    // Tratamiento de errores limpio
+    let errorMsg = 'Error al restaurar la base de datos:\n\n';
+    if (typeof err === 'string') {
+      errorMsg += err;
+    } else if (err instanceof Error) {
+      errorMsg += err.message;
+    } else {
+      errorMsg += String(err);
     }
-  };
+    alert(errorMsg);
+
+    try {
+      await getDb();
+      console.log('Base de datos reconectada después del error');
+    } catch (e) {
+      console.error('Error crítico al reconectar:', e);
+    }
+  } finally {
+    setRestoring(false);
+  }
+};
 
   return (
     <div className="p-lg">
@@ -120,6 +218,7 @@ export default function Configuracion() {
         subtitle="Administra las opciones del sistema"
       />
 
+      {/* Sección Superior: Copias de seguridad */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
         <div className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0] flex flex-col">
           <div className="flex items-center gap-sm mb-sm">
@@ -136,75 +235,136 @@ export default function Configuracion() {
           </div>
         </div>
 
-        <div className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0] flex flex-col">
-          <div className="flex items-center gap-sm mb-sm">
-            <span className="material-symbols-outlined text-[20px] text-error">restore_page</span>
-            <h3 className="font-label-lg text-label-lg text-on-surface">Restaurar base de datos</h3>
+        {/* Renderizado condicional: Solo visible si el usuario es Admin */}
+        {isAdmin && (
+          <div className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0] flex flex-col">
+            <div className="flex items-center gap-sm mb-sm">
+              <span className="material-symbols-outlined text-[20px] text-error">restore_page</span>
+              <h3 className="font-label-lg text-label-lg text-on-surface">Restaurar base de datos</h3>
+            </div>
+            <p className="text-body-sm text-secondary mb-md leading-relaxed">
+              Reemplaza los datos actuales con una copia de seguridad previa. Irreversible.
+            </p>
+            <div className="mt-auto">
+              <Btn icon="download" variant="danger" onClick={handleRestore} disabled={restoring}>
+                {restoring ? 'Restaurando...' : 'Restaurar desde copia'}
+              </Btn>
+            </div>
           </div>
-          <p className="text-body-sm text-secondary mb-md leading-relaxed">
-            Reemplaza los datos actuales con una copia de seguridad previa. Irreversible.
-          </p>
-          <div className="mt-auto">
-            <Btn icon="download" variant="danger" onClick={handleRestore} disabled={restoring}>
-              {restoring ? 'Restaurando...' : 'Restaurar desde copia'}
-            </Btn>
-          </div>
-        </div>
+        )}
       </div>
 
-      <div className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0] w-full mt-lg">
-        <div className="flex items-center gap-sm mb-sm">
-          <span className="material-symbols-outlined text-[20px] text-primary">lock</span>
-          <h3 className="font-label-lg text-label-lg text-on-surface">Cambiar contraseña</h3>
-        </div>
-        <p className="text-body-sm text-secondary mb-md leading-relaxed">
-          Cambia la contraseña de un usuario del sistema.
-        </p>
+      {/* Sección Inferior: Gestión de usuarios */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-lg mt-lg">
+        
+        {/* Formulario 1: Crear Usuario */}
+        <div className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0] w-full">
+          <div className="flex items-center gap-sm mb-sm">
+            <span className="material-symbols-outlined text-[20px] text-primary">person_add</span>
+            <h3 className="font-label-lg text-label-lg text-on-surface">Crear nuevo usuario</h3>
+          </div>
+          <p className="text-body-sm text-secondary mb-md leading-relaxed">
+            Registra un nuevo usuario asignándole un rol en el sistema.
+          </p>
 
-        <div className="flex flex-col gap-md">
-          <div className="flex items-end gap-md">
-            <div className="flex-1">
-              <Select
-                label="Usuario"
-                placeholder="Seleccionar usuario"
-                value={selectedUserId}
-                onChange={setSelectedUserId}
-                options={users.map((u) => ({
-                  value: String(u.id),
-                  label: `${u.username}`,
-                }))}
-                icon="person"
-              />
+          <div className="flex flex-col gap-md">
+            <Input
+              label="Nombre de usuario"
+              type="text"
+              value={createUsername}
+              onChange={setCreateUsername}
+              icon="person"
+            />
+            <Input
+              label="Contraseña"
+              type="password"
+              value={createPassword}
+              onChange={setCreatePassword}
+              icon="lock"
+            />
+            <Select
+              label="Rol"
+              placeholder="Seleccionar rol"
+              value={createRole}
+              onChange={setCreateRole}
+              options={[
+                { value: 'admin', label: 'Administrador' },
+                { value: 'seller', label: 'Vendedor' },
+              ]}
+              icon="manage_accounts"
+            />
+            <div>
+              <Btn icon="add" onClick={handleCreateUser} disabled={creating}>
+                {creating ? 'Guardando...' : 'Crear usuario'}
+              </Btn>
             </div>
-            {selectedUserId && (
-              <div className="mb-1">
-                <label className="text-[12px] font-semibold tracking-wide text-[#424754] block mb-1">Rol</label>
-                <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-[#d5e0f8] text-[#545f73]">
-                  {users.find((u) => String(u.id) === selectedUserId)?.role}
-                </span>
-              </div>
-            )}
-          </div>
-          <Input
-            label="Nueva contraseña"
-            type="password"
-            value={newPassword}
-            onChange={setNewPassword}
-            icon="lock"
-          />
-          <Input
-            label="Confirmar contraseña"
-            type="password"
-            value={confirmPassword}
-            onChange={setConfirmPassword}
-            icon="lock"
-          />
-          <div>
-            <Btn icon="lock" onClick={handleChangePassword} disabled={changing}>
-              {changing ? 'Cambiando...' : 'Cambiar contraseña'}
-            </Btn>
           </div>
         </div>
+
+        {/* Formulario 2: Modificar / Eliminar Usuario Existente */}
+        <div className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0] w-full">
+          <div className="flex items-center gap-sm mb-sm">
+            <span className="material-symbols-outlined text-[20px] text-primary">manage_accounts</span>
+            <h3 className="font-label-lg text-label-lg text-on-surface">Administrar usuario</h3>
+          </div>
+          <p className="text-body-sm text-secondary mb-md leading-relaxed">
+            Cambia la contraseña o elimina cuentas del sistema de forma permanente.
+          </p>
+
+          <div className="flex flex-col gap-md">
+            <div className="flex items-end gap-md">
+              <div className="flex-1">
+                <Select
+                  label="Usuario"
+                  placeholder="Seleccionar usuario"
+                  value={selectedUserId}
+                  onChange={setSelectedUserId}
+                  options={users.map((u) => ({
+                    value: String(u.id),
+                    label: `${u.username}`,
+                  }))}
+                  icon="person"
+                />
+              </div>
+              {selectedUserId && (
+                <div className="mb-1">
+                  <label className="text-[12px] font-semibold tracking-wide text-[#424754] block mb-1">Rol</label>
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-[#d5e0f8] text-[#545f73]">
+                    {users.find((u) => String(u.id) === selectedUserId)?.role}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <Input
+              label="Nueva contraseña"
+              type="password"
+              value={newPassword}
+              onChange={setNewPassword}
+              icon="lock"
+            />
+            <Input
+              label="Confirmar contraseña"
+              type="password"
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              icon="lock"
+            />
+            
+            <div className="flex gap-sm mt-sm">
+              <Btn icon="lock" onClick={handleChangePassword} disabled={changing}>
+                {changing ? 'Cambiando...' : 'Cambiar contraseña'}
+              </Btn>
+              
+              {selectedUserId && (
+                <Btn icon="delete" variant="danger" onClick={handleDeleteUser} disabled={deleting}>
+                  {deleting ? 'Eliminando...' : 'Eliminar usuario'}
+                </Btn>
+              )}
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
