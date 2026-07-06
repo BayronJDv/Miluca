@@ -3,7 +3,7 @@ name: Release Build
 on:
   push:
     tags:
-      - 'v*' # Se activará cada vez que subas un tag que empiece con 'v' (ej. v1.0.0)
+      - 'v*'
 
 jobs:
   release:
@@ -20,6 +20,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 11
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
