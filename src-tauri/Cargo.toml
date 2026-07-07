@@ -1,7 +1,7 @@
 [package]
 name = "gualcala"
 version = "1.0.0"
-description = "A Tauri App"
+description = "Una aplicacion de punto de venta"
 authors = ["you"]
 edition = "2021"
 
