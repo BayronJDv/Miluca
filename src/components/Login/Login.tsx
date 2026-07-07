@@ -93,9 +93,9 @@ export default function Login() {
             }}>
               <Icon name="wallet" size={28} color="#fff" />
             </div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: colors.onSurface }}>FactuGestion</h1>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: colors.onSurface }}>Gualcalapp</h1>
             <p style={{ fontSize: 14, color: colors.secondary, textAlign: "center" }}>
-              Inicie sesión para acceder al panel administrativo
+              Inicie sesión para acceder
             </p>
           </div>
 

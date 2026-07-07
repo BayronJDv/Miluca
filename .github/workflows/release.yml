@@ -19,24 +19,22 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v5
         with:
           version: 11
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: 'pnpm'
 
-      # 2. Instalar Rust estable
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
 
-      # 3. Instalar dependencias del sistema (SOLO para Linux)
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-latest'
         run: |
@@ -49,11 +47,9 @@ jobs:
             libayatana-appindicator3-dev \
             librsvg2-dev
 
-      # 4. Instalar dependencias del Frontend
       - name: Install frontend dependencies
         run: pnpm install
 
-      # 5. Ejecutar la acción oficial de Tauri para compilar y publicar
       - name: Build and Release Tauri App
         uses: tauri-apps/tauri-action@v0
         env:
@@ -62,5 +58,5 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: 'App Release ${{ github.ref_name }}'
           releaseBody: 'Release automático generado por GitHub Actions.'
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false

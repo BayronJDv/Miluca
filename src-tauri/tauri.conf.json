@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Gualcala",
+  "productName": "Gualcalapp",
   "version": "1.0.0",
   "identifier": "Gualcala-POS",
   "build": {
