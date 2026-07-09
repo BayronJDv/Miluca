@@ -9,17 +9,17 @@ jobs:
   release:
     permissions:
       contents: write
-    
+
     strategy:
       fail-fast: false
       matrix:
         platform: [ubuntu-latest, windows-latest]
 
     runs-on: ${{ matrix.platform }}
-    
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Install pnpm
         uses: pnpm/action-setup@v5
@@ -36,7 +36,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install Linux dependencies
-        if: matrix.platform == 'ubuntu-latest'
+        if: ${{ matrix.platform == 'ubuntu-latest' }} # 
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -51,7 +51,7 @@ jobs:
         run: pnpm install
 
       - name: Build and Release Tauri App
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v2 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
