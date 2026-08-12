@@ -133,6 +133,7 @@ pub fn run() {
                 .add_migrations("sqlite:mydatabase.db", migrations)
                 .build(),
         )
+        .plugin(tauri_plugin_thermal_printer::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![

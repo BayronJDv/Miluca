@@ -22,7 +22,8 @@
     "react": "^19.1.0",
     "react-datepicker": "^9.1.0",
     "react-dom": "^19.1.0",
-    "react-router-dom": "^7.15.1"
+    "react-router-dom": "^7.15.1",
+    "tauri-plugin-thermal-printer": "^2.1.4"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.0",
