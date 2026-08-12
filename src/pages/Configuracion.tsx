@@ -9,7 +9,20 @@ import { Select } from '../components/design/Select';
 import { listUsers, changePassword, createUser, deleteUser } from '../db/users';
 import { isAdminAtom } from '../store/UserAtom';
 import { getDb, closeDb } from '../db/database';
-import { list_thermal_printers, test_thermal_printer, ENCODE, type TestPrintRequest } from 'tauri-plugin-thermal-printer';
+import {
+  list_thermal_printers,
+  test_thermal_printer,
+  ENCODE,
+  type TestPrintRequest,
+  type PrinterInfo,
+} from 'tauri-plugin-thermal-printer';
+import {
+  getSelectedPrinter,
+  setSelectedPrinter,
+  getBusinessData,
+  setBusinessData,
+  type BusinessData,
+} from '../db/settings';
 
 
 export default function Configuracion() {
@@ -34,19 +47,32 @@ export default function Configuracion() {
   const [deleting, setDeleting] = useState(false);
 
   // Estado para impresoras
-  const [printers, setPrinters] = useState<{ name: string; interface_type: string; identifier: string; status: string }[]>([]);
+  const [printers, setPrinters] = useState<PrinterInfo[]>([]);
   const [printersLoading, setPrintersLoading] = useState(true);
-  const [testingPrinter, setTestingPrinter] = useState<string | null>(null);
+  const [testingPrinter, setTestingPrinter] = useState(false);
+  const [selectedPrinter, setSelectedPrinterState] = useState<string>(getSelectedPrinter());
+
+  // Estado para datos de la empresa
+  const [businessForm, setBusinessForm] = useState<BusinessData>(getBusinessData());
+  const [savingBusiness, setSavingBusiness] = useState(false);
+  const [savedBusiness, setSavedBusiness] = useState(false);
 
   const refreshUsers = () => {
     listUsers().then(setUsers);
   };
 
-  const listPrinters = async () => {
+  const refreshPrinters = async () => {
     setPrintersLoading(true);
     try {
       const response = await list_thermal_printers();
       setPrinters(response);
+
+      // Si la impresora guardada ya no existe, limpiar la selección
+      const current = getSelectedPrinter();
+      if (current && !response.some((p) => p.name === current)) {
+        setSelectedPrinter('');
+        setSelectedPrinterState('');
+      }
     } catch (error) {
       console.log("List printers failed:" + error)
       setPrinters([]);
@@ -55,12 +81,21 @@ export default function Configuracion() {
     }
   }
 
-  const handleTestPrinter = async (printerName: string) => {
-    setTestingPrinter(printerName);
+  const handleChangePrinter = (printerName: string) => {
+    setSelectedPrinterState(printerName);
+    setSelectedPrinter(printerName);
+  };
+
+  const handleTestPrinter = async () => {
+    if (!selectedPrinter) {
+      alert('Primero selecciona una impresora.');
+      return;
+    }
+    setTestingPrinter(true);
     try {
       await test_thermal_printer({
         printer_info: {
-          printer: printerName,
+          printer: selectedPrinter,
           paper_size: "Mm80",
           options: {
             code_page: 6,
@@ -91,15 +126,31 @@ export default function Configuracion() {
       console.error("Test print failed:", error);
       alert("Error al probar la impresora: " + error);
     } finally {
-      setTestingPrinter(null);
+      setTestingPrinter(false);
+    }
+  };
+
+  const handleSaveBusiness = () => {
+    setSavingBusiness(true);
+    setSavedBusiness(false);
+    try {
+      const data: BusinessData = {
+        ...businessForm,
+        tax_rate: Number.isFinite(Number(businessForm.tax_rate)) ? Number(businessForm.tax_rate) : 0,
+      };
+      setBusinessData(data);
+      setSavedBusiness(true);
+      setTimeout(() => setSavedBusiness(false), 2500);
+    } catch (error) {
+      alert('Error al guardar los datos de la empresa: ' + error);
+    } finally {
+      setSavingBusiness(false);
     }
   };
 
   useEffect(() => {
     refreshUsers();
-    listPrinters();
-
-
+    refreshPrinters();
   }, []);
 
   const handleChangePassword = async () => {
@@ -437,60 +488,197 @@ export default function Configuracion() {
           <h3 className="font-label-lg text-label-lg text-on-surface">Impresoras térmicas</h3>
         </div>
 
-        {printersLoading ? (
-          <div className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0] flex items-center justify-center">
-            <span className="text-body-sm text-secondary">Buscando impresoras...</span>
-          </div>
-        ) : printers.length === 0 ? (
-          <div className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0] flex flex-col items-center justify-center py-xl">
-            <span className="material-symbols-outlined text-[40px] text-tertiary mb-sm">printer_disabled</span>
-            <span className="text-body-md text-secondary">No se encontraron impresoras térmicas conectadas</span>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
-            {printers.map((printer, index) => (
-              <div
-                key={printer.identifier || index}
-                className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0] flex flex-col"
-              >
-                <div className="flex items-center gap-sm mb-md">
-                  <span className="material-symbols-outlined text-[20px] text-primary">print</span>
-                  <h4 className="font-label-md text-label-md text-on-surface truncate">{printer.name}</h4>
-                </div>
+        <div className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0]">
+          <p className="text-body-sm text-secondary mb-md leading-relaxed">
+            Selecciona la impresora que se usará para emitir los recibos de compra. También puedes
+            verificar que funcione correctamente con una prueba de impresión.
+          </p>
 
-                <div className="flex flex-col gap-sm">
-                  <div className="flex items-center gap-sm">
-                    <span className="material-symbols-outlined text-[16px] text-tertiary">cable</span>
-                    <span className="text-body-sm text-secondary">{printer.interface_type}</span>
-                  </div>
-                  <div className="flex items-center gap-sm">
-                    <span className="material-symbols-outlined text-[16px] text-tertiary">link</span>
-                    <span className="text-body-sm text-secondary truncate">{printer.identifier}</span>
-                  </div>
-                  <div className="flex items-center gap-sm">
-                    <span
-                      className={`inline-block w-2 h-2 rounded-full ${
-                        printer.status === 'IDLE' ? 'bg-green-500' : 'bg-yellow-500'
-                      }`}
+          {printersLoading ? (
+            <div className="flex items-center justify-center py-xl">
+              <span className="text-body-sm text-secondary">Buscando impresoras...</span>
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-col gap-md">
+                <div className="flex items-end gap-md">
+                  <div className="flex-1">
+                    <Select
+                      label="Impresora predeterminada"
+                      placeholder={
+                        printers.length === 0
+                          ? 'No hay impresoras disponibles'
+                          : 'Seleccionar impresora'
+                      }
+                      value={selectedPrinter}
+                      onChange={handleChangePrinter}
+                      options={printers.map((printer) => ({
+                        value: printer.name,
+                        label: `${printer.name}${printer.status === 'IDLE' ? '' : ` (${printer.status})`}`,
+                      }))}
+                      icon="download"
                     />
-                    <span className="text-body-sm text-secondary">{printer.status}</span>
+                  </div>
+                  <div className="mb-1">
+                    <Btn icon="history" variant="ghost" onClick={refreshPrinters}>
+                      Actualizar
+                    </Btn>
                   </div>
                 </div>
 
-                <div className="mt-auto pt-md">
-                  <Btn
-                    icon="download"
-                    variant="ghost"
-                    onClick={() => handleTestPrinter(printer.name)}
-                    disabled={testingPrinter !== null}
-                  >
-                    {testingPrinter === printer.name ? 'Probando...' : 'Probar impresión'}
-                  </Btn>
-                </div>
+                {selectedPrinter && printers.find((p) => p.name === selectedPrinter) && (
+                  <div className="flex flex-col gap-sm rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-md">
+                    <div className="text-body-sm font-semibold text-on-surface mt-xs">
+                      {(() => {
+                        const printer = printers.find((p) => p.name === selectedPrinter);
+                        return printer ? printer.name : selectedPrinter;
+                      })()}
+                    </div>
+                    {(() => {
+                      const printer = printers.find((p) => p.name === selectedPrinter);
+                      return printer ? (
+                        <div className="flex flex-col gap-sm">
+                          <div className="flex items-center gap-sm">
+                            <span className="material-symbols-outlined text-[16px] text-tertiary">cable</span>
+                            <span className="text-body-sm text-secondary">{printer.interface_type}</span>
+                          </div>
+                          <div className="flex items-center gap-sm">
+                            <span className="material-symbols-outlined text-[16px] text-tertiary">link</span>
+                            <span className="text-body-sm text-secondary truncate">{printer.identifier}</span>
+                          </div>
+                          <div className="flex items-center gap-sm">
+                            <span
+                              className={`inline-block w-2 h-2 rounded-full ${
+                                printer.status === 'IDLE' ? 'bg-green-500' : 'bg-yellow-500'
+                              }`}
+                            />
+                            <span className="text-body-sm text-secondary">{printer.status}</span>
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
+                  </div>
+                )}
+
+                {printers.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-lg gap-sm">
+                    <span className="material-symbols-outlined text-[40px] text-tertiary">printer_disabled</span>
+                    <span className="text-body-md text-secondary">
+                      No se encontraron impresoras térmicas conectadas
+                    </span>
+                  </div>
+                )}
               </div>
-            ))}
+
+              <div className="flex gap-sm mt-md">
+                <Btn
+                  icon="download"
+                  onClick={handleTestPrinter}
+                  disabled={testingPrinter || !selectedPrinter}
+                >
+                  {testingPrinter ? 'Probando...' : 'Probar impresión'}
+                </Btn>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Sección: Datos de la empresa */}
+      <div className="mt-lg">
+        <div className="flex items-center gap-sm mb-lg">
+          <span className="material-symbols-outlined text-[20px] text-primary">storefront</span>
+          <h3 className="font-label-lg text-label-lg text-on-surface">Datos de la empresa</h3>
+        </div>
+
+        <div className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0]">
+          <p className="text-body-sm text-secondary mb-md leading-relaxed">
+            Estos datos aparecerán en el encabezado y pie de los recibos de compra impresos.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+            <div className="md:col-span-2">
+              <Input
+                label="Nombre / Razón social"
+                value={businessForm.name}
+                onChange={(v) => setBusinessForm((prev) => ({ ...prev, name: v }))}
+                icon="receipt"
+              />
+            </div>
+            <Input
+              label="RFC"
+              value={businessForm.rfc}
+              onChange={(v) => setBusinessForm((prev) => ({ ...prev, rfc: v }))}
+              icon="info"
+            />
+            <Input
+              label="Teléfono"
+              value={businessForm.phone}
+              onChange={(v) => setBusinessForm((prev) => ({ ...prev, phone: v }))}
+              icon="person"
+            />
+            <div className="md:col-span-2">
+              <Input
+                label="Dirección"
+                value={businessForm.address}
+                onChange={(v) => setBusinessForm((prev) => ({ ...prev, address: v }))}
+                icon="box"
+              />
+            </div>
+            <Input
+              label="Ciudad"
+              value={businessForm.city}
+              onChange={(v) => setBusinessForm((prev) => ({ ...prev, city: v }))}
+              icon="filter"
+            />
+            <Input
+              label="Correo electrónico"
+              value={businessForm.email}
+              onChange={(v) => setBusinessForm((prev) => ({ ...prev, email: v }))}
+              icon="person"
+            />
+            <Input
+              label="Sitio web"
+              value={businessForm.website}
+              onChange={(v) => setBusinessForm((prev) => ({ ...prev, website: v }))}
+              icon="search"
+            />
+            <Input
+              label="IVA (%)"
+              type="number"
+              value={String(businessForm.tax_rate)}
+              onChange={(v) =>
+                setBusinessForm((prev) => ({ ...prev, tax_rate: Number(v) || 0 }))
+              }
+              icon="attach_money"
+            />
+            <div className="md:col-span-2">
+              <Input
+                label="Lema"
+                value={businessForm.slogan}
+                onChange={(v) => setBusinessForm((prev) => ({ ...prev, slogan: v }))}
+                icon="star"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <Input
+                label="Leyenda al pie del recibo"
+                value={businessForm.footer}
+                onChange={(v) => setBusinessForm((prev) => ({ ...prev, footer: v }))}
+                icon="receipt"
+              />
+            </div>
           </div>
-        )}
+
+          <div className="flex items-center gap-sm mt-md">
+            <Btn icon="check" onClick={handleSaveBusiness} disabled={savingBusiness}>
+              {savingBusiness ? 'Guardando...' : 'Guardar datos'}
+            </Btn>
+            {savedBusiness && (
+              <span className="text-body-sm font-medium text-green-600">Datos guardados</span>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

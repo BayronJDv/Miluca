@@ -1,9 +1,18 @@
 import React, { useState, useCallback, useMemo } from 'react';
+import {
+  print_thermal_printer,
+  ENCODE,
+  type PrintJobRequest,
+} from 'tauri-plugin-thermal-printer';
 import { colors } from '../components/design/colors';
 import { Icon } from '../components/design/Icon';
 import Btn from '../components/design/Btn';
 import { buscarProductosPorNombre, buscarProductosPorCodigo, Producto } from '../db/products';
 import { registrarVenta, Factura } from '../db/sales';
+import { getSelectedPrinter, getBusinessData } from '../db/settings';
+import { buildReceiptSections } from '../print/receipt';
+import { useAtomValue } from 'jotai';
+import { userAtom } from '../store/UserAtom';
 
 interface CartItem {
   id: number;
@@ -22,6 +31,10 @@ const Pos: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [lastInvoice, setLastInvoice] = useState<Factura | null>(null);
   const [showInvoice, setShowInvoice] = useState(false);
+  const [lastPayment, setLastPayment] = useState<{ received: number; change: number } | null>(null);
+  const [printing, setPrinting] = useState(false);
+
+  const currentUser = useAtomValue(userAtom);
 
   const handleSearch = useCallback(async (value: string) => {
     setSearch(value);
@@ -151,6 +164,7 @@ const Pos: React.FC = () => {
     try {
       const factura = await registrarVenta(items);
       setLastInvoice(factura);
+      setLastPayment({ received: receivedNumber, change });
       setShowInvoice(true);
       
       setCart([]);
@@ -161,7 +175,47 @@ const Pos: React.FC = () => {
       console.error('Error al registrar venta:', error);
       alert('Error al procesar la venta');
     }
-  }, [cart, total, receivedNumber, products]);
+  }, [cart, total, receivedNumber, products, change]);
+
+  const handlePrint = useCallback(async () => {
+    if (!lastInvoice) return;
+    if (!lastPayment) return;
+
+    const printer = getSelectedPrinter();
+    if (!printer) {
+      alert('No hay una impresora seleccionada. Configúrala en la sección de Configuración.');
+      return;
+    }
+
+    const business = getBusinessData();
+    const sections = buildReceiptSections({
+      business,
+      factura: lastInvoice,
+      cashier: currentUser?.username ?? 'Cajero',
+      received: lastPayment.received,
+      change: lastPayment.change,
+    });
+
+    setPrinting(true);
+    try {
+      const request: PrintJobRequest = {
+        printer,
+        paper_size: 'Mm80',
+        options: {
+          code_page: 6,
+          encode: ENCODE.WINDOWS_1252,
+          use_gbk: false,
+        },
+        sections,
+      };
+      await print_thermal_printer(request);
+    } catch (error) {
+      console.error('Error al imprimir:', error);
+      alert('Error al imprimir el recibo: ' + error);
+    } finally {
+      setPrinting(false);
+    }
+  }, [lastInvoice, lastPayment, currentUser]);
 
   return (
     <div 
@@ -286,7 +340,7 @@ const Pos: React.FC = () => {
 
       {/* Right Panel: Cart */}
       <div style={{ 
-        width: 320, display: "flex", flexDirection: "column", 
+        width: 600, display: "flex", flexDirection: "column", 
         background: colors.surfaceLowest, border: `1px solid ${colors.outlineVariant}`, 
         borderRadius: 10, overflow: "hidden" 
       }}>
@@ -476,13 +530,12 @@ const Pos: React.FC = () => {
               <Btn variant="ghost" onClick={() => {
                 setShowInvoice(false);
                 setLastInvoice(null);
+                setLastPayment(null);
               }}>
                 Cerrar
               </Btn>
-              <Btn onClick={() => {
-                window.print();
-              }}>
-                Imprimir
+              <Btn icon="download" onClick={handlePrint} disabled={printing}>
+                {printing ? 'Imprimiendo...' : 'Imprimir'}
               </Btn>
             </div>
           </div>
