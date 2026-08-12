@@ -10,6 +10,9 @@
     "opener:default",
     "sql:default",
     "sql:allow-execute",
-    "dialog:default"
+    "dialog:default",
+    "thermal-printer:allow-list-thermal-printers",
+    "thermal-printer:allow-print-thermal-printer",
+    "thermal-printer:allow-test-thermal-printer"
   ]
 }

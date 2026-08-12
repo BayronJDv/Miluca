@@ -44,6 +44,9 @@ importers:
       react-router-dom:
         specifier: ^7.15.1
         version: 7.15.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      tauri-plugin-thermal-printer:
+        specifier: ^2.1.4
+        version: 2.1.4
     devDependencies:
       '@tailwindcss/vite':
         specifier: ^4.3.0
@@ -1014,6 +1017,9 @@ packages:
     resolution: {integrity: sha512-uxc/zpqFg6x7C8vOE7lh6Lbda8eEL9zmVm/PLeTPBRhh1xCgdWaQ+J1CUieGpIfm2HdtsUpRv+HshiasBMcc6A==}
     engines: {node: '>=6'}
 
+  tauri-plugin-thermal-printer@2.1.4:
+    resolution: {integrity: sha512-1z7UD2ndODPdfNKBefRaQxWY2nHJZwaKYzUvBRCBPY4lnQKXS73pzi4oNyDWSXm15kjJQ5E2C42RkgdrxKQQ0w==}
+
   tinyglobby@0.2.16:
     resolution: {integrity: sha512-pn99VhoACYR8nFHhxqix+uvsbXineAasWm5ojXoN8xEwK5Kd3/TrhNn1wByuD52UxWRLy8pu+kRMniEi6Eq9Zg==}
     engines: {node: '>=12.0.0'}
@@ -1825,6 +1831,10 @@ snapshots:
   tailwindcss@4.3.0: {}
 
   tapable@2.3.3: {}
+
+  tauri-plugin-thermal-printer@2.1.4:
+    dependencies:
+      '@tauri-apps/api': 2.11.0
 
   tinyglobby@0.2.16:
     dependencies:

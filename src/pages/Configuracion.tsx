@@ -9,6 +9,8 @@ import { Select } from '../components/design/Select';
 import { listUsers, changePassword, createUser, deleteUser } from '../db/users';
 import { isAdminAtom } from '../store/UserAtom';
 import { getDb, closeDb } from '../db/database';
+import { list_thermal_printers, test_thermal_printer, ENCODE, type TestPrintRequest } from 'tauri-plugin-thermal-printer';
+
 
 export default function Configuracion() {
   const isAdmin = useAtomValue(isAdminAtom);
@@ -31,12 +33,73 @@ export default function Configuracion() {
   // Estado para la eliminación
   const [deleting, setDeleting] = useState(false);
 
+  // Estado para impresoras
+  const [printers, setPrinters] = useState<{ name: string; interface_type: string; identifier: string; status: string }[]>([]);
+  const [printersLoading, setPrintersLoading] = useState(true);
+  const [testingPrinter, setTestingPrinter] = useState<string | null>(null);
+
   const refreshUsers = () => {
     listUsers().then(setUsers);
   };
 
+  const listPrinters = async () => {
+    setPrintersLoading(true);
+    try {
+      const response = await list_thermal_printers();
+      setPrinters(response);
+    } catch (error) {
+      console.log("List printers failed:" + error)
+      setPrinters([]);
+    } finally {
+      setPrintersLoading(false);
+    }
+  }
+
+  const handleTestPrinter = async (printerName: string) => {
+    setTestingPrinter(printerName);
+    try {
+      await test_thermal_printer({
+        printer_info: {
+          printer: printerName,
+          paper_size: "Mm80",
+          options: {
+            code_page: 6,
+            encode: ENCODE.WINDOWS_1252,
+            use_gbk: false
+          },
+          sections: []
+        },
+        include_text: true,
+        include_text_styles: true,
+        include_alignment: true,
+        include_columns: true,
+        include_separators: true,
+        include_barcode: true,
+        include_barcode_types: false,
+        include_qr: true,
+        include_image: false,
+        image_base64: null,
+        include_beep: true,
+        test_cash_drawer: false,
+        cut_paper: true,
+        test_feed: true,
+        test_all_fonts: false,
+        test_invert: false,
+        test_rotate: false
+      } as TestPrintRequest);
+    } catch (error) {
+      console.error("Test print failed:", error);
+      alert("Error al probar la impresora: " + error);
+    } finally {
+      setTestingPrinter(null);
+    }
+  };
+
   useEffect(() => {
     refreshUsers();
+    listPrinters();
+
+
   }, []);
 
   const handleChangePassword = async () => {
@@ -153,7 +216,7 @@ export default function Configuracion() {
     'ACCION CRÍTICA INTERRUMPIDA\n\n' +
     'Para proceder definitivamente con la restauración, por favor escribe la palabra "RESTAURAR" en mayúsculas:'
   );
-  
+
   if (verification !== 'RESTAURAR') {
     alert('Restauración cancelada. La palabra clave introducida no coincide.');
     return;
@@ -164,7 +227,7 @@ export default function Configuracion() {
     // 4. Cerrar la conexión a la base de datos desde JS/TS (libera los descriptores de archivo)
     console.log('Cerrando conexión a la base de datos...');
     // Nota: Asegúrate de que closeDb esté importada desde tu manejador de base de datos
-    await closeDb(); 
+    await closeDb();
     console.log('Base de datos cerrada correctamente');
 
     // 5. Invocar comando Rust para mover/reemplazar el archivo físico
@@ -178,7 +241,7 @@ export default function Configuracion() {
     // 7. Esperar 2 segundos para que el usuario lea el aviso y apagar/reiniciar la app
     setTimeout(async () => {
       try {
-        await invoke('restart_app'); 
+        await invoke('restart_app');
       } catch (err) {
         console.error('Error al reiniciar la app:', err);
         // Fallback si falla el reinicio por completo: al menos refrescar la ventana actual
@@ -188,7 +251,7 @@ export default function Configuracion() {
 
   } catch (err) {
     console.error('Error en restore:', err);
-    
+
     // Tratamiento de errores limpio
     let errorMsg = 'Error al restaurar la base de datos:\n\n';
     if (typeof err === 'string') {
@@ -256,7 +319,7 @@ export default function Configuracion() {
 
       {/* Sección Inferior: Gestión de usuarios */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-lg mt-lg">
-        
+
         {/* Formulario 1: Crear Usuario */}
         <div className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0] w-full">
           <div className="flex items-center gap-sm mb-sm">
@@ -350,12 +413,12 @@ export default function Configuracion() {
               onChange={setConfirmPassword}
               icon="lock"
             />
-            
+
             <div className="flex gap-sm mt-sm">
               <Btn icon="lock" onClick={handleChangePassword} disabled={changing}>
                 {changing ? 'Cambiando...' : 'Cambiar contraseña'}
               </Btn>
-              
+
               {selectedUserId && (
                 <Btn icon="delete" variant="danger" onClick={handleDeleteUser} disabled={deleting}>
                   {deleting ? 'Eliminando...' : 'Eliminar usuario'}
@@ -365,6 +428,69 @@ export default function Configuracion() {
           </div>
         </div>
 
+      </div>
+
+      {/* Sección: Impresoras térmicas */}
+      <div className="mt-lg">
+        <div className="flex items-center gap-sm mb-lg">
+          <span className="material-symbols-outlined text-[20px] text-primary">print</span>
+          <h3 className="font-label-lg text-label-lg text-on-surface">Impresoras térmicas</h3>
+        </div>
+
+        {printersLoading ? (
+          <div className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0] flex items-center justify-center">
+            <span className="text-body-sm text-secondary">Buscando impresoras...</span>
+          </div>
+        ) : printers.length === 0 ? (
+          <div className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0] flex flex-col items-center justify-center py-xl">
+            <span className="material-symbols-outlined text-[40px] text-tertiary mb-sm">printer_disabled</span>
+            <span className="text-body-md text-secondary">No se encontraron impresoras térmicas conectadas</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg">
+            {printers.map((printer, index) => (
+              <div
+                key={printer.identifier || index}
+                className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0] flex flex-col"
+              >
+                <div className="flex items-center gap-sm mb-md">
+                  <span className="material-symbols-outlined text-[20px] text-primary">print</span>
+                  <h4 className="font-label-md text-label-md text-on-surface truncate">{printer.name}</h4>
+                </div>
+
+                <div className="flex flex-col gap-sm">
+                  <div className="flex items-center gap-sm">
+                    <span className="material-symbols-outlined text-[16px] text-tertiary">cable</span>
+                    <span className="text-body-sm text-secondary">{printer.interface_type}</span>
+                  </div>
+                  <div className="flex items-center gap-sm">
+                    <span className="material-symbols-outlined text-[16px] text-tertiary">link</span>
+                    <span className="text-body-sm text-secondary truncate">{printer.identifier}</span>
+                  </div>
+                  <div className="flex items-center gap-sm">
+                    <span
+                      className={`inline-block w-2 h-2 rounded-full ${
+                        printer.status === 'IDLE' ? 'bg-green-500' : 'bg-yellow-500'
+                      }`}
+                    />
+                    <span className="text-body-sm text-secondary">{printer.status}</span>
+                  </div>
+                </div>
+
+                <div className="mt-auto pt-md">
+                  <Btn
+                    icon="download"
+                    variant="ghost"
+                    onClick={() => handleTestPrinter(printer.name)}
+                    disabled={testingPrinter !== null}
+                  >
+                    {testingPrinter === printer.name ? 'Probando...' : 'Probar impresión'}
+                  </Btn>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
