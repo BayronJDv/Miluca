@@ -63,6 +63,7 @@ export function buildReceiptSections({
 
   const facturaDate = new Date(venta.sale_date);
   const fechaFormateada = facturaDate.toLocaleString('es-CO', {
+    timeZone: 'America/Bogota',
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -88,7 +89,7 @@ export function buildReceiptSections({
         ],
         body: items.map((item) => [
           { text: String(item.quantity), styles: leftStyle() },
-          { text: item.product_name, styles: leftStyle() },
+           { text: `${item.product_name}${item.lot_number ? ` Lote:${item.lot_number}` : ''}${item.expiration_date ? ` Vence:${item.expiration_date}` : ''}`, styles: leftStyle() },
           { text: formatMoney(item.price), styles: rightStyle() },
           { text: formatMoney(item.subtotal), styles: rightStyle() },
         ]),

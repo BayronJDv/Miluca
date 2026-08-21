@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { obtenerLotesPorVencer, obtenerLotesVencidos } from '../../db/batches';
 import { 
   listarNotificaciones, 
   marcarNotificacionComoVista, 
@@ -8,6 +10,7 @@ import {
 
 function StockAlerts() {
   const [alerts, setAlerts] = useState<StockNotification[]>([]);
+  const [expiryCount, setExpiryCount] = useState(0);
   const [currentIndex, setCurrentIndex] = useState(0);
   const itemsPerPage = 3;
 
@@ -17,6 +20,8 @@ function StockAlerts() {
     if (response.success) {
       setAlerts(response.notifications);
     }
+    const [soon, expired] = await Promise.all([obtenerLotesPorVencer(30), obtenerLotesVencidos()]);
+    setExpiryCount(soon.length + expired.length);
   };
 
   useEffect(() => {
@@ -98,6 +103,9 @@ function StockAlerts() {
           <p className="text-secondary font-label-md text-label-md"></p>
         )}
       </div>
+      {expiryCount > 0 && <Link to="/vencimientos" className="flex items-center justify-between p-md mb-md rounded-lg bg-amber-50 border border-amber-200 text-amber-900 no-underline">
+        <span><strong>{expiryCount}</strong> lote(s) vencido(s) o próximos a vencer</span><span className="font-semibold">Revisar vencimientos →</span>
+      </Link>}
 
       {/* Lista de Alertas */}
       <div className="space-y-md">

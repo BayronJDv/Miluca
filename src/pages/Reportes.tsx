@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import PageHeader from '../components/design/PageHeader';
-import { colors } from '../components/design/colors';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { save } from '@tauri-apps/plugin-dialog';
@@ -128,6 +127,8 @@ export default function Reportes() {
     { ventas: 0, numVentas: 0, ganancia: 0, egresos: 0 }
   );
 
+  const isDisabled = loading || !startDate || !endDate;
+
   return (
     <div className="fade-up">
       <PageHeader
@@ -137,9 +138,7 @@ export default function Reportes() {
 
       <div style={{ display: "flex", gap: 16, marginBottom: 24, flexWrap: "wrap", alignItems: "flex-end" }}>
         <div>
-          <label style={{ fontSize: 12, fontWeight: 600, color: colors.secondary, display: "block", marginBottom: 6 }}>
-            Rango de Fechas
-          </label>
+          <label className="field-label">Rango de Fechas</label>
           <DatePicker
             selectsRange={true}
             startDate={startDate}
@@ -148,28 +147,22 @@ export default function Reportes() {
             isClearable={true}
             placeholderText="Seleccionar rango..."
             dateFormat="dd/MM/yyyy"
+            showMonthDropdown
+            showYearDropdown
+            scrollableYearDropdown
+            yearDropdownItemNumber={20}
+            dropdownMode="select"
             customInput={
-              <input
-                style={{
-                  height: 42, padding: "0 12px", border: `1px solid ${colors.outlineVariant}`,
-                  borderRadius: 8, fontSize: 14, outline: "none", color: colors.onSurface,
-                  background: "#fff", width: 240
-                }}
-              />
+              <input className="control control--md" />
             }
           />
         </div>
 
         <button
           onClick={generarReporte}
-          disabled={!startDate || !endDate || loading}
-          style={{
-            height: 42, padding: "0 24px", border: "none", borderRadius: 8, fontSize: 14,
-            fontWeight: 600, cursor: loading || !startDate || !endDate ? "not-allowed" : "pointer",
-            background: loading || !startDate || !endDate ? colors.surfaceContainer : colors.primary,
-            color: loading || !startDate || !endDate ? colors.secondary : "#fff",
-            display: "flex", alignItems: "center", gap: 8
-          }}
+          disabled={isDisabled}
+          className="btn-solid btn-solid--md"
+          style={{ cursor: isDisabled ? "not-allowed" : "pointer" }}
         >
           {loading ? "Generando..." : "Generar Reporte"}
         </button>
@@ -177,42 +170,26 @@ export default function Reportes() {
         {generated && rows.length > 0 && (
           <button
             onClick={() => exportToCSV(rows)}
-            style={{
-              height: 42, padding: "0 24px", border: `1px solid ${colors.outlineVariant}`, borderRadius: 8,
-              fontSize: 14, fontWeight: 600, cursor: "pointer", background: "#fff",
-              color: colors.onSurface, display: "flex", alignItems: "center", gap: 8
-            }}
+            className="btn-outline"
           >
             Exportar CSV
           </button>
         )}
       </div>
 
-      <div style={{
-        background: colors.surfaceLowest, border: `1px solid ${colors.outlineVariant}`,
-        borderRadius: 10, overflow: "hidden", overflowX: "auto"
-      }}>
+      <div className="page-card page-card--flush overflow-x-auto">
         {loading ? (
-          <div style={{ padding: "40px 20px", textAlign: "center", color: colors.secondary }}>
-            Generando reporte...
-          </div>
+          <div className="empty-state">Generando reporte...</div>
         ) : !generated ? (
-          <div style={{ padding: "40px 20px", textAlign: "center", color: colors.secondary }}>
-            Selecciona un rango de fechas y presiona "Generar Reporte"
-          </div>
+          <div className="empty-state">Selecciona un rango de fechas y presiona "Generar Reporte"</div>
         ) : rows.length === 0 ? (
-          <div style={{ padding: "40px 20px", textAlign: "center", color: colors.secondary }}>
-            No se encontraron datos en el rango seleccionado
-          </div>
+          <div className="empty-state">No se encontraron datos en el rango seleccionado</div>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 600 }}>
+          <table className="data-table min-w-600">
             <thead>
-              <tr style={{ background: colors.surfaceLow }}>
+              <tr>
                 {["FECHA", "VENTAS", "N° VENTAS", "GANANCIA", "EGRESOS"].map(header => (
-                  <th key={header} style={{
-                    padding: "12px 16px", textAlign: header === "FECHA" ? "left" : "right", fontSize: 11,
-                    fontWeight: 700, letterSpacing: "0.05em", color: colors.secondary, whiteSpace: "nowrap"
-                  }}>
+                  <th key={header} className={header !== "FECHA" ? "align-right" : ""}>
                     {header}
                   </th>
                 ))}
@@ -220,41 +197,30 @@ export default function Reportes() {
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={row.fecha} className="hover-row" style={{ borderTop: `1px solid ${colors.outlineVariant}` }}>
-                  <td style={{ padding: "14px 16px", fontSize: 13, fontWeight: 600, color: colors.onSurface }}>
+                <tr key={row.fecha} className="hover-row">
+                  <td style={{ fontWeight: 600 }}>
                     {formatDateDisplay(row.fecha)}
                   </td>
-                  <td style={{ padding: "14px 16px", fontSize: 13, textAlign: "right", fontWeight: 600 }}>
+                  <td className="align-right" style={{ fontWeight: 600 }}>
                     {formatPrice(row.ventas)}
                   </td>
-                  <td style={{ padding: "14px 16px", fontSize: 13, textAlign: "right" }}>
+                  <td className="align-right">
                     {row.numVentas}
                   </td>
-                  <td style={{ padding: "14px 16px", fontSize: 13, textAlign: "right", fontWeight: 600, color: "#16a34a" }}>
+                  <td className="align-right text-income" style={{ fontWeight: 600 }}>
                     {formatPrice(row.ganancia)}
                   </td>
-                  <td style={{ padding: "14px 16px", fontSize: 13, textAlign: "right", fontWeight: 600, color: "#dc2626" }}>
+                  <td className="align-right text-expense" style={{ fontWeight: 600 }}>
                     {formatPrice(row.egresos)}
                   </td>
                 </tr>
               ))}
-              {/* Totals row */}
-              <tr style={{ borderTop: `2px solid ${colors.primary}`, background: colors.surfaceLow }}>
-                <td style={{ padding: "14px 16px", fontSize: 14, fontWeight: 800, color: colors.onSurface }}>
-                  TOTALES
-                </td>
-                <td style={{ padding: "14px 16px", fontSize: 14, textAlign: "right", fontWeight: 800, color: colors.onSurface }}>
-                  {formatPrice(totals.ventas)}
-                </td>
-                <td style={{ padding: "14px 16px", fontSize: 14, textAlign: "right", fontWeight: 800, color: colors.onSurface }}>
-                  {totals.numVentas}
-                </td>
-                <td style={{ padding: "14px 16px", fontSize: 14, textAlign: "right", fontWeight: 800, color: "#16a34a" }}>
-                  {formatPrice(totals.ganancia)}
-                </td>
-                <td style={{ padding: "14px 16px", fontSize: 14, textAlign: "right", fontWeight: 800, color: "#dc2626" }}>
-                  {formatPrice(totals.egresos)}
-                </td>
+              <tr className="totals-row">
+                <td>TOTALES</td>
+                <td className="align-right">{formatPrice(totals.ventas)}</td>
+                <td className="align-right">{totals.numVentas}</td>
+                <td className="align-right text-income">{formatPrice(totals.ganancia)}</td>
+                <td className="align-right text-expense">{formatPrice(totals.egresos)}</td>
               </tr>
             </tbody>
           </table>

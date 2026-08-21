@@ -1,12 +1,12 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import PageHeader from '../components/design/PageHeader';
-import { colors } from '../components/design/colors';
 import { Icon } from '../components/design/Icon';
 import { obtenerVentas, obtenerFactura, Venta, ItemVenta } from '../db/sales';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useAtomValue } from 'jotai';
-import { isAdminAtom } from '../store/UserAtom';
+import { isAdminAtom, userIdAtom } from '../store/UserAtom';
+import { devolverCliente, obtenerPendienteDevolucionVenta } from '../db/returns';
 
 const HistorialVentas: React.FC = () => {
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
@@ -17,6 +17,10 @@ const HistorialVentas: React.FC = () => {
   const [detallesCache, setDetallesCache] = useState<Record<number, ItemVenta[]>>({});
   const [loadingDetalle, setLoadingDetalle] = useState<number | null>(null);
   const isAdmin = useAtomValue(isAdminAtom);
+  const userId = useAtomValue(userIdAtom);
+  const [returnTarget, setReturnTarget] = useState<{ saleId: number; batchId: number; name: string; max: number } | null>(null);
+  const [returnQuantity, setReturnQuantity] = useState('');
+  const [returnReason, setReturnReason] = useState('Devolución de cliente');
 
   const cargarVentas = useCallback(async () => {
     setLoading(true);
@@ -27,10 +31,8 @@ const HistorialVentas: React.FC = () => {
         const day = String(d.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
       };
-      
       const fechaInicioStr = startDate ? formatLocal(startDate) : undefined;
       const fechaFinStr = endDate ? formatLocal(endDate) : undefined;
-      
       const response = await obtenerVentas(1, 100, fechaInicioStr, fechaFinStr);
       setItems(response.ventas);
     } catch (error) {
@@ -40,205 +42,122 @@ const HistorialVentas: React.FC = () => {
     }
   }, [startDate, endDate]);
 
-  useEffect(() => {
-    cargarVentas();
-  }, [cargarVentas]);
+  useEffect(() => { cargarVentas(); }, [cargarVentas]);
 
   const formatPrice = (n: number): string =>
     "$" + n.toLocaleString("es-CO", { minimumFractionDigits: 2 });
 
   const formatDate = (dateString: string): string => {
-    const safeDateString = dateString.includes('T') 
-      ? dateString 
+    const safeDateString = dateString.includes('T')
+      ? dateString
       : dateString.replace(' ', 'T') + 'Z';
-      
     return new Date(safeDateString).toLocaleString('es-CO', {
-      timeZone: 'America/Bogota',
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit', 
-      minute: '2-digit'
+      timeZone: 'America/Bogota', year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit'
     });
   };
 
   const handleToggleExpand = async (ventaId: number) => {
-    if (expandedId === ventaId) {
-      setExpandedId(null);
-      return;
-    }
-
+    if (expandedId === ventaId) { setExpandedId(null); return; }
     setExpandedId(ventaId);
-
     if (!detallesCache[ventaId]) {
       setLoadingDetalle(ventaId);
       try {
         const factura = await obtenerFactura(ventaId);
-        if (factura) {
-          setDetallesCache(prev => ({
-            ...prev,
-            [ventaId]: factura.items
-          }));
-        }
-      } catch (error) {
-        console.error("Error al cargar detalles de la venta:", error);
-      } finally {
-        setLoadingDetalle(null);
-      }
+        if (factura) setDetallesCache(prev => ({ ...prev, [ventaId]: factura.items }));
+      } catch (error) { console.error("Error al cargar detalles de la venta:", error); }
+      finally { setLoadingDetalle(null); }
     }
   };
 
-  // Definir los headers basados en el rol
+  const openReturn = async (saleId: number, item: ItemVenta) => {
+    if (!item.batch_id) return alert('Este ítem no tiene lote asociado.');
+    const max = await obtenerPendienteDevolucionVenta(saleId, item.batch_id);
+    if (!max) return alert('La cantidad completa de este lote ya fue devuelta.');
+    setReturnTarget({ saleId, batchId: item.batch_id, name: item.product_name, max });
+    setReturnQuantity(String(max));
+  };
+
+  const submitReturn = async () => {
+    if (!returnTarget) return;
+    try { await devolverCliente({ sale_id: returnTarget.saleId, batch_id: returnTarget.batchId, quantity: Number(returnQuantity), reason: returnReason, user_id: userId }); setReturnTarget(null); alert('Devolución registrada en el lote original y kardex.'); }
+    catch (error) { alert(String(error)); }
+  };
+
   const getTableHeaders = () => {
     const headers = ["ID VENTA", "FECHA", "TOTAL"];
-    if (isAdmin) {
-      headers.push("GANANCIA");
-    }
+    if (isAdmin) headers.push("GANANCIA");
     headers.push("ACCIÓN");
     return headers;
   };
 
   return (
     <div className="fade-up">
-      <PageHeader
-        title="Historial de Ventas"
-        subtitle="Registro detallado de todas las ventas realizadas."
-      />
-      
-      {/* Filtros */}
-      <div style={{ display: "flex", gap: 16, marginBottom: 24, flexWrap: "wrap", alignItems: "flex-end" }}>
+      <PageHeader title="Historial de Ventas" subtitle="Registro detallado de todas las ventas realizadas." />
+      <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div>
-          <label style={{ fontSize: 12, fontWeight: 600, color: colors.secondary, display: "block", marginBottom: 6 }}>
-            Rango de Fechas
-          </label>
-          <DatePicker
-            selectsRange={true}
-            startDate={startDate}
-            endDate={endDate}
+          <label className="field-label">Rango de Fechas</label>
+          <DatePicker selectsRange startDate={startDate} endDate={endDate}
             onChange={(update: [Date | null, Date | null]) => setDateRange(update)}
-            isClearable={true}
-            placeholderText="Seleccionar rango..."
-            dateFormat="dd/MM/yyyy"
-            customInput={
-              <input 
-                style={{
-                  height: 42, padding: "0 12px", border: `1px solid ${colors.outlineVariant}`,
-                  borderRadius: 8, fontSize: 14, outline: "none", color: colors.onSurface,
-                  background: "#fff", width: 240
-                }}
-              />
-            }
-          />
+            isClearable placeholderText="Seleccionar rango..." dateFormat="dd/MM/yyyy"
+            showMonthDropdown showYearDropdown scrollableYearDropdown yearDropdownItemNumber={20} dropdownMode="select"
+            customInput={<input className="control control--md" />} />
         </div>
       </div>
 
-      {/* Tabla de Ventas */}
-      <div style={{ 
-        background: colors.surfaceLowest, border: `1px solid ${colors.outlineVariant}`, 
-        borderRadius: 10, overflow: "hidden", overflowX: "auto" 
-      }}>
+      <div className="page-card page-card--flush">
         {loading ? (
-          <div style={{ padding: "40px 20px", textAlign: "center", color: colors.secondary }}>
-            Cargando historial de ventas...
-          </div>
+          <div className="empty-state">Cargando historial de ventas...</div>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 650 }}>
-            <thead>
-              <tr style={{ background: colors.surfaceLow }}>
-                {getTableHeaders().map(header => (
-                  <th key={header} style={{ 
-                    padding: "12px 16px", 
-                    textAlign: header === "TOTAL" || header === "GANANCIA" ? "right" : "left", 
-                    fontSize: 11, 
-                    fontWeight: 700, 
-                    letterSpacing: "0.05em", 
-                    color: colors.secondary, 
-                    whiteSpace: "nowrap" 
-                  }}>
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
+          <table className="data-table" style={{ minWidth: 650 }}>
+            <thead><tr>
+              {getTableHeaders().map(header => (
+                <th key={header} className={header === "TOTAL" || header === "GANANCIA" ? 'align-right' : ''}>{header}</th>
+              ))}
+            </tr></thead>
             <tbody>
               {items.map((row) => (
                 <React.Fragment key={row.id}>
-                  <tr className="hover-row" style={{ borderTop: `1px solid ${colors.outlineVariant}` }}>
-                    <td style={{ padding: "14px 16px", fontSize: 13, fontWeight: 600, color: colors.secondary }}>
-                      #{row.id}
-                    </td>
-                    <td style={{ padding: "14px 16px", fontSize: 13 }}>
-                      {formatDate(row.sale_date)}
-                    </td>
-                    <td style={{ padding: "14px 16px", fontSize: 14, fontWeight: 700, textAlign: "right" }}>
-                      {formatPrice(row.total)}
-                    </td>
-                    {/* Mostrar ganancia solo si es admin */}
-                    {isAdmin && (
-                      <td style={{ padding: "14px 16px", fontSize: 14, fontWeight: 700, textAlign: "right", color: colors.primary }}>
-                        {formatPrice(row.profit)}
-                      </td>
-                    )}
-                    <td style={{ padding: "14px 16px" }}>
-                      <button 
-                        onClick={() => row.id && handleToggleExpand(row.id)}
-                        style={{ 
-                          background: "none", border: "none", cursor: "pointer", 
-                          color: colors.primary, display: "flex", alignItems: "center", gap: 4,
-                          fontSize: 13, fontWeight: 600
-                        }}
-                      >
+                  <tr>
+                    <td style={{ fontWeight: 600, color: 'var(--color-secondary)' }}>#{row.id}</td>
+                    <td>{formatDate(row.sale_date)}</td>
+                    <td style={{ fontWeight: 700 }} className="align-right">{formatPrice(row.total)}</td>
+                    {isAdmin && <td className="text-primary align-right" style={{ fontWeight: 700 }}>{formatPrice(row.profit)}</td>}
+                    <td>
+                      <button onClick={() => row.id && handleToggleExpand(row.id)} className="btn-link">
                         {expandedId === row.id ? "Ocultar" : "Ver detalle"}
                         <Icon name={expandedId === row.id ? "minus" : "plus"} size={18} />
                       </button>
                     </td>
                   </tr>
-                  
-                  {/* Fila expandida con detalles */}
                   {expandedId === row.id && (
-                    <tr style={{ background: colors.surfaceLowest }}>
-                      <td colSpan={isAdmin ? 5 : 4} style={{ padding: "16px 24px", borderTop: `1px solid ${colors.surfaceContainer}` }}>
-                        <div style={{ 
-                          background: "#fff", border: `1px solid ${colors.outlineVariant}`,
-                          borderRadius: 8, overflow: "hidden"
-                        }}>
-                          <div style={{ 
-                            padding: "10px 16px", background: colors.surfaceLow,
-                            fontSize: 12, fontWeight: 700, color: colors.secondary,
-                            borderBottom: `1px solid ${colors.outlineVariant}`
-                          }}>
+                    <tr className="row-detail">
+                      <td colSpan={isAdmin ? 5 : 4} style={{ padding: "16px 24px" }}>
+                        <div className="page-card page-card--flush" style={{ borderRadius: 8 }}>
+                          <div className="page-card-header" style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-secondary)' }}>
                             PRODUCTOS DE LA VENTA #{row.id}
                           </div>
-                          
                           {loadingDetalle === row.id ? (
-                            <div style={{ padding: "20px", textAlign: "center", fontSize: 13, color: colors.secondary }}>
-                              Cargando detalles...
-                            </div>
+                            <div className="empty-state" style={{ fontSize: 13 }}>Cargando detalles...</div>
                           ) : detallesCache[row.id!] ? (
-                            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                              <thead>
-                                <tr>
-                                  <th style={{ padding: "8px 16px", textAlign: "left", fontSize: 11, color: colors.secondary, fontWeight: 600 }}>Producto</th>
-                                  <th style={{ padding: "8px 16px", textAlign: "right", fontSize: 11, color: colors.secondary, fontWeight: 600 }}>Cantidad</th>
-                                  <th style={{ padding: "8px 16px", textAlign: "right", fontSize: 11, color: colors.secondary, fontWeight: 600 }}>Precio Unit.</th>
-                                  <th style={{ padding: "8px 16px", textAlign: "right", fontSize: 11, color: colors.secondary, fontWeight: 600 }}>Subtotal</th>
-                                </tr>
-                              </thead>
+                            <table className="data-table">
+                              <thead><tr>
+                                <th>Producto</th><th className="align-right">Cantidad</th><th className="align-right">Precio Unit.</th><th className="align-right">Subtotal</th><th className="align-right">Acción</th>
+                              </tr></thead>
                               <tbody>
                                 {detallesCache[row.id!].map(item => (
-                                  <tr key={item.product_id} style={{ borderTop: `1px solid ${colors.surfaceContainer}` }}>
-                                    <td style={{ padding: "8px 16px", fontSize: 13 }}>{item.product_name}</td>
-                                    <td style={{ padding: "8px 16px", fontSize: 13, textAlign: "right" }}>{item.quantity}</td>
-                                    <td style={{ padding: "8px 16px", fontSize: 13, textAlign: "right" }}>{formatPrice(item.price)}</td>
-                                    <td style={{ padding: "8px 16px", fontSize: 13, textAlign: "right", fontWeight: 600 }}>{formatPrice(item.subtotal)}</td>
+                                  <tr key={`${item.product_id}-${item.batch_id ?? item.quantity}`}>
+                                    <td>{item.product_name}</td>
+                                    <td className="align-right">{item.quantity}</td>
+                                    <td className="align-right">{formatPrice(item.price)}</td>
+                                    <td className="align-right" style={{ fontWeight: 600 }}>{formatPrice(item.subtotal)}</td>
+                                    <td className="align-right"><button onClick={() => openReturn(row.id!, item)} className="btn-mini-solid">Devolver</button></td>
                                   </tr>
                                 ))}
                               </tbody>
                             </table>
                           ) : (
-                            <div style={{ padding: "20px", textAlign: "center", fontSize: 13, color: colors.secondary }}>
-                              No se pudieron cargar los detalles.
-                            </div>
+                            <div className="empty-state" style={{ fontSize: 13 }}>No se pudieron cargar los detalles.</div>
                           )}
                         </div>
                       </td>
@@ -249,13 +168,9 @@ const HistorialVentas: React.FC = () => {
             </tbody>
           </table>
         )}
-        
-        {!loading && items.length === 0 && (
-          <div style={{ padding: "40px 20px", textAlign: "center", color: colors.secondary }}>
-            No se encontraron ventas
-          </div>
-        )}
+        {!loading && items.length === 0 && <div className="empty-state">No se encontraron ventas</div>}
       </div>
+      {returnTarget && <div className="overlay"><div className="modal"><h3 style={{ marginTop: 0 }}>Devolución de cliente</h3><p className="text-secondary">{returnTarget.name} · máximo pendiente: {returnTarget.max}</p><label className="field" style={{ marginTop: 12 }}>Cantidad<input type="number" min="0.01" max={returnTarget.max} value={returnQuantity} onChange={e => setReturnQuantity(e.target.value)} /></label><label className="field" style={{ marginTop: 12 }}>Motivo<input value={returnReason} onChange={e => setReturnReason(e.target.value)} /></label><div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}><button onClick={() => setReturnTarget(null)} className="btn-mini-outline">Cancelar</button><button onClick={submitReturn} className="btn-mini-solid">Confirmar devolución</button></div></div></div>}
     </div>
   );
 };

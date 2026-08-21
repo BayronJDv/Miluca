@@ -29,9 +29,11 @@ export async function verificarYCrearNotificacion(
   try {
     // 1. Obtener el producto con su stock actual
     const productos = await db.select<Producto[]>(
-      `SELECT id, name, code, price, cost, stock, 
-              COALESCE(alert_stock, 1) as alert_stock
-       FROM products WHERE id = $1`,
+      `SELECT p.id, p.name, p.code, p.price,
+              COALESCE(v.stock, 0) AS stock,
+              (SELECT b.cost FROM product_batches b WHERE b.product_id = p.id ORDER BY b.created_at DESC LIMIT 1) AS cost,
+              COALESCE(p.alert_stock, 1) as alert_stock
+       FROM products p LEFT JOIN v_product_stock v ON v.product_id = p.id WHERE p.id = $1`,
       [productoId]
     );
 
@@ -161,10 +163,11 @@ export async function listarNotificaciones(
         sn.start_date,
         sn.view_date,
         p.name as product_name,
-        p.stock as product_stock,
-        p.alert_stock as product_alert_stock
+         COALESCE(v.stock, 0) as product_stock,
+         p.alert_stock as product_alert_stock
        FROM stock_notifications sn
        JOIN products p ON p.id = sn.product_id
+       LEFT JOIN v_product_stock v ON v.product_id = p.id
        ORDER BY 
         CASE WHEN sn.view_date IS NULL THEN 0 ELSE 1 END,
         COALESCE(sn.view_date, sn.start_date) ASC`

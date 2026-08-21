@@ -334,9 +334,9 @@ export default function Configuracion() {
 
       {/* Sección Superior: Copias de seguridad */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
-        <div className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0] flex flex-col">
+        <div className="bg-white p-lg rounded-xl shadow-sm border border-outline-variant flex flex-col">
           <div className="flex items-center gap-sm mb-sm">
-            <span className="material-symbols-outlined text-[20px] text-primary">backup</span>
+            <span className="material-symbols-outlined icon-lg text-primary">backup</span>
             <h3 className="font-label-lg text-label-lg text-on-surface">Copia de seguridad</h3>
           </div>
           <p className="text-body-sm text-secondary mb-md leading-relaxed">
@@ -351,9 +351,9 @@ export default function Configuracion() {
 
         {/* Renderizado condicional: Solo visible si el usuario es Admin */}
         {isAdmin && (
-          <div className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0] flex flex-col">
+          <div className="bg-white p-lg rounded-xl shadow-sm border border-outline-variant flex flex-col">
             <div className="flex items-center gap-sm mb-sm">
-              <span className="material-symbols-outlined text-[20px] text-error">restore_page</span>
+              <span className="material-symbols-outlined icon-lg text-error">restore_page</span>
               <h3 className="font-label-lg text-label-lg text-on-surface">Restaurar base de datos</h3>
             </div>
             <p className="text-body-sm text-secondary mb-md leading-relaxed">
@@ -372,9 +372,9 @@ export default function Configuracion() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-lg mt-lg">
 
         {/* Formulario 1: Crear Usuario */}
-        <div className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0] w-full">
+        <div className="bg-white p-lg rounded-xl shadow-sm border border-outline-variant w-full">
           <div className="flex items-center gap-sm mb-sm">
-            <span className="material-symbols-outlined text-[20px] text-primary">person_add</span>
+            <span className="material-symbols-outlined icon-lg text-primary">person_add</span>
             <h3 className="font-label-lg text-label-lg text-on-surface">Crear nuevo usuario</h3>
           </div>
           <p className="text-body-sm text-secondary mb-md leading-relaxed">
@@ -416,9 +416,9 @@ export default function Configuracion() {
         </div>
 
         {/* Formulario 2: Modificar / Eliminar Usuario Existente */}
-        <div className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0] w-full">
+        <div className="bg-white p-lg rounded-xl shadow-sm border border-outline-variant w-full">
           <div className="flex items-center gap-sm mb-sm">
-            <span className="material-symbols-outlined text-[20px] text-primary">manage_accounts</span>
+            <span className="material-symbols-outlined icon-lg text-primary">manage_accounts</span>
             <h3 className="font-label-lg text-label-lg text-on-surface">Administrar usuario</h3>
           </div>
           <p className="text-body-sm text-secondary mb-md leading-relaxed">
@@ -442,8 +442,8 @@ export default function Configuracion() {
               </div>
               {selectedUserId && (
                 <div className="mb-1">
-                  <label className="text-[12px] font-semibold tracking-wide text-[#424754] block mb-1">Rol</label>
-                  <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-[#d5e0f8] text-[#545f73]">
+                  <label className="text-label-md text-on-surface-variant block mb-1">Rol</label>
+                  <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary-container text-secondary">
                     {users.find((u) => String(u.id) === selectedUserId)?.role}
                   </span>
                 </div>
@@ -484,11 +484,11 @@ export default function Configuracion() {
       {/* Sección: Impresoras térmicas */}
       <div className="mt-lg">
         <div className="flex items-center gap-sm mb-lg">
-          <span className="material-symbols-outlined text-[20px] text-primary">print</span>
+          <span className="material-symbols-outlined icon-lg text-primary">print</span>
           <h3 className="font-label-lg text-label-lg text-on-surface">Impresoras térmicas</h3>
         </div>
 
-        <div className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0]">
+        <div className="bg-white p-lg rounded-xl shadow-sm border border-outline-variant">
           <p className="text-body-sm text-secondary mb-md leading-relaxed">
             Selecciona la impresora que se usará para emitir los recibos de compra. También puedes
             verificar que funcione correctamente con una prueba de impresión.
@@ -527,7 +527,7 @@ export default function Configuracion() {
                 </div>
 
                 {selectedPrinter && printers.find((p) => p.name === selectedPrinter) && (
-                  <div className="flex flex-col gap-sm rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-md">
+                  <div className="flex flex-col gap-sm rounded-lg border border-outline-variant bg-surface p-md">
                     <div className="text-body-sm font-semibold text-on-surface mt-xs">
                       {(() => {
                         const printer = printers.find((p) => p.name === selectedPrinter);
@@ -539,17 +539,17 @@ export default function Configuracion() {
                       return printer ? (
                         <div className="flex flex-col gap-sm">
                           <div className="flex items-center gap-sm">
-                            <span className="material-symbols-outlined text-[16px] text-tertiary">cable</span>
+                            <span className="material-symbols-outlined icon-md text-tertiary">cable</span>
                             <span className="text-body-sm text-secondary">{printer.interface_type}</span>
                           </div>
                           <div className="flex items-center gap-sm">
-                            <span className="material-symbols-outlined text-[16px] text-tertiary">link</span>
+                            <span className="material-symbols-outlined icon-md text-tertiary">link</span>
                             <span className="text-body-sm text-secondary truncate">{printer.identifier}</span>
                           </div>
                           <div className="flex items-center gap-sm">
                             <span
                               className={`inline-block w-2 h-2 rounded-full ${
-                                printer.status === 'IDLE' ? 'bg-green-500' : 'bg-yellow-500'
+                                printer.status === 'IDLE' ? 'bg-success' : 'bg-warning'
                               }`}
                             />
                             <span className="text-body-sm text-secondary">{printer.status}</span>
@@ -562,7 +562,7 @@ export default function Configuracion() {
 
                 {printers.length === 0 && (
                   <div className="flex flex-col items-center justify-center py-lg gap-sm">
-                    <span className="material-symbols-outlined text-[40px] text-tertiary">printer_disabled</span>
+                    <span className="material-symbols-outlined icon-xl text-tertiary">printer_disabled</span>
                     <span className="text-body-md text-secondary">
                       No se encontraron impresoras térmicas conectadas
                     </span>
@@ -587,11 +587,11 @@ export default function Configuracion() {
       {/* Sección: Datos de la empresa */}
       <div className="mt-lg">
         <div className="flex items-center gap-sm mb-lg">
-          <span className="material-symbols-outlined text-[20px] text-primary">storefront</span>
+          <span className="material-symbols-outlined icon-lg text-primary">storefront</span>
           <h3 className="font-label-lg text-label-lg text-on-surface">Datos de la empresa</h3>
         </div>
 
-        <div className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0]">
+        <div className="bg-white p-lg rounded-xl shadow-sm border border-outline-variant">
           <p className="text-body-sm text-secondary mb-md leading-relaxed">
             Estos datos aparecerán en el encabezado y pie de los recibos de compra impresos.
           </p>
@@ -675,7 +675,7 @@ export default function Configuracion() {
               {savingBusiness ? 'Guardando...' : 'Guardar datos'}
             </Btn>
             {savedBusiness && (
-              <span className="text-body-sm font-medium text-green-600">Datos guardados</span>
+              <span className="text-body-sm font-medium text-success">Datos guardados</span>
             )}
           </div>
         </div>

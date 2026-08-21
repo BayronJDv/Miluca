@@ -125,6 +125,18 @@ pub fn run() {
             sql: include_str!("../migrations/002_profit.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 3,
+            description: "add_pharmacy_traceability",
+            sql: include_str!("../migrations/003_pharmacy.sql"),
+            kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 4,
+            description: "repair_pharmacy_constraints",
+            sql: include_str!("../migrations/004_repair_pharmacy_constraints.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

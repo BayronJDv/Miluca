@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import PageHeader from '../components/design/PageHeader';
-import { colors } from '../components/design/colors';
 import { obtenerEstadisticasProductos, ProductoEstadistica } from '../db/product_stats';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -17,6 +16,7 @@ interface MetricConfig {
   format: (n: number) => string;
   adminOnly: boolean;
   accent: string;
+  accentClass: string;
 }
 
 type SortDireccion = 'asc' | 'desc';
@@ -41,49 +41,52 @@ const AnalisisVentas: React.FC = () => {
 
   const METRICAS: MetricConfig[] = useMemo(
     () =>
-        ([
+      ([
         {
-            key: 'unidades_vendidas',
-            label: 'Unidades vendidas',
-            labelTop: 'Más vendidos',
-            labelBottom: 'Menos vendidos',
-            format: formatNumero,
-            adminOnly: false,
-            accent: colors.primary,
+          key: 'unidades_vendidas',
+          label: 'Unidades vendidas',
+          labelTop: 'Más vendidos',
+          labelBottom: 'Menos vendidos',
+          format: formatNumero,
+          adminOnly: false,
+          accent: 'var(--color-primary)',
+          accentClass: 'accent-blue',
         },
         {
-            key: 'ingresos',
-            label: 'Ingresos',
-            labelTop: 'Mayores ingresos',
-            labelBottom: 'Menores ingresos',
-            format: formatPrice,
-            adminOnly: false,
-            accent: '#2E7D5B',
+          key: 'ingresos',
+          label: 'Ingresos',
+          labelTop: 'Mayores ingresos',
+          labelBottom: 'Menores ingresos',
+          format: formatPrice,
+          adminOnly: false,
+          accent: 'var(--color-metric-green)',
+          accentClass: 'accent-green',
         },
         {
-            key: 'ganancia',
-            label: 'Ganancia',
-            labelTop: 'Mayor ganancia',
-            labelBottom: 'Menor ganancia',
-            format: formatPrice,
-            adminOnly: true,
-            accent: '#B8860B',
+          key: 'ganancia',
+          label: 'Ganancia',
+          labelTop: 'Mayor ganancia',
+          labelBottom: 'Menor ganancia',
+          format: formatPrice,
+          adminOnly: true,
+          accent: 'var(--color-metric-gold)',
+          accentClass: 'accent-gold',
         },
         {
-            key: 'num_ventas',
-            label: 'N° de ventas (rotación)',
-            labelTop: 'Mayor rotación',
-            labelBottom: 'Menor rotación',
-            format: formatNumero,
-            adminOnly: false,
-            accent: '#6A4C93',
+          key: 'num_ventas',
+          label: 'N° de ventas (rotación)',
+          labelTop: 'Mayor rotación',
+          labelBottom: 'Menor rotación',
+          format: formatNumero,
+          adminOnly: false,
+          accent: 'var(--color-metric-purple)',
+          accentClass: 'accent-purple',
         },
-        ] as MetricConfig[]).filter((m) => !m.adminOnly || isAdmin), // <-- Aquí le aseguras el tipo antes de filtrar
+      ] as MetricConfig[]).filter((m) => !m.adminOnly || isAdmin),
     [isAdmin]
-    );
+  );
 
   useEffect(() => {
-    // Si el usuario deja de ser admin o la métrica de ganancia no está disponible, redirige a una válida
     if (!METRICAS.find((m) => m.key === metricaActiva)) {
       setMetricaActiva(METRICAS[0]?.key ?? 'unidades_vendidas');
     }
@@ -113,8 +116,6 @@ const AnalisisVentas: React.FC = () => {
   useEffect(() => {
     cargarEstadisticas();
   }, [cargarEstadisticas]);
-
-  // ---- Datos derivados ----
 
   const totales = useMemo(() => {
     return stats.reduce(
@@ -175,112 +176,15 @@ const AnalisisVentas: React.FC = () => {
     ...(isAdmin ? ([{ key: 'ganancia', label: 'GANANCIA', align: 'right' }] as const) : []),
   ];
 
-  // ---- Subcomponentes visuales ----
-
-  const KpiCard: React.FC<{ label: string; value: string; accent: string; hint?: string }> = ({
-    label,
-    value,
-    accent,
-    hint,
-  }) => (
-    <div
-      style={{
-        flex: '1 1 200px',
-        background: colors.surfaceLowest,
-        border: `1px solid ${colors.outlineVariant}`,
-        borderRadius: 10,
-        padding: '16px 18px',
-        borderLeft: `3px solid ${accent}`,
-      }}
-    >
-      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', color: colors.secondary }}>
-        {label}
-      </div>
-      <div style={{ fontSize: 22, fontWeight: 700, color: colors.onSurface, marginTop: 4 }}>{value}</div>
-      {hint && <div style={{ fontSize: 12, color: colors.secondary, marginTop: 2 }}>{hint}</div>}
-    </div>
-  );
-
-  const RankingPanel: React.FC<{
-    titulo: string;
-    items: ProductoEstadistica[];
-    accent: string;
-    invertido?: boolean;
-  }> = ({ titulo, items, accent }) => {
-    const maxValor = Math.max(1, ...items.map((p) => Math.abs(p[metricaConfig.key])));
-    return (
-      <div
-        style={{
-          flex: '1 1 340px',
-          background: colors.surfaceLowest,
-          border: `1px solid ${colors.outlineVariant}`,
-          borderRadius: 10,
-          padding: 18,
-        }}
-      >
-        <div style={{ fontSize: 13, fontWeight: 700, color: colors.onSurface, marginBottom: 14 }}>{titulo}</div>
-        {items.length === 0 ? (
-          <div style={{ fontSize: 13, color: colors.secondary, padding: '12px 0' }}>
-            No hay datos suficientes para este período.
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {items.map((p, idx) => {
-              const valor = p[metricaConfig.key];
-              const anchoPct = Math.max(6, (Math.abs(valor) / maxValor) * 100);
-              return (
-                <div key={p.product_id}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      fontSize: 13,
-                      marginBottom: 4,
-                    }}
-                  >
-                    <span style={{ color: colors.onSurface, fontWeight: 600 }}>
-                      {idx + 1}. {p.name}
-                    </span>
-                    <span style={{ color: colors.secondary, fontWeight: 700 }}>
-                      {metricaConfig.format(valor)}
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      height: 6,
-                      borderRadius: 4,
-                      background: colors.surfaceLow,
-                      overflow: 'hidden',
-                    }}
-                  >
-                    <div
-                      style={{
-                        height: '100%',
-                        width: `${anchoPct}%`,
-                        background: valor < 0 ? '#C0392B' : accent,
-                        borderRadius: 4,
-                      }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    );
-  };
+  const maxValor = Math.max(1, ...topRanking.map((p) => Math.abs(p[metricaConfig.key])));
 
   return (
     <div className="fade-up">
       <PageHeader title="Análisis de Ventas" subtitle="Rendimiento de productos: qué se mueve, qué no, y qué deja más ganancia." />
 
-      {/* Filtro de fechas */}
       <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div>
-          <label style={{ fontSize: 12, fontWeight: 600, color: colors.secondary, display: 'block', marginBottom: 6 }}>
-            Rango de Fechas
-          </label>
+          <label className="field-label">Rango de Fechas</label>
           <DatePicker
             selectsRange={true}
             startDate={startDate}
@@ -289,124 +193,146 @@ const AnalisisVentas: React.FC = () => {
             isClearable={true}
             placeholderText="Todo el historial"
             dateFormat="dd/MM/yyyy"
+            showMonthDropdown
+            showYearDropdown
+            scrollableYearDropdown
+            yearDropdownItemNumber={20}
+            dropdownMode="select"
             customInput={
-              <input
-                style={{
-                  height: 42,
-                  padding: '0 12px',
-                  border: `1px solid ${colors.outlineVariant}`,
-                  borderRadius: 8,
-                  fontSize: 14,
-                  outline: 'none',
-                  color: colors.onSurface,
-                  background: '#fff',
-                  width: 240,
-                }}
-              />
+              <input className="control control--md" />
             }
           />
         </div>
       </div>
 
       {loading ? (
-        <div style={{ padding: '40px 20px', textAlign: 'center', color: colors.secondary }}>
-          Cargando análisis de ventas...
-        </div>
+        <div className="empty-state">Cargando análisis de ventas...</div>
       ) : (
         <>
-          {/* KPIs */}
-          <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginBottom: 24 }}>
-            <KpiCard label="UNIDADES VENDIDAS" value={formatNumero(totales.unidades)} accent={colors.primary} />
-            <KpiCard label="INGRESOS TOTALES" value={formatPrice(totales.ingresos)} accent="#2E7D5B" />
-            {isAdmin && <KpiCard label="GANANCIA TOTAL" value={formatPrice(totales.ganancia)} accent="#B8860B" />}
-            <KpiCard
-              label="SIN MOVIMIENTO"
-              value={formatNumero(totales.sinMovimiento)}
-              accent="#C0392B"
-              hint="Productos con 0 ventas en el período"
-            />
+          <div className="kpi-grid">
+            <div className="kpi-card" style={{ borderLeft: '3px solid var(--color-primary)' }}>
+              <div className="kpi-card-label">UNIDADES VENDIDAS</div>
+              <div className="kpi-card-value">{formatNumero(totales.unidades)}</div>
+            </div>
+            <div className="kpi-card" style={{ borderLeft: '3px solid var(--color-metric-green)' }}>
+              <div className="kpi-card-label">INGRESOS TOTALES</div>
+              <div className="kpi-card-value">{formatPrice(totales.ingresos)}</div>
+            </div>
+            {isAdmin && (
+              <div className="kpi-card" style={{ borderLeft: '3px solid var(--color-metric-gold)' }}>
+                <div className="kpi-card-label">GANANCIA TOTAL</div>
+                <div className="kpi-card-value">{formatPrice(totales.ganancia)}</div>
+              </div>
+            )}
+            <div className="kpi-card" style={{ borderLeft: '3px solid var(--color-metric-red)' }}>
+              <div className="kpi-card-label">SIN MOVIMIENTO</div>
+              <div className="kpi-card-value">{formatNumero(totales.sinMovimiento)}</div>
+              <div className="kpi-card-hint">Productos con 0 ventas en el período</div>
+            </div>
           </div>
 
-          {/* Selector de métrica */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
             {METRICAS.map((m) => (
               <button
                 key={m.key}
                 onClick={() => setMetricaActiva(m.key)}
-                style={{
-                  padding: '8px 14px',
-                  borderRadius: 8,
-                  border: `1px solid ${metricaActiva === m.key ? m.accent : colors.outlineVariant}`,
-                  background: metricaActiva === m.key ? m.accent : '#fff',
-                  color: metricaActiva === m.key ? '#fff' : colors.onSurface,
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
+                className={`metric-chip ${m.accentClass} ${metricaActiva === m.key ? 'is-active' : ''}`}
+                style={{ '--metric-accent': m.accent } as React.CSSProperties}
               >
                 {m.label}
               </button>
             ))}
           </div>
 
-          {/* Rankings top / bottom para la métrica activa */}
           {metricaConfig && (
-            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 28 }}>
-              <RankingPanel titulo={`${metricaConfig.labelTop}`} items={topRanking} accent={metricaConfig.accent} />
-              <RankingPanel titulo={`${metricaConfig.labelBottom}`} items={bottomRanking} accent={metricaConfig.accent} />
+            <div className="ranking-grid">
+              <div className="ranking-panel">
+                <div className="ranking-title">{metricaConfig.labelTop}</div>
+                {topRanking.length === 0 ? (
+                  <div className="ranking-empty">No hay datos suficientes para este período.</div>
+                ) : (
+                  <div className="ranking-items">
+                    {topRanking.map((p, idx) => {
+                      const valor = p[metricaConfig.key];
+                      const anchoPct = Math.max(6, (Math.abs(valor) / maxValor) * 100);
+                      return (
+                        <div key={p.product_id}>
+                          <div className="ranking-item-row">
+                            <span className="ranking-item-name">{idx + 1}. {p.name}</span>
+                            <span className="ranking-item-value">{metricaConfig.format(valor)}</span>
+                          </div>
+                          <div className="ranking-bar">
+                            <div
+                              className="ranking-bar-fill"
+                              style={{
+                                width: `${anchoPct}%`,
+                                background: valor < 0 ? 'var(--color-metric-red)' : metricaConfig.accent,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="ranking-panel">
+                <div className="ranking-title">{metricaConfig.labelBottom}</div>
+                {bottomRanking.length === 0 ? (
+                  <div className="ranking-empty">No hay datos suficientes para este período.</div>
+                ) : (
+                  <div className="ranking-items">
+                    {bottomRanking.map((p, idx) => {
+                      const valor = p[metricaConfig.key];
+                      const anchoPct = Math.max(6, (Math.abs(valor) / maxValor) * 100);
+                      return (
+                        <div key={p.product_id}>
+                          <div className="ranking-item-row">
+                            <span className="ranking-item-name">{idx + 1}. {p.name}</span>
+                            <span className="ranking-item-value">{metricaConfig.format(valor)}</span>
+                          </div>
+                          <div className="ranking-bar">
+                            <div
+                              className="ranking-bar-fill"
+                              style={{
+                                width: `${anchoPct}%`,
+                                background: valor < 0 ? 'var(--color-metric-red)' : metricaConfig.accent,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
-          {/* Tabla completa */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 12 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: colors.onSurface }}>Todos los productos</div>
+            <div className="text-on-surface" style={{ fontSize: 14, fontWeight: 700 }}>Todos los productos</div>
             <div style={{ position: 'relative' }}>
               <input
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
                 placeholder="Buscar por nombre o código..."
-                style={{
-                  height: 38,
-                  padding: '0 12px',
-                  border: `1px solid ${colors.outlineVariant}`,
-                  borderRadius: 8,
-                  fontSize: 13,
-                  outline: 'none',
-                  width: 260,
-                  color: colors.onSurface,
-                  background: '#fff',
-                }}
+                className="control"
+                style={{ width: 260 }}
               />
             </div>
           </div>
 
-          <div
-            style={{
-              background: colors.surfaceLowest,
-              border: `1px solid ${colors.outlineVariant}`,
-              borderRadius: 10,
-              overflow: 'hidden',
-              overflowX: 'auto',
-            }}
-          >
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+          <div className="page-card page-card--flush overflow-x-auto">
+            <table className="data-table min-w-700">
               <thead>
-                <tr style={{ background: colors.surfaceLow }}>
+                <tr>
                   {columnas.map((col) => (
                     <th
                       key={col.key}
                       onClick={() => handleSort(col.key)}
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: col.align,
-                        fontSize: 11,
-                        fontWeight: 700,
-                        letterSpacing: '0.05em',
-                        color: colors.secondary,
-                        whiteSpace: 'nowrap',
-                        cursor: 'pointer',
-                        userSelect: 'none',
-                      }}
+                      className={col.align === 'right' ? 'align-right' : ''}
+                      style={{ cursor: 'pointer', userSelect: 'none' }}
                     >
                       {col.label}
                       {sortConfig.key === col.key && (sortConfig.dir === 'asc' ? ' ▲' : ' ▼')}
@@ -416,31 +342,21 @@ const AnalisisVentas: React.FC = () => {
               </thead>
               <tbody>
                 {filasTabla.map((p) => (
-                  <tr key={p.product_id} className="hover-row" style={{ borderTop: `1px solid ${colors.outlineVariant}` }}>
-                    <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 600 }}>
+                  <tr key={p.product_id} className="hover-row">
+                    <td style={{ fontWeight: 600 }}>
                       {p.name}
-                      <div style={{ fontSize: 11, color: colors.secondary, fontWeight: 400 }}>{p.code}</div>
+                      <div className="text-secondary" style={{ fontSize: 11, fontWeight: 400 }}>{p.code}</div>
                     </td>
-                    <td style={{ padding: '12px 16px', fontSize: 13, textAlign: 'right' }}>
-                      {formatNumero(p.stock)}
-                    </td>
-                    <td style={{ padding: '12px 16px', fontSize: 13, textAlign: 'right', fontWeight: 600 }}>
-                      {formatNumero(p.unidades_vendidas)}
-                    </td>
-                    <td style={{ padding: '12px 16px', fontSize: 13, textAlign: 'right' }}>
-                      {formatNumero(p.num_ventas)}
-                    </td>
-                    <td style={{ padding: '12px 16px', fontSize: 13, textAlign: 'right' }}>
-                      {formatPrice(p.ingresos)}
-                    </td>
+                    <td className="align-right">{formatNumero(p.stock)}</td>
+                    <td className="align-right" style={{ fontWeight: 600 }}>{formatNumero(p.unidades_vendidas)}</td>
+                    <td className="align-right">{formatNumero(p.num_ventas)}</td>
+                    <td className="align-right">{formatPrice(p.ingresos)}</td>
                     {isAdmin && (
                       <td
+                        className="align-right"
                         style={{
-                          padding: '12px 16px',
-                          fontSize: 13,
-                          textAlign: 'right',
                           fontWeight: 600,
-                          color: p.ganancia < 0 ? '#C0392B' : colors.primary,
+                          color: p.ganancia < 0 ? 'var(--color-metric-red)' : 'var(--color-primary)',
                         }}
                       >
                         {formatPrice(p.ganancia)}
@@ -452,9 +368,7 @@ const AnalisisVentas: React.FC = () => {
             </table>
 
             {filasTabla.length === 0 && (
-              <div style={{ padding: '40px 20px', textAlign: 'center', color: colors.secondary }}>
-                No se encontraron productos que coincidan con tu búsqueda.
-              </div>
+              <div className="empty-state">No se encontraron productos que coincidan con tu búsqueda.</div>
             )}
           </div>
         </>

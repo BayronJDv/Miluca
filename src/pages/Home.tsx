@@ -5,7 +5,6 @@ import QuickAccess from '../components/QuickAccess/QuickAccess';
 import TopProductos from '../components/TopProductos/TopProductos';
 import { obtenerTotalVentasHoy, obtenerNumeroTransaccionesHoy, obtenerProfitHoy } from '../db/sales';
 import { obtenerTotalCompras } from '../db/purchases';
-import styles from './Home.module.css';
 import { isAdminAtom } from '../store/UserAtom';
 import { useAtomValue } from 'jotai';
 
@@ -143,7 +142,7 @@ export default function Home() {
   ] : [];
 
   return (
-    <div className={styles.dashboard}>
+    <div className="fade-up">
       {/* Dashboard Header */}
       <div className="flex justify-between items-end mb-lg">
         <div>

@@ -1,5 +1,6 @@
 import { getDb, enqueueGlobalOperation, executeInTransaction } from './database';
-import { actualizarStock } from './products';
+import { obtenerLotesVendibles, ajustarCantidadLote } from './batches';
+import { registrarMovimiento } from './stock_movements';
 import { verificarYCrearNotificacion } from './product_notifications';
 
 export interface Venta {
@@ -15,6 +16,9 @@ export interface ItemVenta {
   quantity: number;
   price: number;
   subtotal: number;
+  batch_id?: number;
+  lot_number?: string | null;
+  expiration_date?: string | null;
 }
 
 export interface Factura {
@@ -22,60 +26,71 @@ export interface Factura {
   items: ItemVenta[];
 }
 
+export interface EstimacionVenta {
+  totalProfit: number;
+  lines: { product_id: number; product_name: string; price: number; quantity: number; profit: number; lot_number: string; cost: number; expiration_date: string | null }[];
+}
+
+/** Simula FEFO sin modificar stock para detectar pérdidas antes de confirmar. */
+export async function estimarUtilidadVenta(items: { product_id: number; quantity: number; price: number }[]): Promise<EstimacionVenta> {
+  return enqueueGlobalOperation(async () => {
+    const db = await getDb();
+    const lines: EstimacionVenta['lines'] = [];
+    for (const item of items) {
+      const product = (await db.select<{ name: string }[]>('SELECT name FROM products WHERE id = ?', [item.product_id]))[0];
+      if (!product) throw new Error(`Producto no encontrado ID: ${item.product_id}`);
+      let remaining = item.quantity;
+      const lots = await obtenerLotesVendibles(item.product_id, db);
+      for (const lot of lots) {
+        if (remaining <= 0) break;
+        const quantity = Math.min(remaining, lot.quantity);
+        lines.push({ product_id: item.product_id, product_name: product.name, price: item.price, quantity, profit: (item.price - lot.cost) * quantity, lot_number: lot.lot_number, cost: lot.cost, expiration_date: lot.expiration_date });
+        remaining -= quantity;
+      }
+      if (remaining > 0) throw new Error(`Stock insuficiente para ${product.name}.`);
+    }
+    return { totalProfit: lines.reduce((sum, line) => sum + line.profit, 0), lines };
+  });
+}
+
 export async function registrarVenta(
-  items: { product_id: number; quantity: number; price: number }[]
+  items: { product_id: number; quantity: number; price: number }[], userId: number | null = null
 ): Promise<Factura> {
   return executeInTransaction(async (db) => {
-    // 1. Get product costs and verify stock within transaction
-    const ids = items.map(i => i.product_id);
-    const placeholders = ids.map(() => '?').join(',');
-    const productsInfo = await db.select<{ id: number; stock: number; cost: number }[]>(
-      `SELECT id, stock, cost FROM products WHERE id IN (${placeholders})`,
-      ids
-    );
-
-    const productMap = new Map(productsInfo.map(p => [p.id, p]));
-
-    for (const item of items) {
-      const product = productMap.get(item.product_id);
-      if (!product) {
-        throw new Error(`Producto no encontrado ID: ${item.product_id}`);
-      }
-      if (product.stock < item.quantity) {
-        throw new Error(`Stock insuficiente para producto ID: ${item.product_id}`);
-      }
-    }
-
-    // 2. Calculate total and profit (profit = Σ (price - cost) × quantity)
     let total = 0;
     let profit = 0;
+    const allocations: { item: typeof items[number]; batchId: number; quantity: number; cost: number }[] = [];
     for (const item of items) {
-      const product = productMap.get(item.product_id)!;
-      total += item.quantity * item.price;
-      profit += (item.price - product.cost) * item.quantity;
+      let remaining = item.quantity;
+      const batches = await obtenerLotesVendibles(item.product_id, db);
+      for (const batch of batches) {
+        if (remaining <= 0) break;
+        const quantity = Math.min(remaining, batch.quantity);
+        allocations.push({ item, batchId: batch.id, quantity, cost: batch.cost });
+        remaining -= quantity;
+      }
+      if (remaining > 0) throw new Error(`Stock insuficiente para producto ID: ${item.product_id}`);
+    }
+    for (const allocation of allocations) {
+      total += allocation.quantity * allocation.item.price;
+      profit += (allocation.item.price - allocation.cost) * allocation.quantity;
     }
 
-    // 3. Insert sale with profit
     const result = await db.execute(
-      `INSERT INTO sales (sale_date, total, profit) 
-       VALUES (datetime('now'), ?, ?)`,
-      [total, profit]
+      `INSERT INTO sales (user_id, sale_date, total, profit) VALUES (?, datetime('now'), ?, ?)`, [userId, total, profit]
     );
     
     const saleId = result.lastInsertId;
     
-    // 4. Insert items and update stock (passing the db instance!)
-    for (const item of items) {
+    for (const allocation of allocations) {
       await db.execute(
-        `INSERT INTO sale_items (sale_id, product_id, quantity, subtotal) 
-         VALUES (?, ?, ?, ?)`,
-        [saleId, item.product_id, item.quantity, item.quantity * item.price]
+        `INSERT INTO sale_items (sale_id, product_id, batch_id, quantity, unit_price, subtotal) VALUES (?, ?, ?, ?, ?, ?)`,
+        [saleId, allocation.item.product_id, allocation.batchId, allocation.quantity, allocation.item.price, allocation.quantity * allocation.item.price]
       );
-      
-      // Crucial: Pass the SAME transaction database connection to avoid locks
-      await actualizarStock(item.product_id, -item.quantity, db);
-      await verificarYCrearNotificacion(item.product_id, db)
+      await ajustarCantidadLote(allocation.batchId, -allocation.quantity, db);
+      await registrarMovimiento({ batch_id: allocation.batchId, movement_type: 'salida_venta', quantity: allocation.quantity, user_id: userId, reference_type: 'sale', reference_id: saleId }, db);
     }
+    for (const item of items) await verificarYCrearNotificacion(item.product_id, db);
     
     // 5. Fetch resulting invoice to return
     const venta = await db.select<Venta[]>(
@@ -87,11 +102,12 @@ export async function registrarVenta(
       `SELECT 
         si.product_id,
         p.name as product_name,
-        p.price as price,
+         si.unit_price as price,
         si.quantity,
-        si.subtotal
-       FROM sale_items si
-       JOIN products p ON p.id = si.product_id
+         si.subtotal, si.batch_id, b.lot_number, b.expiration_date
+        FROM sale_items si
+        JOIN products p ON p.id = si.product_id
+        JOIN product_batches b ON b.id = si.batch_id
        WHERE si.sale_id = ?`,
       [saleId]
     );

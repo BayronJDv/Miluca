@@ -1,680 +1,683 @@
-import React, { useState, useMemo, useCallback, useEffect, memo } from 'react';
-import PageHeader from '../components/design/PageHeader';
-import { Input } from '../components/design/Input';
-// import { Chip } from '../components/design/Chip';  Esto sirve para la eleccion multiple, pero todavia no la tenemos en sql
-import { colors } from '../components/design/colors';
-import { Icon, IconName } from '../components/design/Icon';
-import Btn from '../components/design/Btn';
-import { crearProducto, obtenerProductos, modificarProducto, eliminarProducto, Producto } from '../db/products';
-import { userIdAtom } from '../store/UserAtom';
-import { useAtomValue } from 'jotai';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import PageHeader from "../components/design/PageHeader";
+import Btn from "../components/design/Btn";
+import { Icon } from "../components/design/Icon";
+import {
+  crearProducto,
+  eliminarProducto,
+  modificarProducto,
+  obtenerProductos,
+  Producto,
+} from "../db/products";
+import {
+  obtenerKardexProducto,
+  obtenerLotes,
+  ProductBatch,
+} from "../db/batches";
+import { userIdAtom } from "../store/UserAtom";
+import { useAtomValue } from "jotai";
 
-interface FormData {
+type FormState = {
   name: string;
   code: string;
   price: string;
-  cost: string;
-  stock: string;
   alert_stock: string;
-}
+  generic_name: string;
+  active_ingredient: string;
+  dosage_form: string;
+  concentration: string;
+  presentation: string;
+  manufacturer: string;
+  category: NonNullable<Producto["category"]>;
+  requires_prescription: boolean;
+  requires_lot_control: boolean;
+  has_invima: boolean;
+  invima_info: string;
+  wholesale_price: string;
+  wholesale_min_qty: string;
+};
 
-interface StatCard {
-  icon: IconName;
+const emptyForm = (): FormState => ({
+  name: "",
+  code: "",
+  price: "",
+  alert_stock: "5",
+  generic_name: "",
+  active_ingredient: "",
+  dosage_form: "",
+  concentration: "",
+  presentation: "",
+  manufacturer: "",
+  category: "medicamento",
+  requires_prescription: false,
+  requires_lot_control: true,
+  has_invima: false,
+  invima_info: "",
+  wholesale_price: "",
+  wholesale_min_qty: "",
+});
+
+function Field({
+  label,
+  children,
+  wide = false,
+}: {
   label: string;
-  value: string;
-  valueColor?: string;
+  children: React.ReactNode;
+  wide?: boolean;
+}) {
+  return (
+    <label style={{ gridColumn: wide ? "1 / -1" : undefined }}>
+      <span className="field-label">{label}</span>
+      {children}
+    </label>
+  );
 }
 
-const ModalContent = memo(({ 
-  title, 
-  subtitle, 
-  formData, 
-  onInputChange, 
-  onSave, 
+function ProductForm({
+  value,
+  editing,
+  onChange,
+  onSave,
   onClose,
-  isEditing = false,
-  razonModificacion = "",
-  onRazonChange
-}: { 
-  title: string;
-  subtitle: string;
-  formData: FormData;
-  onInputChange: (key: keyof FormData, value: string) => void;
+  reason,
+  setReason,
+}: {
+  value: FormState;
+  editing: boolean;
+  onChange: (key: keyof FormState, value: string | boolean) => void;
   onSave: () => void;
   onClose: () => void;
-  isEditing?: boolean;
-  razonModificacion?: string;
-  onRazonChange?: (value: string) => void;
-}) => {
-  const handleNameChange = useCallback((value: string) => {
-    onInputChange('name', value);
-  }, [onInputChange]);
-
-  const handleCodeChange = useCallback((value: string) => {
-    onInputChange('code', value);
-  }, [onInputChange]);
-
-  const handlePriceChange = useCallback((value: string) => {
-    onInputChange('price', value);
-  }, [onInputChange]);
-
-  const handleCostChange = useCallback((value: string) => {
-    onInputChange('cost', value);
-  }, [onInputChange]);
-
-  const handleStockChange = useCallback((value: string) => {
-    onInputChange('stock', value);
-  }, [onInputChange]);
-
-  const handleAlertStockChange = useCallback((value: string) => {
-    onInputChange('alert_stock', value);
-  }, [onInputChange]); // <-- Añadido
-
-  const gainPercentage = useMemo(() => {
-    const cost = parseFloat(formData.cost);
-    const price = parseFloat(formData.price);
-    if (!cost || !price || cost === 0) return "0%";
-    return `${(((price - cost) / cost) * 100).toFixed(1)}%`;
-  }, [formData.cost, formData.price]);
-
-  const gainColor = useMemo(() => {
-    const cost = parseFloat(formData.cost);
-    const price = parseFloat(formData.price);
-    if (!cost || !price || cost === 0) return colors.secondary;
-    const pct = ((price - cost) / cost) * 100;
-    return pct > 0 ? "#16A34A" : colors.red;
-  }, [formData.cost, formData.price]);
-
+  reason: string;
+  setReason: (value: string) => void;
+}) {
   return (
-    <div style={{ 
-      background: "#fff", borderRadius: 14, 
-      width: 520, maxWidth: "95vw", maxHeight: "92vh", 
-      overflowY: "auto",
-      boxShadow: "0 8px 40px rgba(0,0,0,0.18)",
-    }}>
-      {/* Modal Header */}
-      <div style={{ 
-        display: "flex", alignItems: "center", justifyContent: "space-between", 
-        padding: "20px 24px 16px 24px",
-        borderBottom: `1px solid ${colors.outlineVariant}`,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{
-            width: 40, height: 40, borderRadius: 10,
-            background: colors.primary,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0,
-          }}>
-            <Icon name={isEditing ? "edit" : "plus"} size={22} color="#fff" />
+    <div className="modal--sheet modal">
+      <div className="modal-header">
+        <div>
+          <div className="font-headline-sm">
+            {editing
+              ? "Editar producto farmacéutico"
+              : "Nuevo producto farmacéutico"}
           </div>
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: colors.onSurface, lineHeight: 1.2 }}>
-              {title}
-            </div>
-            <div style={{ fontSize: 12, color: colors.secondary, marginTop: 2 }}>
-              {subtitle}
-            </div>
+          <div className="field-label mt-xs">
+            El inventario físico se registra mediante compras y lotes.
           </div>
         </div>
-        <button 
-          onClick={onClose} 
-          style={{ 
-            background: "none", border: "none", cursor: "pointer",
-            width: 32, height: 32, borderRadius: 8,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            color: colors.outline,
-            transition: "background 0.15s",
-          }}
-          onMouseEnter={e => (e.currentTarget.style.background = colors.surfaceLow)}
-          onMouseLeave={e => (e.currentTarget.style.background = "none")}
-        >
-          <Icon name="close" size={18} color={colors.outline} />
+        <button onClick={onClose} className="btn-icon">
+          <Icon name="close" size={20} />
         </button>
       </div>
-
-      {/* Modal Body */}
-      <div style={{ padding: "20px 24px" }}>
-        {/* Nombre del Producto */}
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: colors.secondary, display: "block", marginBottom: 6 }}>
-            Nombre del Producto <span style={{ color: colors.red }}>*</span>
-          </label>
-          <Input
-            placeholder="Ej. Monitor UltraWide 34'"
-            value={formData.name}
-            onChange={handleNameChange}
-          />
+      <div className="modal-body">
+        <div className="section-label">IDENTIFICACIÓN Y PRESENTACIÓN</div>
+        <div
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
+        >
+          <Field label="Nombre comercial *" wide>
+            <input
+              className="control"
+              value={value.name}
+              onChange={(e) => onChange("name", e.target.value)}
+              placeholder="Ej. Dolex 500 mg"
+            />
+          </Field>
+          <Field label="Código de barras *">
+            <input
+              className="control"
+              value={value.code}
+              disabled={editing}
+              onChange={(e) => onChange("code", e.target.value)}
+              placeholder="770..."
+            />
+          </Field>
+          <Field label="Nombre genérico">
+            <input
+              className="control"
+              value={value.generic_name}
+              onChange={(e) => onChange("generic_name", e.target.value)}
+              placeholder="Acetaminofén"
+            />
+          </Field>
+          <Field label="Principio activo">
+            <input
+              className="control"
+              value={value.active_ingredient}
+              onChange={(e) => onChange("active_ingredient", e.target.value)}
+            />
+          </Field>
+          <Field label="Forma farmacéutica">
+            <input
+              className="control"
+              value={value.dosage_form}
+              onChange={(e) => onChange("dosage_form", e.target.value)}
+              placeholder="Tableta, jarabe..."
+            />
+          </Field>
+          <Field label="Concentración">
+            <input
+              className="control"
+              value={value.concentration}
+              onChange={(e) => onChange("concentration", e.target.value)}
+              placeholder="500 mg"
+            />
+          </Field>
+          <Field label="Presentación">
+            <input
+              className="control"
+              value={value.presentation}
+              onChange={(e) => onChange("presentation", e.target.value)}
+              placeholder="Caja x 30 tabletas"
+            />
+          </Field>
+          <Field label="Fabricante / laboratorio">
+            <input
+              className="control"
+              value={value.manufacturer}
+              onChange={(e) => onChange("manufacturer", e.target.value)}
+            />
+          </Field>
+          <Field label="Categoría">
+            <select
+              className="control"
+              value={value.category}
+              onChange={(e) => onChange("category", e.target.value)}
+            >
+              {[
+                ["medicamento", "Medicamento"],
+                ["dispositivo_medico", "Dispositivo médico"],
+                ["cosmetico", "Cosmético"],
+                ["alimento", "Alimento"],
+                ["otro", "Otro"],
+              ].map(([v, l]) => (
+                <option key={v} value={v}>
+                  {l}
+                </option>
+              ))}
+            </select>
+          </Field>
         </div>
 
-        {/* Código SKU */}
-        <div style={{ marginBottom: 20 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: colors.secondary, display: "block", marginBottom: 6 }}>
-            Código (SKU) <span style={{ color: colors.red }}>*</span>
+        <div className="section-label mt-lg">REGULACIÓN Y TRAZABILIDAD</div>
+        <div
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
+        >
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontSize: 13,
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={value.requires_lot_control}
+              onChange={(e) =>
+                onChange("requires_lot_control", e.target.checked)
+              }
+            />{" "}
+            Exige control de lote y vencimiento
           </label>
-          <Input
-            placeholder="INV-0000"
-            value={formData.code}
-            onChange={handleCodeChange}
-            disabled={isEditing}
-            style={isEditing ? { background: colors.surfaceLow, cursor: 'not-allowed' } : {}}
-          />
-          {isEditing && (
-            <div style={{ fontSize: 11, color: colors.secondary, marginTop: 4 }}>
-              El código no puede ser modificado
-            </div>
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontSize: 13,
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={value.requires_prescription}
+              onChange={(e) =>
+                onChange("requires_prescription", e.target.checked)
+              }
+            />{" "}
+            Requiere fórmula médica
+          </label>
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontSize: 13,
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={value.has_invima}
+              onChange={(e) => onChange("has_invima", e.target.checked)}
+            />{" "}
+            Tiene registro INVIMA activo
+          </label>
+          {value.has_invima && (
+            <Field label="Registro INVIMA o enlace" wide>
+              <input
+                className="control"
+                value={value.invima_info}
+                onChange={(e) => onChange("invima_info", e.target.value)}
+                placeholder="RSA..., INVIMA o URL"
+              />
+            </Field>
           )}
         </div>
 
-        {/* Finanzas y Costos Section */}
-        <div style={{
-          background: "#EFF6FF",
-          border: "1px solid #BFDBFE",
-          borderRadius: 10,
-          padding: "16px 16px 18px 16px",
-          marginBottom: 20,
-        }}>
-          <div style={{ 
-            display: "flex", alignItems: "center", gap: 7, 
-            marginBottom: 14,
-          }}>
-            <Icon name="wallet" size={15} color={colors.primary} />
-            <span style={{ fontSize: 11, fontWeight: 700, color: colors.primary, letterSpacing: "0.07em" }}>
-              FINANZAS Y COSTOS
-            </span>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: colors.secondary, display: "block", marginBottom: 6 }}>
-                Costo de Compra <span style={{ color: colors.red }}>*</span>
-              </label>
-              <div style={{ position: "relative" }}>
-                <span style={{
-                  position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
-                  fontSize: 13, color: colors.secondary, fontWeight: 600, pointerEvents: "none",
-                  zIndex: 1,
-                }}>$</span>
-                <Input
-                  type="number"
-                  placeholder="0.00"
-                  value={formData.cost}
-                  onChange={handleCostChange}
-                  style={{ paddingLeft: 28 }}
-                />
-              </div>
-            </div>
-            <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: colors.secondary, display: "block", marginBottom: 6 }}>
-                Precio de Venta <span style={{ color: colors.red }}>*</span>
-              </label>
-              <div style={{ position: "relative" }}>
-                <span style={{
-                  position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
-                  fontSize: 13, color: colors.secondary, fontWeight: 600, pointerEvents: "none",
-                  zIndex: 1,
-                }}>$</span>
-                <Input
-                  type="number"
-                  placeholder="0.00"
-                  value={formData.price}
-                  onChange={handlePriceChange}
-                  style={{ paddingLeft: 28 }}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Porcentaje de Ganancia */}
-          <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: colors.secondary, display: "block", marginBottom: 6 }}>
-              Porcentaje de Ganancia
-            </label>
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              background: "#fff", border: `1px solid ${colors.outlineVariant}`,
-              borderRadius: 8, padding: "9px 12px",
-              minHeight: 40,
-            }}>
-              <span style={{ 
-                fontSize: 14, fontWeight: 700,
-                color: gainColor,
-              }}>
-                {gainPercentage}
-              </span>
-              <Icon name="info" size={15} color={colors.outline} />
-            </div>
+        <div className="section-label mt-lg">PRECIOS Y ALERTAS</div>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr",
+            gap: 12,
+          }}
+        >
+          <Field label="Precio de venta *">
+            <input
+              type="number"
+              min="0"
+              className="control"
+              value={value.price}
+              onChange={(e) => onChange("price", e.target.value)}
+            />
+          </Field>
+          <Field label="Stock mínimo">
+            <input
+              type="number"
+              min="0"
+              className="control"
+              value={value.alert_stock}
+              onChange={(e) => onChange("alert_stock", e.target.value)}
+            />
+          </Field>
+          <Field label="Costo">
+            <div className="control control--readonly">Se captura por lote</div>
+          </Field>
+          <Field label="Precio mayorista">
+            <input
+              type="number"
+              min="0"
+              className="control"
+              value={value.wholesale_price}
+              onChange={(e) => onChange("wholesale_price", e.target.value)}
+              placeholder="Opcional"
+            />
+          </Field>
+          <Field label="Cantidad mínima mayorista">
+            <input
+              type="number"
+              min="1"
+              className="control"
+              value={value.wholesale_min_qty}
+              onChange={(e) => onChange("wholesale_min_qty", e.target.value)}
+              placeholder="Ej. 12"
+            />
+          </Field>
+          <div
+            className="field-label"
+            style={{ alignSelf: "end", paddingBottom: 9 }}
+          >
+            Se aplica automáticamente en el POS al alcanzar la cantidad.
           </div>
         </div>
-
-        {/* Distribución de Stock (Fila con dos columnas para Stock y Stock Mínimo) */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 4 }}>
-          <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: colors.secondary, display: "block", marginBottom: 6 }}>
-              Stock {isEditing ? "Actual" : "Inicial"} <span style={{ color: colors.red }}>*</span>
-            </label>
-            <Input
-              type="number"
-              placeholder="0"
-              value={formData.stock}
-              onChange={handleStockChange}
-            />
-          </div>
-          <div>
-            <label style={{ fontSize: 12, fontWeight: 600, color: colors.secondary, display: "block", marginBottom: 6 }}>
-              Stock Mínimo Alerta <span style={{ color: colors.red }}>*</span>
-            </label>
-            <Input
-              type="number"
-              placeholder="Ej. 5"
-              value={formData.alert_stock}
-              onChange={handleAlertStockChange}
-            />
-          </div>
-        </div>
-
-        {/* Razon modificacion*/}
-        {isEditing && (
-          <div style={{ marginTop: 16, marginBottom: 4 }}>
-            <label style={{ fontSize: 12, fontWeight: 600, color: colors.secondary, display: "block", marginBottom: 6 }}>
-              Razón de la modificación <span style={{ color: colors.red }}>*</span>
-            </label>
-            <Input
-              placeholder="Ej. Corrección de precio / Ajuste de inventario físico"
-              value={razonModificacion}
-              onChange={(value) => onRazonChange && onRazonChange(value)}
-            />
+        {editing && (
+          <div className="mt-md">
+            <Field label="Razón de modificación *">
+              <input
+                className="control"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Corrección de precio, datos regulatorios..."
+              />
+            </Field>
           </div>
         )}
       </div>
-
-      {/* Modal Footer */}
-      <div style={{ 
-        display: "flex", justifyContent: "flex-end", gap: 10,
-        padding: "14px 24px 20px 24px",
-        borderTop: `1px solid ${colors.outlineVariant}`,
-      }}>
-        <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
-        <Btn onClick={onSave}>{isEditing ? "Actualizar Producto" : "Guardar Producto"}</Btn>
+      <div className="modal-footer">
+        <Btn variant="ghost" onClick={onClose}>
+          Cancelar
+        </Btn>
+        <Btn onClick={onSave}>
+          {editing ? "Guardar cambios" : "Crear producto"}
+        </Btn>
       </div>
     </div>
   );
-});
+}
 
-ModalContent.displayName = 'ModalContent';
-
-const Inventario: React.FC = () => {
-  const [search, setSearch] = useState<string>("");
-  const [showModal, setShowModal] = useState<boolean>(false);
-  const [showEditModal, setShowEditModal] = useState<boolean>(false);
-  const [editingProduct, setEditingProduct] = useState<Producto | null>(null);
-  const [form, setForm] = useState<FormData>({ 
-    name: "", code: "", price: "", cost: "", stock: "", alert_stock: "5" // Por defecto 5
-  });
-  const [editForm, setEditForm] = useState<FormData>({ 
-    name: "", code: "", price: "", cost: "", stock: "", alert_stock: "" 
-  });
-  const [items, setItems] = useState<Producto[]>([]);
-  const [, setLoading] = useState(true);
-  const [razonModificacion, setRazonModificacion] = useState<string>("");
-  const userId = useAtomValue(userIdAtom);
-  
-  useEffect(() => {
-    cargarProductos();
-  }, []);
-
-  const cargarProductos = async () => {
-    setLoading(true);
-    const productos = await obtenerProductos();
-    setItems(productos);
-    setLoading(false);
+function toForm(product: Producto): FormState {
+  return {
+    name: product.name,
+    code: product.code,
+    price: String(product.price),
+    alert_stock: String(product.alert_stock ?? 5),
+    generic_name: product.generic_name ?? "",
+    active_ingredient: product.active_ingredient ?? "",
+    dosage_form: product.dosage_form ?? "",
+    concentration: product.concentration ?? "",
+    presentation: product.presentation ?? "",
+    manufacturer: product.manufacturer ?? "",
+    category: product.category ?? "otro",
+    requires_prescription: Boolean(product.requires_prescription),
+    requires_lot_control: Boolean(product.requires_lot_control),
+    has_invima: Boolean(product.has_invima),
+    invima_info: product.invima_info ?? "",
+    wholesale_price:
+      product.wholesale_price == null ? "" : String(product.wholesale_price),
+    wholesale_min_qty:
+      product.wholesale_min_qty == null
+        ? ""
+        : String(product.wholesale_min_qty),
   };
+}
 
-  const filtered = useMemo(() => 
-    items.filter(item => 
-      item.name.toLowerCase().includes(search.toLowerCase()) || 
-      item.code.toLowerCase().includes(search.toLowerCase())
-    ),
-    [items, search]
+export default function Inventario() {
+  const [items, setItems] = useState<Producto[]>([]);
+  const [search, setSearch] = useState("");
+  const [form, setForm] = useState<FormState>(emptyForm);
+  const [showCreate, setShowCreate] = useState(false);
+  const [editing, setEditing] = useState<Producto | null>(null);
+  const [detail, setDetail] = useState<Producto | null>(null);
+  const [batches, setBatches] = useState<ProductBatch[]>([]);
+  const [movements, setMovements] = useState<any[]>([]);
+  const [reason, setReason] = useState("");
+  const userId = useAtomValue(userIdAtom);
+  const load = useCallback(async () => setItems(await obtenerProductos()), []);
+  useEffect(() => {
+    load();
+  }, [load]);
+  const filtered = useMemo(
+    () =>
+      items.filter((p) =>
+        `${p.name} ${p.code} ${p.generic_name ?? ""}`
+          .toLowerCase()
+          .includes(search.toLowerCase()),
+      ),
+    [items, search],
   );
-
-  const totalValue = useMemo(() => 
-    items.reduce((sum, item) => sum + item.cost * item.stock, 0),
-    [items]
-  );
-
-  // Ahora dinámicamente evalúa usando el alert_stock de cada item, cayendo en 5 si no se define.
-  const lowStockCount = useMemo(() => 
-    items.filter(item => item.stock < (item.alert_stock ?? 5)).length,
-    [items]
-  );
-
-  const stats: StatCard[] = [
-    { icon: "inventory", label: "Total Productos", value: items.length.toLocaleString() },
-    { icon: "warning", label: "Productos Stock Bajo", value: lowStockCount.toString(), valueColor: colors.red },
-    { icon: "wallet", label: "Valor Inventario", value: "$" + totalValue.toLocaleString("es-CO", { minimumFractionDigits: 2 }) },
-    { icon: "history", label: "Última Carga", value: "Hoy, 09:15" },
-  ];
-
-  const handleInputChange = useCallback((key: keyof FormData, value: string) => {
-    setForm(prev => ({ ...prev, [key]: value }));
-  }, []);
-
-  const handleEditInputChange = useCallback((key: keyof FormData, value: string) => {
-    setEditForm(prev => ({ ...prev, [key]: value }));
-  }, []);
-
-  const handleCreateProduct = useCallback(async () => {
-    if (!form.name || !form.code || !form.price || !form.cost || !form.stock || !form.alert_stock) {
-      alert('Por favor complete todos los campos');
-      return;
-    }
-
-    const newProduct: Producto = {
-      name: form.name,
-      code: form.code,
-      price: parseFloat(form.price),
-      cost: parseFloat(form.cost),
-      stock: parseInt(form.stock),
-      alert_stock: parseInt(form.alert_stock) // <-- Añadido
+  const update = (key: keyof FormState, value: string | boolean) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
+  const openCreate = () => {
+    setEditing(null);
+    setShowCreate(true);
+    setForm(emptyForm());
+    setReason("");
+  };
+  const save = async () => {
+    if (!form.name.trim() || !form.code.trim() || !form.price)
+      return alert("Nombre, código de barras y precio son obligatorios.");
+    const payload: Producto = {
+      name: form.name.trim(),
+      code: form.code.trim(),
+      price: Number(form.price),
+      stock: 0,
+      cost: 0,
+      alert_stock: Number(form.alert_stock) || 0,
+      generic_name: form.generic_name || null,
+      active_ingredient: form.active_ingredient || null,
+      dosage_form: form.dosage_form || null,
+      concentration: form.concentration || null,
+      presentation: form.presentation || null,
+      manufacturer: form.manufacturer || null,
+      category: form.category,
+      requires_prescription: Number(form.requires_prescription),
+      requires_lot_control: Number(form.requires_lot_control),
+      has_invima: Number(form.has_invima),
+      invima_info: form.invima_info || null,
+      wholesale_price: form.wholesale_price
+        ? Number(form.wholesale_price)
+        : null,
+      wholesale_min_qty: form.wholesale_min_qty
+        ? Number(form.wholesale_min_qty)
+        : null,
     };
-
-    await crearProducto(newProduct);
-    await cargarProductos();
-    
-    setShowModal(false);
-    setForm({ name: "", code: "", price: "", cost: "", stock: "", alert_stock: "5" });
-  }, [form]);
-
-  const handleUpdateProduct = useCallback(async () => {
-    if (!editingProduct || !editingProduct.id) return;
-    
-    if (!editForm.name || !editForm.code || !editForm.price || !editForm.cost || !editForm.stock || !editForm.alert_stock) {
-      alert('Por favor complete todos los campos');
-      return;
+    try {
+      if (editing?.id) {
+        if (!reason.trim()) return alert("Indica la razón de modificación.");
+        await modificarProducto(editing.id, payload, reason, userId);
+      } else await crearProducto(payload);
+      await load();
+      setEditing(null);
+      setShowCreate(false);
+      setForm(emptyForm());
+    } catch (error) {
+      alert(String(error));
     }
-    
-    if (!razonModificacion.trim()) {
-      alert('Por favor ingrese la razón de la modificación');
-      return;
-    }
-
-    const updatedProduct: Partial<Omit<Producto, 'id'>> = {
-      name: editForm.name,
-      code: editForm.code,
-      price: parseFloat(editForm.price),
-      cost: parseFloat(editForm.cost),
-      stock: parseInt(editForm.stock),
-      alert_stock: parseInt(editForm.alert_stock) // <-- Añadido
-    };
-    
-    console.log("PRODUCTO MODIFICADO, SU RAZON FUE:", razonModificacion);
-    await modificarProducto(editingProduct.id, updatedProduct, razonModificacion, userId);
-    await cargarProductos();
-    
-    setShowEditModal(false);
-    setEditingProduct(null);
-    setRazonModificacion(""); 
-    setEditForm({ name: "", code: "", price: "", cost: "", stock: "", alert_stock: "" });
-  }, [editForm, editingProduct, userId, razonModificacion]);
-
-  const handleEdit = useCallback((product: Producto) => {
-    setEditingProduct(product);
-    setEditForm({
-      name: product.name,
-      code: product.code,
-      price: product.price.toString(),
-      cost: product.cost.toString(),
-      stock: product.stock.toString(),
-      alert_stock: (product.alert_stock ?? 5).toString() // <-- Añadido
-    });
-    setRazonModificacion(""); 
-    setShowEditModal(true);
-  }, []);
-
-  const handleDelete = useCallback(async (product: Producto) => {
-    if (!product.id) return;
-    
-    const confirmDelete = window.confirm(`¿Estás seguro de que deseas eliminar el producto "${product.name}"?`);
-    if (confirmDelete) {
+  };
+  const openDetail = async (product: Producto) => {
+    setDetail(product);
+    const [lotRows, movementRows] = await Promise.all([
+      obtenerLotes(product.id!),
+      obtenerKardexProducto(product.id!),
+    ]);
+    setBatches(lotRows);
+    setMovements(movementRows as any[]);
+  };
+  const remove = async (product: Producto) => {
+    if (product.id && confirm(`¿Eliminar ${product.name}?`)) {
       await eliminarProducto(product.id);
-      await cargarProductos();
+      await load();
     }
-  }, []);
-
-  const handleDuplicate = useCallback(async (item: Producto) => {
-    const newCode = `${item.code}_COPY_${Date.now()}`; 
-    const duplicatedProduct: Producto = {
-      name: `${item.name} (Copia)`,
-      code: newCode,
-      price: item.price,
-      cost: item.cost,
-      stock: item.stock,
-      alert_stock: item.alert_stock ?? 5 // <-- Añadido
-    };
-    
-    await crearProducto(duplicatedProduct);
-    await cargarProductos();
-  }, []);
-
-  const handleHistory = useCallback((code: string) => {
-    console.log('Ver historial:', code);
-  }, []);
-
-  // Modificado para usar dinámicamente el stock de alerta propio del elemento
-  const getStockColor = useCallback((item: Producto): string => {
-    const limit = item.alert_stock ?? 5;
-    if (item.stock === 0) return colors.red;
-    if (item.stock < limit) return colors.amber;
-    return colors.onSurface;
-  }, []);
-
-  const handleCloseModal = useCallback(() => {
-    setShowModal(false);
-    setForm({ name: "", code: "", price: "", cost: "", stock: "", alert_stock: "5" });
-  }, []);
-
-  const handleCloseEditModal = useCallback(() => {
-    setShowEditModal(false);
-    setEditingProduct(null);
-    setRazonModificacion(""); 
-    setEditForm({ name: "", code: "", price: "", cost: "", stock: "", alert_stock: "" });
-  }, []);
-
+  };
+  const totalValue = items.reduce((sum, p) => sum + (p.cost || 0) * p.stock, 0);
+  const lowStock = items.filter((p) => p.stock <= (p.alert_stock ?? 5)).length;
   return (
     <div className="fade-up">
       <PageHeader
-        title="Listado de Inventario"
-        subtitle="Gestión centralizada de existencias, precios y alertas de stock."
-        actions={<Btn icon="plus" onClick={() => setShowModal(true)}>CREAR PRODUCTO</Btn>}
+        title="Inventario farmacéutico"
+        subtitle="Catálogo, trazabilidad por lote, regulación y precios."
+        actions={
+          <Btn icon="plus" onClick={openCreate}>
+            NUEVO PRODUCTO
+          </Btn>
+        }
       />
-      
-      {/* Stats Cards */}
-      <div style={{ display: "flex", gap: 16, marginBottom: 24 }}>
-        {stats.map((stat, index) => (
-          <div key={index} style={{ 
-            flex: 1, background: colors.surfaceLowest, 
-            border: `1px solid ${colors.outlineVariant}`, borderRadius: 10, 
-            padding: "16px 20px", display: "flex", gap: 14, alignItems: "center" 
-          }}>
-            <div style={{ 
-              width: 40, height: 40, background: colors.surfaceContainer, 
-              borderRadius: 8, display: "flex", alignItems: "center", 
-              justifyContent: "center" 
-            }}>
-              <Icon name={stat.icon} size={20} color={colors.primary} />
-            </div>
-            <div>
-              <div style={{ fontSize: 11, color: colors.secondary, fontWeight: 500 }}>
-                {stat.label}
-              </div>
-              <div style={{ 
-                fontSize: 20, fontWeight: 700, 
-                color: stat.valueColor || colors.onSurface, 
-                letterSpacing: "-0.02em" 
-              }}>
-                {stat.value}
-              </div>
-            </div>
+      <div className="stat-grid">
+        {[
+          ["Productos", items.length],
+          ["Stock bajo", lowStock],
+          ["Valor inventario", `$${totalValue.toLocaleString("es-CO")}`],
+          [
+            "Control de lote",
+            items.filter((p) => p.requires_lot_control).length,
+          ],
+        ].map(([label, value]) => (
+          <div key={String(label)} className="stat-card">
+            <div className="stat-label">{label}</div>
+            <strong className="stat-value">{value}</strong>
           </div>
         ))}
       </div>
-
-      {/* Search Bar */}
-      <div style={{ marginBottom: 14 }}>
-        <Input 
-          placeholder="Buscar producto por nombre o código..." 
-          value={search} 
-          onChange={setSearch} 
-          icon="search" 
+      <div className="mb-sm">
+        <input
+          className="control"
+          style={{ maxWidth: 420 }}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar por nombre, genérico o código de barras..."
         />
       </div>
-
-      {/* Products Table */}
-      <div style={{ 
-        background: colors.surfaceLowest, border: `1px solid ${colors.outlineVariant}`, 
-        borderRadius: 10, overflow: "hidden", overflowX: "auto" 
-      }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 650 }}>
+      <div className="page-card page-card--flush">
+        <table className="data-table" style={{ minWidth: 950 }}>
           <thead>
-            <tr style={{ background: colors.surfaceLow }}>
-              {["NOMBRE DEL PRODUCTO", "CÓDIGO", "P. VENTA", "COSTO", "STOCK", "ACCIONES"].map(header => (
-                <th key={header} style={{ 
-                  padding: "12px 16px", textAlign: "left", fontSize: 11, 
-                  fontWeight: 700, letterSpacing: "0.05em", color: colors.secondary, 
-                  whiteSpace: "nowrap" 
-                }}>
-                  {header}
-                </th>
+            <tr>
+              {[
+                "PRODUCTO",
+                "CÓDIGO",
+                "CATEGORÍA",
+                "PRECIO",
+                "MAYORISTA",
+                "STOCK",
+                "TRAZABILIDAD",
+                "ACCIONES",
+              ].map((h) => (
+                <th key={h}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {filtered.map((row) => {
-              const limit = row.alert_stock ?? 5;
-              return (
-                <tr key={row.id || row.code} className="hover-row" style={{ borderTop: `1px solid ${colors.outlineVariant}` }}>
-                  <td style={{ padding: "14px 16px" }}>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{row.name}</div>
-                    {row.stock === 0 && (
-                      <div style={{ 
-                        fontSize: 11, color: colors.red, fontWeight: 700, 
-                        display: "flex", alignItems: "center", gap: 3, marginTop: 2 
-                      }}>
-                        <Icon name="warning" size={12} color={colors.red} /> SIN STOCK
-                      </div>
-                    )}
-                    {row.stock > 0 && row.stock < limit && (
-                      <div style={{ 
-                        fontSize: 11, color: colors.amber, fontWeight: 700, 
-                        display: "flex", alignItems: "center", gap: 3, marginTop: 2 
-                      }}>
-                        <Icon name="warning" size={12} color={colors.amber} /> STOCK BAJO (&lt;{limit})
-                      </div>
-                    )}
-                  </td>
-                  <td style={{ padding: "14px 16px", fontSize: 13, color: colors.secondary }}>
-                    {row.code}
-                  </td>
-                  <td style={{ padding: "14px 16px", fontSize: 13, fontWeight: 700 }}>
-                    ${row.price.toFixed(2)}
-                  </td>
-                  <td style={{ padding: "14px 16px", fontSize: 13 }}>
-                    ${row.cost.toFixed(2)}
-                  </td>
-                  <td style={{ 
-                    padding: "14px 16px", fontSize: 14, fontWeight: 700, 
-                    color: getStockColor(row) 
-                  }}>
-                    {row.stock}
-                  </td>
-                  <td style={{ padding: "14px 16px" }}>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button 
-                        onClick={() => handleEdit(row)}
-                        style={{ background: "none", border: "none", cursor: "pointer", color: colors.outline, display: "flex" }}
-                        title="Editar"
-                      >
-                        <Icon name="edit" size={18} />
-                      </button>
-                      <button 
-                        onClick={() => handleDuplicate(row)}
-                        style={{ background: "none", border: "none", cursor: "pointer", color: colors.outline, display: "flex" }}
-                        title="Duplicar"
-                      >
-                        <Icon name="copy" size={18} />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(row)}
-                        style={{ background: "none", border: "none", cursor: "pointer", color: colors.outline, display: "flex" }}
-                        title="Eliminar"
-                      >
-                        <Icon name="trash" size={18} />
-                      </button>
-                      <button 
-                        onClick={() => handleHistory(row.code)}
-                        style={{ background: "none", border: "none", cursor: "pointer", color: colors.outline, display: "flex" }}
-                        title="Historial"
-                      >
-                        <Icon name="history" size={18} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+            {filtered.map((p) => (
+              <tr key={p.id}>
+                <td>
+                  <strong>{p.name}</strong>
+                  <div className="stat-label">
+                    {p.generic_name ||
+                      p.active_ingredient ||
+                      "Sin nombre genérico"}
+                  </div>
+                </td>
+                <td>{p.code}</td>
+                <td>{p.category?.replace("_", " ")}</td>
+                <td style={{ fontWeight: 700 }}>
+                  ${p.price.toLocaleString("es-CO")}
+                </td>
+                <td>
+                  {p.wholesale_price
+                    ? `$${p.wholesale_price.toLocaleString("es-CO")} / ${p.wholesale_min_qty}`
+                    : "No definido"}
+                </td>
+                <td
+                  style={{
+                    fontWeight: 800,
+                    color:
+                      p.stock <= (p.alert_stock ?? 5)
+                        ? "var(--color-danger)"
+                        : undefined,
+                  }}
+                >
+                  {p.stock}
+                </td>
+                <td style={{ fontSize: 11 }}>
+                  <div>
+                    {p.requires_lot_control ? "Lote obligatorio" : "Lote S/N"}
+                  </div>
+                  <div
+                    style={{
+                      color: p.has_invima ? "var(--color-success)" : undefined,
+                    }}
+                  >
+                    {p.has_invima ? "INVIMA activo" : "Sin INVIMA"}
+                  </div>
+                </td>
+                <td style={{ whiteSpace: "nowrap" }}>
+                  <button
+                    title="Ver lotes y kardex"
+                    onClick={() => openDetail(p)}
+                    className="btn-icon"
+                  >
+                    <Icon name="inventory" size={18} />
+                  </button>
+                  <button
+                    title="Editar"
+                    onClick={() => {
+                      setEditing(p);
+                      setForm(toForm(p));
+                      setReason("");
+                    }}
+                    className="btn-icon"
+                  >
+                    <Icon name="edit" size={18} />
+                  </button>
+                  <button
+                    title="Eliminar"
+                    onClick={() => remove(p)}
+                    className="btn-icon btn-icon--danger"
+                  >
+                    <Icon name="delete" size={18} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {!filtered.length && (
+              <tr>
+                <td colSpan={8} className="empty-state">
+                  Sin resultados.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
-        
-        {filtered.length === 0 && (
-          <div style={{ padding: "40px 20px", textAlign: "center", color: colors.secondary }}>
-            No se encontraron productos
-          </div>
-        )}
       </div>
-
-      {/* Create Product Modal */}
-      {showModal && (
-        <div style={{ 
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", 
-          display: "flex", alignItems: "center", justifyContent: "center", 
-          zIndex: 200,
-          backdropFilter: "blur(2px)",
-        }}>
-          <ModalContent
-            title="Nuevo Producto"
-            subtitle="Complete la información para registrar el artículo en el sistema."
-            formData={form}
-            onInputChange={handleInputChange}
-            onSave={handleCreateProduct}
-            onClose={handleCloseModal}
-            isEditing={false}
+      {(editing !== null || showCreate) && (
+        <div className="overlay">
+          <ProductForm
+            value={form}
+            editing={Boolean(editing)}
+            onChange={update}
+            onSave={save}
+            onClose={() => {
+              setEditing(null);
+              setShowCreate(false);
+            }}
+            reason={reason}
+            setReason={setReason}
           />
         </div>
       )}
-
-      {/* Edit Product Modal */}
-      {showEditModal && editingProduct && (
-        <div style={{ 
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", 
-          display: "flex", alignItems: "center", justifyContent: "center", 
-          zIndex: 200,
-          backdropFilter: "blur(2px)",
-        }}>
-          <ModalContent
-            title={`Editar Producto: ${editingProduct.name}`}
-            subtitle="Modifique los campos necesarios y guarde los cambios."
-            formData={editForm}
-            onInputChange={handleEditInputChange}
-            onSave={handleUpdateProduct}
-            onClose={handleCloseEditModal}
-            isEditing={true}
-            razonModificacion={razonModificacion}
-            onRazonChange={setRazonModificacion} 
-          />
+      {detail && (
+        <div className="overlay">
+          <div className="modal modal--detail">
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <div>
+                <h2 style={{ margin: 0 }}>{detail.name}</h2>
+                <p className="stat-label mt-xs">
+                  Lotes físicos y kardex inmutable
+                </p>
+              </div>
+              <button onClick={() => setDetail(null)} className="btn-icon">
+                <Icon name="close" />
+              </button>
+            </div>
+            <h3>Lotes</h3>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>LOTE</th>
+                  <th>FABRICACIÓN</th>
+                  <th>VENCIMIENTO</th>
+                  <th>CANTIDAD</th>
+                  <th>COSTO</th>
+                  <th>ESTADO</th>
+                </tr>
+              </thead>
+              <tbody>
+                {batches.map((b) => (
+                  <tr key={b.id}>
+                    <td>{b.lot_number}</td>
+                    <td>{b.manufacture_date || "-"}</td>
+                    <td>{b.expiration_date || "-"}</td>
+                    <td>{b.quantity}</td>
+                    <td>${b.cost.toLocaleString("es-CO")}</td>
+                    <td>{b.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <h3 style={{ marginTop: 24 }}>Kardex</h3>
+            <div style={{ maxHeight: 220, overflow: "auto" }}>
+              {movements.map((m) => (
+                <div
+                  key={m.id}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    borderTop: "1px solid var(--color-outline-variant)",
+                    padding: "9px 0",
+                    fontSize: 12,
+                  }}
+                >
+                  <span>
+                    {m.movement_date?.slice(0, 10)} · {m.movement_type} · lote{" "}
+                    {m.lot_number}
+                  </span>
+                  <strong>{m.quantity}</strong>
+                </div>
+              ))}
+              {!movements.length && (
+                <p className="stat-label">Sin movimientos registrados.</p>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
   );
-};
-
-export default Inventario;
+}

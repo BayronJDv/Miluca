@@ -1,5 +1,6 @@
 import { getDb, enqueueGlobalOperation, executeInTransaction } from './database';
-import { actualizarStock } from './products';
+import { crearLote } from './batches';
+import { registrarMovimiento } from './stock_movements';
 import { verificarYCrearNotificacion } from './product_notifications';
 
 export interface Compra {
@@ -16,6 +17,10 @@ export interface ItemCompra {
   quantity: number;
   cost: number;
   subtotal: number;
+  lot_number?: string | null;
+  manufacture_date?: string | null;
+  expiration_date?: string | null;
+  batch_id?: number;
 }
 
 export interface CompraFactura {
@@ -24,7 +29,7 @@ export interface CompraFactura {
 }
 
 export async function registrarCompra(
-  items: { product_id: number; quantity: number; cost: number }[],
+  items: { product_id: number; quantity: number; cost: number; lot_number?: string; manufacture_date?: string | null; expiration_date?: string | null }[],
   supplier_id: number | null
 ): Promise<CompraFactura> {
   return executeInTransaction(async (db) => {
@@ -39,14 +44,19 @@ export async function registrarCompra(
     const purchaseId = result.lastInsertId;
 
     for (const item of items) {
-      await db.execute(
-        `INSERT INTO purchase_items (purchase_id, product_id, quantity, cost)
-         VALUES (?, ?, ?, ?)`,
-        [purchaseId, item.product_id, item.quantity, item.cost]
+      const product = (await db.select<{ requires_lot_control: number }[]>('SELECT requires_lot_control FROM products WHERE id = ?', [item.product_id]))[0];
+      const lotNumber = item.lot_number?.trim() || 'S/N';
+      if (product?.requires_lot_control && (!item.lot_number || !item.expiration_date)) throw new Error('El producto requiere lote y fecha de vencimiento');
+      if (item.expiration_date && item.expiration_date <= new Date().toISOString().slice(0, 10)) throw new Error('La fecha de vencimiento debe ser futura');
+      if (item.manufacture_date && item.expiration_date && item.manufacture_date > item.expiration_date) throw new Error('La fabricación no puede ser posterior al vencimiento');
+      const batchId = await crearLote({ product_id: item.product_id, lot_number: lotNumber, manufacture_date: item.manufacture_date ?? null, expiration_date: item.expiration_date ?? null, quantity: item.quantity, cost: item.cost, supplier_id }, db);
+      const purchaseItem = await db.execute(
+        `INSERT INTO purchase_items (purchase_id, product_id, batch_id, quantity, cost, lot_number, manufacture_date, expiration_date)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [purchaseId, item.product_id, batchId, item.quantity, item.cost, lotNumber, item.manufacture_date ?? null, item.expiration_date ?? null]
       );
-
-      // Pass 'db' explicitly to ensure we use the same connection for the transaction
-      await actualizarStock(item.product_id, item.quantity, db);
+      await db.execute('UPDATE product_batches SET purchase_item_id = ? WHERE id = ?', [purchaseItem.lastInsertId, batchId]);
+      await registrarMovimiento({ batch_id: batchId, movement_type: 'entrada_compra', quantity: item.quantity, reference_type: 'purchase', reference_id: purchaseId }, db);
       await verificarYCrearNotificacion(item.product_id, db);
     }
 
@@ -61,7 +71,7 @@ export async function registrarCompra(
         p.name as product_name,
         pi.quantity,
         pi.cost,
-        (pi.quantity * pi.cost) as subtotal
+         (pi.quantity * pi.cost) as subtotal, pi.lot_number, pi.manufacture_date, pi.expiration_date, pi.batch_id
        FROM purchase_items pi
        JOIN products p ON p.id = pi.product_id
        WHERE pi.purchase_id = ?`,
@@ -184,9 +194,9 @@ export async function obtenerCompra(id: number): Promise<CompraFactura | null> {
       `SELECT
         pi.product_id,
         p.name as product_name,
-        pi.quantity,
-        pi.cost,
-        (pi.quantity * pi.cost) as subtotal
+         pi.quantity,
+         pi.cost,
+         (pi.quantity * pi.cost) as subtotal, pi.lot_number, pi.manufacture_date, pi.expiration_date, pi.batch_id
        FROM purchase_items pi
        JOIN products p ON p.id = pi.product_id
        WHERE pi.purchase_id = ?`,

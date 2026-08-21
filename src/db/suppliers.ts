@@ -5,6 +5,9 @@ export interface Supplier {
   name: string;
   photo_route: string | null;
   contact_info: string | null;
+  nit?: string | null;
+  address?: string | null;
+  email?: string | null;
 }
 
 export interface SupplierStats {
@@ -77,8 +80,8 @@ export async function obtenerEstadisticasProveedores(): Promise<SupplierStats> {
 export async function crearProveedor(s: Supplier): Promise<void> {
   const db = await getDb();
   await db.execute(
-    'INSERT INTO suppliers (name, photo_route, contact_info) VALUES ($1, $2, $3)',
-    [s.name, s.photo_route, s.contact_info]
+    'INSERT INTO suppliers (name, photo_route, contact_info, nit, address, email) VALUES ($1, $2, $3, $4, $5, $6)',
+    [s.name, s.photo_route, s.contact_info, s.nit ?? null, s.address ?? null, s.email ?? null]
   );
 }
 

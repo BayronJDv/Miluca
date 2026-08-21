@@ -7,11 +7,14 @@ interface SupplierCardProps {
   imageUrl?: string | null;
   icon?: string;
   initials?: string;
+  nit?: string | null;
+  address?: string | null;
+  email?: string | null;
   onEdit?: () => void;
   onDelete?: () => void;
 }
 
-const SupplierCard: React.FC<SupplierCardProps> = ({ name, phone, imageUrl, icon, initials, onEdit, onDelete }) => {
+const SupplierCard: React.FC<SupplierCardProps> = ({ name, phone, imageUrl, icon, initials, nit, address, email, onEdit, onDelete }) => {
   const [imgSrc, setImgSrc] = useState<string | null>(null);
   const [loadingImg, setLoadingImg] = useState(!!imageUrl);
 
@@ -47,10 +50,30 @@ const SupplierCard: React.FC<SupplierCardProps> = ({ name, phone, imageUrl, icon
         )}
       </div>
       <h4 className="font-headline-sm text-headline-sm text-on-surface mb-xs">{name}</h4>
-      <p className="text-body-md text-secondary flex items-center justify-center">
-        <span className="material-symbols-outlined text-sm mr-xs">call</span>
-        {phone}
-      </p>
+      {phone && (
+        <p className="text-body-md text-secondary flex items-center justify-center">
+          <span className="material-symbols-outlined text-sm mr-xs">call</span>
+          {phone}
+        </p>
+      )}
+      {nit && (
+        <p className="text-body-sm text-secondary flex items-center justify-center">
+          <span className="material-symbols-outlined text-sm mr-xs">receipt_long</span>
+          NIT: {nit}
+        </p>
+      )}
+      {email && (
+        <p className="text-body-sm text-secondary flex items-center justify-center break-all">
+          <span className="material-symbols-outlined text-sm mr-xs">mail</span>
+          {email}
+        </p>
+      )}
+      {address && (
+        <p className="text-body-sm text-secondary flex items-center justify-center">
+          <span className="material-symbols-outlined text-sm mr-xs">location_on</span>
+          {address}
+        </p>
+      )}
       <div className="mt-lg pt-md border-t border-outline-variant w-full flex justify-center gap-md">
         <button onClick={onEdit} className="text-primary hover:text-primary-container font-label-md text-label-md">
           Editar

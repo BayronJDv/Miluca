@@ -1,11 +1,13 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import PageHeader from '../components/design/PageHeader';
 import { Input } from '../components/design/Input';
-import { colors } from '../components/design/colors';
 import { Icon } from '../components/design/Icon';
 import { obtenerCompras, obtenerCompra, Compra, ItemCompra } from '../db/purchases';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { userIdAtom } from '../store/UserAtom';
+import { devolverProveedor, obtenerPendienteDevolucionCompra } from '../db/returns';
+import { useAtomValue } from 'jotai';
 
 const HistorialCompras: React.FC = () => {
   const [search, setSearch] = useState<string>("");
@@ -16,6 +18,10 @@ const HistorialCompras: React.FC = () => {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [detallesCache, setDetallesCache] = useState<Record<number, ItemCompra[]>>({});
   const [loadingDetalle, setLoadingDetalle] = useState<number | null>(null);
+  const userId = useAtomValue(userIdAtom);
+  const [returnTarget, setReturnTarget] = useState<{ purchaseId: number; batchId: number; name: string; max: number } | null>(null);
+  const [returnQuantity, setReturnQuantity] = useState('');
+  const [returnReason, setReturnReason] = useState('Devolución a proveedor');
 
   const cargarCompras = useCallback(async () => {
     setLoading(true);
@@ -26,222 +32,134 @@ const HistorialCompras: React.FC = () => {
         const day = String(d.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
       };
-      
       const fechaInicioStr = startDate ? formatLocal(startDate) : undefined;
       const fechaFinStr = endDate ? formatLocal(endDate) : undefined;
-      
       const response = await obtenerCompras(1, 100, fechaInicioStr, fechaFinStr);
       setItems(response.compras);
     } catch (error) {
       console.error("Error al cargar compras:", error);
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }, [startDate, endDate]);
 
-  useEffect(() => {
-    cargarCompras();
-  }, [cargarCompras]);
+  useEffect(() => { cargarCompras(); }, [cargarCompras]);
 
-  const filtered = useMemo(() => 
-    items.filter(item => 
+  const filtered = useMemo(() =>
+    items.filter(item =>
       (item.supplier_name?.toLowerCase() || 'sin proveedor').includes(search.toLowerCase())
-    ),
-    [items, search]
+    ), [items, search]
   );
 
   const formatPrice = (n: number): string =>
     "$" + n.toLocaleString("es-CO", { minimumFractionDigits: 2 });
 
   const formatDate = (dateString: string): string => {
-    // Si la base de datos devuelve "YYYY-MM-DD HH:MM:SS" en UTC,
-    // al reemplazar el espacio por 'T' y añadir 'Z' aseguramos que JS lo interprete como UTC
-    const safeDateString = dateString.includes('T') 
-      ? dateString 
+    const safeDateString = dateString.includes('T')
+      ? dateString
       : dateString.replace(' ', 'T') + 'Z';
-      
     return new Date(safeDateString).toLocaleString('es-CO', {
-      timeZone: 'America/Bogota',
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric',
-      hour: '2-digit', 
-      minute: '2-digit'
+      timeZone: 'America/Bogota', year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit'
     });
   };
 
   const handleToggleExpand = async (compraId: number) => {
-    if (expandedId === compraId) {
-      setExpandedId(null);
-      return;
-    }
-
+    if (expandedId === compraId) { setExpandedId(null); return; }
     setExpandedId(compraId);
-
-    // Load details if not cached
     if (!detallesCache[compraId]) {
       setLoadingDetalle(compraId);
       try {
         const detalle = await obtenerCompra(compraId);
-        if (detalle) {
-          setDetallesCache(prev => ({
-            ...prev,
-            [compraId]: detalle.items
-          }));
-        }
-      } catch (error) {
-        console.error("Error al cargar detalles de la compra:", error);
-      } finally {
-        setLoadingDetalle(null);
-      }
+        if (detalle) setDetallesCache(prev => ({ ...prev, [compraId]: detalle.items }));
+      } catch (error) { console.error("Error al cargar detalles de la compra:", error); }
+      finally { setLoadingDetalle(null); }
     }
+  };
+
+  const openReturn = async (purchaseId: number, item: ItemCompra) => {
+    if (!item.batch_id) return alert('Este ítem no tiene lote asociado.');
+    const max = await obtenerPendienteDevolucionCompra(purchaseId, item.batch_id);
+    if (!max) return alert('La cantidad completa de este lote ya fue devuelta.');
+    setReturnTarget({ purchaseId, batchId: item.batch_id, name: item.product_name, max });
+    setReturnQuantity(String(max));
+  };
+
+  const submitReturn = async () => {
+    if (!returnTarget) return;
+    try { await devolverProveedor({ purchase_id: returnTarget.purchaseId, batch_id: returnTarget.batchId, quantity: Number(returnQuantity), reason: returnReason, user_id: userId }); setReturnTarget(null); alert('Devolución al proveedor registrada en el lote y kardex.'); }
+    catch (error) { alert(String(error)); }
   };
 
   return (
     <div className="fade-up">
-      <PageHeader
-        title="Historial de Compras"
-        subtitle="Registro detallado de todas las compras realizadas a proveedores."
-      />
-      
-      {/* Filtros */}
-      <div style={{ display: "flex", gap: 16, marginBottom: 24, flexWrap: "wrap", alignItems: "flex-end" }}>
+      <PageHeader title="Historial de Compras" subtitle="Registro detallado de todas las compras realizadas a proveedores." />
+      <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div style={{ flex: 1, minWidth: 300 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: colors.secondary, display: "block", marginBottom: 6 }}>
-            Buscar Proveedor
-          </label>
-          <Input 
-            placeholder="Ej. Distribuidora del Sur..." 
-            value={search} 
-            onChange={setSearch} 
-            icon="search" 
-          />
+          <label className="field-label">Buscar Proveedor</label>
+          <Input placeholder="Ej. Distribuidora del Sur..." value={search} onChange={setSearch} icon="search" />
         </div>
         <div>
-          <label style={{ fontSize: 12, fontWeight: 600, color: colors.secondary, display: "block", marginBottom: 6 }}>
-            Rango de Fechas
-          </label>
-          <DatePicker
-            selectsRange={true}
-            startDate={startDate}
-            endDate={endDate}
+          <label className="field-label">Rango de Fechas</label>
+          <DatePicker selectsRange startDate={startDate} endDate={endDate}
             onChange={(update: [Date | null, Date | null]) => setDateRange(update)}
-            isClearable={true}
-            placeholderText="Seleccionar rango..."
-            dateFormat="dd/MM/yyyy"
-            customInput={
-              <input 
-                style={{
-                  height: 42, padding: "0 12px", border: `1px solid ${colors.outlineVariant}`,
-                  borderRadius: 8, fontSize: 14, outline: "none", color: colors.onSurface,
-                  background: "#fff", width: 240
-                }}
-              />
-            }
-          />
+            isClearable placeholderText="Seleccionar rango..." dateFormat="dd/MM/yyyy"
+            showMonthDropdown showYearDropdown scrollableYearDropdown yearDropdownItemNumber={20} dropdownMode="select"
+            customInput={<input className="control control--md" />} />
         </div>
       </div>
 
-      {/* Tabla de Compras */}
-      <div style={{ 
-        background: colors.surfaceLowest, border: `1px solid ${colors.outlineVariant}`, 
-        borderRadius: 10, overflow: "hidden", overflowX: "auto" 
-      }}>
+      <div className="page-card page-card--flush">
         {loading ? (
-          <div style={{ padding: "40px 20px", textAlign: "center", color: colors.secondary }}>
-            Cargando historial de compras...
-          </div>
+          <div className="empty-state">Cargando historial de compras...</div>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 650 }}>
-            <thead>
-              <tr style={{ background: colors.surfaceLow }}>
-                {["ID COMPRA", "FECHA", "PROVEEDOR", "TOTAL", "ACCIÓN"].map(header => (
-                  <th key={header} style={{ 
-                    padding: "12px 16px", textAlign: header === "TOTAL" ? "right" : "left", fontSize: 11, 
-                    fontWeight: 700, letterSpacing: "0.05em", color: colors.secondary, 
-                    whiteSpace: "nowrap" 
-                  }}>
-                    {header}
-                  </th>
-                ))}
-              </tr>
-            </thead>
+          <table className="data-table" style={{ minWidth: 650 }}>
+            <thead><tr>
+              {["ID COMPRA", "FECHA", "PROVEEDOR", "TOTAL", "ACCIÓN"].map(header => (
+                <th key={header} className={header === "TOTAL" ? 'align-right' : ''}>{header}</th>
+              ))}
+            </tr></thead>
             <tbody>
               {filtered.map((row) => (
                 <React.Fragment key={row.id}>
-                  <tr className="hover-row" style={{ borderTop: `1px solid ${colors.outlineVariant}` }}>
-                    <td style={{ padding: "14px 16px", fontSize: 13, fontWeight: 600, color: colors.secondary }}>
-                      #{row.id}
-                    </td>
-                    <td style={{ padding: "14px 16px", fontSize: 13 }}>
-                      {formatDate(row.purchase_date)}
-                    </td>
-                    <td style={{ padding: "14px 16px", fontSize: 13, fontWeight: 600 }}>
-                      {row.supplier_name || 'Sin Proveedor'}
-                    </td>
-                    <td style={{ padding: "14px 16px", fontSize: 14, fontWeight: 700, textAlign: "right" }}>
-                      {formatPrice(row.total_cost)}
-                    </td>
-                    <td style={{ padding: "14px 16px" }}>
-                      <button 
-                        onClick={() => row.id && handleToggleExpand(row.id)}
-                        style={{ 
-                          background: "none", border: "none", cursor: "pointer", 
-                          color: colors.primary, display: "flex", alignItems: "center", gap: 4,
-                          fontSize: 13, fontWeight: 600
-                        }}
-                      >
+                  <tr>
+                    <td style={{ fontWeight: 600, color: 'var(--color-secondary)' }}>#{row.id}</td>
+                    <td>{formatDate(row.purchase_date)}</td>
+                    <td style={{ fontWeight: 600 }}>{row.supplier_name || 'Sin Proveedor'}</td>
+                    <td style={{ fontWeight: 700 }} className="align-right">{formatPrice(row.total_cost)}</td>
+                    <td>
+                      <button onClick={() => row.id && handleToggleExpand(row.id)} className="btn-link">
                         {expandedId === row.id ? "Ocultar" : "Ver detalle"}
                         <Icon name={expandedId === row.id ? "minus" : "plus"} size={18} />
                       </button>
                     </td>
                   </tr>
-                  
-                  {/* Fila expandida con detalles */}
                   {expandedId === row.id && (
-                    <tr style={{ background: colors.surfaceLowest }}>
-                      <td colSpan={5} style={{ padding: "16px 24px", borderTop: `1px solid ${colors.surfaceContainer}` }}>
-                        <div style={{ 
-                          background: "#fff", border: `1px solid ${colors.outlineVariant}`,
-                          borderRadius: 8, overflow: "hidden"
-                        }}>
-                          <div style={{ 
-                            padding: "10px 16px", background: colors.surfaceLow,
-                            fontSize: 12, fontWeight: 700, color: colors.secondary,
-                            borderBottom: `1px solid ${colors.outlineVariant}`
-                          }}>
+                    <tr className="row-detail">
+                      <td colSpan={5} style={{ padding: "16px 24px" }}>
+                        <div className="page-card page-card--flush" style={{ borderRadius: 8 }}>
+                          <div className="page-card-header" style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-secondary)' }}>
                             PRODUCTOS DE LA COMPRA #{row.id}
                           </div>
-                          
                           {loadingDetalle === row.id ? (
-                            <div style={{ padding: "20px", textAlign: "center", fontSize: 13, color: colors.secondary }}>
-                              Cargando detalles...
-                            </div>
+                            <div className="empty-state" style={{ fontSize: 13 }}>Cargando detalles...</div>
                           ) : detallesCache[row.id!] ? (
-                            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                              <thead>
-                                <tr>
-                                  <th style={{ padding: "8px 16px", textAlign: "left", fontSize: 11, color: colors.secondary, fontWeight: 600 }}>Producto</th>
-                                  <th style={{ padding: "8px 16px", textAlign: "right", fontSize: 11, color: colors.secondary, fontWeight: 600 }}>Cantidad</th>
-                                  <th style={{ padding: "8px 16px", textAlign: "right", fontSize: 11, color: colors.secondary, fontWeight: 600 }}>Costo Unit.</th>
-                                  <th style={{ padding: "8px 16px", textAlign: "right", fontSize: 11, color: colors.secondary, fontWeight: 600 }}>Subtotal</th>
-                                </tr>
-                              </thead>
+                            <table className="data-table">
+                              <thead><tr>
+                                <th>Producto</th><th className="align-right">Cantidad</th><th className="align-right">Costo Unit.</th><th className="align-right">Subtotal</th><th className="align-right">Acción</th>
+                              </tr></thead>
                               <tbody>
                                 {detallesCache[row.id!].map(item => (
-                                  <tr key={item.product_id} style={{ borderTop: `1px solid ${colors.surfaceContainer}` }}>
-                                    <td style={{ padding: "8px 16px", fontSize: 13 }}>{item.product_name}</td>
-                                    <td style={{ padding: "8px 16px", fontSize: 13, textAlign: "right" }}>{item.quantity}</td>
-                                    <td style={{ padding: "8px 16px", fontSize: 13, textAlign: "right" }}>{formatPrice(item.cost)}</td>
-                                    <td style={{ padding: "8px 16px", fontSize: 13, textAlign: "right", fontWeight: 600 }}>{formatPrice(item.subtotal)}</td>
+                                  <tr key={`${item.product_id}-${item.batch_id ?? item.quantity}`}>
+                                    <td>{item.product_name}</td>
+                                    <td className="align-right">{item.quantity}</td>
+                                    <td className="align-right">{formatPrice(item.cost)}</td>
+                                    <td className="align-right" style={{ fontWeight: 600 }}>{formatPrice(item.subtotal)}</td>
+                                    <td className="align-right"><button onClick={() => openReturn(row.id!, item)} className="btn-mini-solid">Devolver</button></td>
                                   </tr>
                                 ))}
                               </tbody>
                             </table>
                           ) : (
-                            <div style={{ padding: "20px", textAlign: "center", fontSize: 13, color: colors.secondary }}>
-                              No se pudieron cargar los detalles.
-                            </div>
+                            <div className="empty-state" style={{ fontSize: 13 }}>No se pudieron cargar los detalles.</div>
                           )}
                         </div>
                       </td>
@@ -252,13 +170,9 @@ const HistorialCompras: React.FC = () => {
             </tbody>
           </table>
         )}
-        
-        {!loading && filtered.length === 0 && (
-          <div style={{ padding: "40px 20px", textAlign: "center", color: colors.secondary }}>
-            No se encontraron compras
-          </div>
-        )}
+        {!loading && filtered.length === 0 && <div className="empty-state">No se encontraron compras</div>}
       </div>
+      {returnTarget && <div className="overlay"><div className="modal"><h3 style={{ marginTop: 0 }}>Devolución a proveedor</h3><p className="text-secondary">{returnTarget.name} · máximo pendiente: {returnTarget.max}</p><label className="field" style={{ marginTop: 12 }}>Cantidad<input type="number" min="0.01" max={returnTarget.max} value={returnQuantity} onChange={e => setReturnQuantity(e.target.value)} /></label><label className="field" style={{ marginTop: 12 }}>Motivo<input value={returnReason} onChange={e => setReturnReason(e.target.value)} /></label><div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}><button onClick={() => setReturnTarget(null)} className="btn-mini-outline">Cancelar</button><button onClick={submitReturn} className="btn-mini-solid">Confirmar devolución</button></div></div></div>}
     </div>
   );
 };

@@ -7,16 +7,10 @@ export interface EditHistoryEntry {
   product_id: number;
   modification_reason: string;
   modification_date?: string;
-  // Valores anteriores
-  previous_name?: string | null;
-  previous_price?: number | null;
-  previous_cost?: number | null;
-  previous_stock?: number | null;
-  // Valores nuevos
-  new_name?: string | null;
-  new_price?: number | null;
-  new_cost?: number | null;
-  new_stock?: number | null;
+  previous_json?: string | null;
+  new_json?: string | null;
+  previous_name?: string | null; previous_price?: number | null; previous_cost?: number | null; previous_stock?: number | null;
+  new_name?: string | null; new_price?: number | null; new_cost?: number | null; new_stock?: number | null;
   modified_by?: number | null;
   
   current_product_code?: string;
@@ -39,26 +33,9 @@ export async function registrarModificacion(
 
   try {
     const result = await db.execute(
-      `INSERT INTO edit_history (
-        product_id, modification_reason, modification_date,
-        previous_name, previous_price, previous_cost, previous_stock,
-        new_name, new_price, new_cost, new_stock,
-        modified_by
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-      [
-        productId,
-        reason,
-        now,
-        previousState?.name ?? null,
-        previousState?.price ?? null,
-        previousState?.cost ?? null,
-        previousState?.stock ?? null,
-        newState?.name ?? null,
-        newState?.price ?? null,
-        newState?.cost ?? null,
-        newState?.stock ?? null,
-        modifiedBy
-      ]
+      `INSERT INTO edit_history (product_id, modification_reason, modification_date, previous_json, new_json, modified_by)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [productId, reason, now, JSON.stringify(previousState ?? null), JSON.stringify(newState ?? null), modifiedBy]
     );
 
     const historyEntry: EditHistoryEntry = {
@@ -66,14 +43,8 @@ export async function registrarModificacion(
       product_id: productId,
       modification_reason: reason,
       modification_date: now,
-      previous_name: previousState?.name ?? null,
-      previous_price: previousState?.price ?? null,
-      previous_cost: previousState?.cost ?? null,
-      previous_stock: previousState?.stock ?? null,
-      new_name: newState?.name ?? null,
-      new_price: newState?.price ?? null,
-      new_cost: newState?.cost ?? null,
-      new_stock: newState?.stock ?? null,
+      previous_json: JSON.stringify(previousState ?? null),
+      new_json: JSON.stringify(newState ?? null),
       modified_by: modifiedBy
     };
 

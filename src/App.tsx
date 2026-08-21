@@ -1,7 +1,8 @@
 import "./App.css";
+import { useEffect } from "react";
 import  Login  from "./components/Login/Login";
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { useAtom } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 import { userAtom } from "./store/UserAtom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import Sidebar from "./components/Sidebar";
@@ -13,13 +14,22 @@ import Compras from "./pages/Compras";
 import HistorialCompras from "./pages/HistorialCompras";
 import HistorialVentas from "./pages/HistorialVentas";
 import Reportes from "./pages/Reportes";
+import Vencimientos from "./pages/Vencimientos";
+import Kardex from "./pages/Kardex";
+import Bajas from "./pages/Bajas";
 import Configuracion from "./pages/Configuracion";
 import HistorialEdiciones from "./pages/HistorialEdiciones";
 import AnalisisVentas from "./pages/Analisis";
+import { marcarLotesVencidos } from "./db/batches";
 
 
 function App() {
   const [user] = useAtom(userAtom);
+  const userReady = useAtomValue(userAtom);
+
+  useEffect(() => {
+    if (userReady) marcarLotesVencidos().catch(error => console.error('Error actualizando lotes vencidos:', error));
+  }, [userReady]);
 
   if (!user) {
     return (
@@ -41,6 +51,9 @@ function App() {
               <Route path="/inventario" element={<Inventario />} />
               <Route path="/proveedores" element={<Proveedores />} />
               <Route path="/compras" element={<Compras />} />
+              <Route path="/vencimientos" element={<Vencimientos />} />
+              <Route path="/kardex" element={<Kardex />} />
+              <Route path="/bajas" element={<ProtectedRoute allowedRoles={['admin']}><Bajas /></ProtectedRoute>} />
               <Route path="/historial-compras" element={<HistorialCompras />} />
               <Route path="/historial-ventas" element={<HistorialVentas />} />
               <Route path="/reportes" element={

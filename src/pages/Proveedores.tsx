@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, memo, useRef } from 'react';
 import SupplierCard from '../components/Proveedores/SupplierCard';
 import { Input } from '../components/design/Input';
-import { colors } from '../components/design/colors';
 import { Icon } from '../components/design/Icon';
 import Btn from '../components/design/Btn';
 import { obtenerProveedores, obtenerEstadisticasProveedores, crearProveedor, modificarProveedor, eliminarProveedor, Supplier, SupplierStats } from '../db/suppliers';
@@ -21,7 +20,19 @@ interface SupplierFormData {
   name: string;
   contact_info: string;
   photo_route: string;
+  nit: string;
+  address: string;
+  email: string;
 }
+
+const EMPTY_FORM: SupplierFormData = {
+  name: '',
+  contact_info: '',
+  photo_route: '',
+  nit: '',
+  address: '',
+  email: '',
+};
 
 interface PhotoSelection {
   data: string;
@@ -60,58 +71,50 @@ const ModalContent = memo(({
     onInputChange('contact_info', value);
   }, [onInputChange]);
 
+  const handleNitChange = useCallback((value: string) => {
+    onInputChange('nit', value);
+  }, [onInputChange]);
+
+  const handleAddressChange = useCallback((value: string) => {
+    onInputChange('address', value);
+  }, [onInputChange]);
+
+  const handleEmailChange = useCallback((value: string) => {
+    onInputChange('email', value);
+  }, [onInputChange]);
+
   return (
-    <div style={{
-      background: "#fff", borderRadius: 14,
-      width: 520, maxWidth: "95vw", maxHeight: "92vh",
-      overflowY: "auto",
-      boxShadow: "0 8px 40px rgba(0,0,0,0.18)",
-    }}>
+    <div className="modal modal--supplier">
       {/* Modal Header */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "20px 24px 16px 24px",
-        borderBottom: `1px solid ${colors.outlineVariant}`,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{
-            width: 40, height: 40, borderRadius: 10,
-            background: colors.primary,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            flexShrink: 0,
-          }}>
-            <Icon name={isEditing ? "edit" : "plus"} size={22} color="#fff" />
+      <div className="modal-header">
+        <div className="flex items-center gap-md">
+          <div className="modal-icon-box">
+            <Icon name={isEditing ? "edit" : "plus"} size={22} color="var(--color-on-primary)" />
           </div>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: colors.onSurface, lineHeight: 1.2 }}>
+            <div className="font-headline-sm text-headline-sm text-on-surface" style={{ lineHeight: 1.2 }}>
               {title}
             </div>
-            <div style={{ fontSize: 12, color: colors.secondary, marginTop: 2 }}>
+            <div className="text-body-sm text-secondary" style={{ marginTop: 2 }}>
               {subtitle}
             </div>
           </div>
         </div>
         <button
           onClick={onClose}
-          style={{
-            background: "none", border: "none", cursor: "pointer",
-            width: 32, height: 32, borderRadius: 8,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            color: colors.outline,
-            transition: "background 0.15s",
-          }}
-          onMouseEnter={e => (e.currentTarget.style.background = colors.surfaceLow)}
-          onMouseLeave={e => (e.currentTarget.style.background = "none")}
+          className="modal-close-btn"
+          onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-surface-container-low)')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'none')}
         >
-          <Icon name="close" size={18} color={colors.outline} />
+          <Icon name="close" size={18} color="var(--color-outline)" />
         </button>
       </div>
 
       {/* Modal Body */}
-      <div style={{ padding: "20px 24px" }}>
+      <div className="modal-body">
         <div style={{ marginBottom: 16 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: colors.secondary, display: "block", marginBottom: 6 }}>
-            Nombre del Proveedor <span style={{ color: colors.red }}>*</span>
+          <label className="field-label">
+            Nombre del Proveedor <span style={{ color: 'var(--color-danger)' }}>*</span>
           </label>
           <Input
             placeholder="Ej. Distribuidora ABC"
@@ -121,30 +124,56 @@ const ModalContent = memo(({
         </div>
 
         <div style={{ marginBottom: 16 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: colors.secondary, display: "block", marginBottom: 6 }}>
+          <label className="field-label">
             Informaci&oacute;n de Contacto
           </label>
           <Input
-            placeholder="Teléfono, email, dirección..."
+            placeholder="Teléfono de contacto..."
             value={formData.contact_info}
             onChange={handleContactChange}
           />
         </div>
 
+        <div style={{ marginBottom: 16 }}>
+          <label className="field-label">
+            NIT
+          </label>
+          <Input
+            placeholder="Ej. 900123456-7"
+            value={formData.nit}
+            onChange={handleNitChange}
+          />
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <label className="field-label">
+            Email
+          </label>
+          <Input
+            placeholder="Ej. contacto@proveedor.com"
+            value={formData.email}
+            onChange={handleEmailChange}
+          />
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <label className="field-label">
+            Direcci&oacute;n
+          </label>
+          <Input
+            placeholder="Ej. Calle 123 #45-67"
+            value={formData.address}
+            onChange={handleAddressChange}
+          />
+        </div>
+
         <div style={{ marginBottom: 4 }}>
-          <label style={{ fontSize: 12, fontWeight: 600, color: colors.secondary, display: "block", marginBottom: 6 }}>
+          <label className="field-label">
             Foto
           </label>
 
           {photoPreview ? (
-            <div style={{
-              position: "relative",
-              width: 140, height: 140,
-              borderRadius: 12,
-              overflow: "hidden",
-              border: `1px solid ${colors.outlineVariant}`,
-              marginBottom: 8,
-            }}>
+            <div className="photo-preview-container">
               <img
                 src={photoPreview}
                 alt="Vista previa"
@@ -152,15 +181,7 @@ const ModalContent = memo(({
               />
               <button
                 onClick={onRemovePhoto}
-                style={{
-                  position: "absolute", top: 4, right: 4,
-                  width: 28, height: 28, borderRadius: "50%",
-                  border: "none", cursor: "pointer",
-                  background: "rgba(0,0,0,0.55)",
-                  color: "#fff",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 16,
-                }}
+                className="photo-remove-btn"
                 title="Quitar foto"
               >
                 ✕
@@ -169,26 +190,17 @@ const ModalContent = memo(({
           ) : (
             <button
               onClick={onPickPhoto}
-              style={{
-                width: 140, height: 140, borderRadius: 12,
-                border: `2px dashed ${colors.outlineVariant}`,
-                background: colors.surfaceLow,
-                cursor: "pointer",
-                display: "flex", flexDirection: "column",
-                alignItems: "center", justifyContent: "center",
-                gap: 6, color: colors.secondary, fontSize: 12,
-                transition: "border-color 0.15s, background 0.15s",
-              }}
+              className="photo-upload-btn"
               onMouseEnter={e => {
-                e.currentTarget.style.borderColor = colors.primary;
-                e.currentTarget.style.background = colors.secondaryContainer;
+                e.currentTarget.style.borderColor = 'var(--color-primary)';
+                e.currentTarget.style.background = 'var(--color-secondary-container)';
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.borderColor = colors.outlineVariant;
-                e.currentTarget.style.background = colors.surfaceLow;
+                e.currentTarget.style.borderColor = 'var(--color-outline-variant)';
+                e.currentTarget.style.background = 'var(--color-surface-container-low)';
               }}
             >
-              <Icon name="plus" size={28} color={colors.secondary} />
+              <Icon name="plus" size={28} color="var(--color-secondary)" />
               Seleccionar foto
             </button>
           )}
@@ -196,11 +208,7 @@ const ModalContent = memo(({
       </div>
 
       {/* Modal Footer */}
-      <div style={{
-        display: "flex", justifyContent: "flex-end", gap: 10,
-        padding: "14px 24px 20px 24px",
-        borderTop: `1px solid ${colors.outlineVariant}`,
-      }}>
+      <div className="modal-footer">
         <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
         <Btn onClick={onSave}>{isEditing ? "Actualizar Proveedor" : "Guardar Proveedor"}</Btn>
       </div>
@@ -238,8 +246,8 @@ const Proveedores: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
-  const [form, setForm] = useState<SupplierFormData>({ name: '', contact_info: '', photo_route: '' });
-  const [editForm, setEditForm] = useState<SupplierFormData>({ name: '', contact_info: '', photo_route: '' });
+  const [form, setForm] = useState<SupplierFormData>(EMPTY_FORM);
+  const [editForm, setEditForm] = useState<SupplierFormData>(EMPTY_FORM);
   const [createPhoto, setCreatePhoto] = useState<PhotoSelection | null>(null);
   const [editPhoto, setEditPhoto] = useState<PhotoSelection | null>(null);
   const [editExistingPreview, setEditExistingPreview] = useState<string | null>(null);
@@ -324,6 +332,9 @@ const Proveedores: React.FC = () => {
       name: form.name.trim(),
       contact_info: form.contact_info.trim() || null,
       photo_route: photoRoute,
+      nit: form.nit.trim() || null,
+      address: form.address.trim() || null,
+      email: form.email.trim() || null,
     });
     const [proveedores, estadisticas] = await Promise.all([
       obtenerProveedores(),
@@ -332,7 +343,7 @@ const Proveedores: React.FC = () => {
     setSuppliers(proveedores);
     setStats(estadisticas);
     setShowCreateModal(false);
-    setForm({ name: '', contact_info: '', photo_route: '' });
+    setForm(EMPTY_FORM);
     setCreatePhoto(null);
   }, [form, createPhoto, uploadPhoto]);
 
@@ -349,6 +360,9 @@ const Proveedores: React.FC = () => {
       name: editForm.name.trim(),
       contact_info: editForm.contact_info.trim() || null,
       photo_route: photoRoute,
+      nit: editForm.nit.trim() || null,
+      address: editForm.address.trim() || null,
+      email: editForm.email.trim() || null,
     });
     const [proveedores, estadisticas] = await Promise.all([
       obtenerProveedores(),
@@ -358,7 +372,7 @@ const Proveedores: React.FC = () => {
     setStats(estadisticas);
     setShowEditModal(false);
     setEditingSupplier(null);
-    setEditForm({ name: '', contact_info: '', photo_route: '' });
+    setEditForm(EMPTY_FORM);
     setEditPhoto(null);
     setEditExistingPreview(null);
   }, [editForm, editingSupplier, editPhoto, uploadPhoto]);
@@ -383,6 +397,9 @@ const Proveedores: React.FC = () => {
       name: supplier.name,
       contact_info: supplier.contact_info ?? '',
       photo_route: supplier.photo_route ?? '',
+      nit: supplier.nit ?? '',
+      address: supplier.address ?? '',
+      email: supplier.email ?? '',
     });
     setEditPhoto(null);
     setEditExistingPreview(null);
@@ -394,20 +411,20 @@ const Proveedores: React.FC = () => {
 
   const handleCloseCreate = useCallback(() => {
     setShowCreateModal(false);
-    setForm({ name: '', contact_info: '', photo_route: '' });
+    setForm(EMPTY_FORM);
     setCreatePhoto(null);
   }, []);
 
   const handleCloseEdit = useCallback(() => {
     setShowEditModal(false);
     setEditingSupplier(null);
-    setEditForm({ name: '', contact_info: '', photo_route: '' });
+    setEditForm(EMPTY_FORM);
     setEditPhoto(null);
     setEditExistingPreview(null);
   }, []);
 
   const trendIcon = stats && stats.spendingTrend >= 0 ? 'trending_up' : 'trending_down';
-  const trendColor = stats && stats.spendingTrend >= 0 ? 'text-green-600' : 'text-red-600';
+  const trendColor = stats && stats.spendingTrend >= 0 ? 'var(--color-delta-up)' : 'var(--color-delta-down)';
   const trendSign = stats && stats.spendingTrend >= 0 ? '+' : '';
 
   return (
@@ -422,7 +439,7 @@ const Proveedores: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-lg mb-xl">
         <div className="bg-white p-lg rounded-xl card-shadow flex flex-col justify-between relative overflow-hidden group border border-outline-variant">
-          <div className="absolute -right-4 -top-4 w-24 h-24 bg-primary/5 rounded-full group-hover:scale-110 transition-transform" />
+          <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-primary/5 group-hover:scale-110 transition-transform" />
           <div>
             <p className="font-label-md text-label-md text-secondary uppercase tracking-wider mb-base">Proveedor Principal</p>
             {loading ? (
@@ -433,7 +450,7 @@ const Proveedores: React.FC = () => {
             ) : stats?.topSupplier ? (
               <>
                 <h3 className="font-headline-sm text-headline-sm text-on-surface">{stats.topSupplier.name}</h3>
-                <p className="text-primary font-bold text-lg mt-1">
+                <p className="font-bold text-lg mt-1" style={{ color: 'var(--color-primary)' }}>
                   {formatCurrency(stats.topSupplier.monthlyVolume)} <span className="text-secondary text-sm font-normal">vol. mensual</span>
                 </p>
               </>
@@ -443,7 +460,7 @@ const Proveedores: React.FC = () => {
           </div>
           {stats?.topSupplier && (
             <div className="mt-md flex">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              <span className="inline-flex items-center px-sm py-xs rounded-full text-xs font-medium" style={{ background: 'var(--color-success-bg)', color: 'var(--color-success)' }}>
                 <span className="material-symbols-outlined text-sm mr-1" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
                 Most Reliable
               </span>
@@ -471,15 +488,15 @@ const Proveedores: React.FC = () => {
             <>
               <div className="flex items-baseline gap-xs">
                 <h3 className="font-display-lg text-display-lg text-on-surface">{formatCurrency(stats?.monthlySpending ?? 0)}</h3>
-                <span className={`${trendColor} font-semibold text-body-sm flex items-center`}>
+                <span className="font-semibold text-body-sm flex items-center" style={{ color: trendColor }}>
                   <span className="material-symbols-outlined text-sm">{trendIcon}</span>
                   {trendSign}{(stats?.spendingTrend ?? 0).toFixed(1)}%
                 </span>
               </div>
-              <div className="mt-md w-full bg-surface-container rounded-full h-2">
-                <div className="bg-primary h-2 rounded-full" style={{ width: `${stats?.monthlyBudgetPercent ?? 0}%` }} />
+              <div className="mt-md w-full rounded-full h-2" style={{ background: 'var(--color-surface-container)' }}>
+                <div className="h-2 rounded-full" style={{ background: 'var(--color-primary)', width: `${stats?.monthlyBudgetPercent ?? 0}%` }} />
               </div>
-              <p className="text-[10px] text-secondary mt-2">{stats?.monthlyBudgetPercent ?? 0}% del presupuesto mensual ejecutado</p>
+              <p style={{ fontSize: 10 }} className="text-secondary mt-2">{stats?.monthlyBudgetPercent ?? 0}% del presupuesto mensual ejecutado</p>
             </>
           )}
         </div>
@@ -493,6 +510,9 @@ const Proveedores: React.FC = () => {
             phone={supplier.contact_info ?? ''}
             imageUrl={supplier.photo_route}
             initials={getInitials(supplier.name)}
+            nit={supplier.nit}
+            address={supplier.address}
+            email={supplier.email}
             onEdit={() => openEdit(supplier)}
             onDelete={() => handleDelete(supplier)}
           />
@@ -500,7 +520,7 @@ const Proveedores: React.FC = () => {
 
         <div onClick={() => setShowCreateModal(true)} className="border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center justify-center p-lg hover:border-primary/50 transition-all cursor-pointer group min-h-[220px]">
           <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-secondary group-hover:bg-primary group-hover:text-white transition-all mb-md">
-            <span className="material-symbols-outlined text-[32px]">add</span>
+            <span className="material-symbols-outlined" style={{ fontSize: 32 }}>add</span>
           </div>
           <p className="font-headline-sm text-headline-sm text-secondary group-hover:text-on-surface">Agregar Proveedor</p>
         </div>
@@ -524,12 +544,7 @@ const Proveedores: React.FC = () => {
 
       {/* Create Supplier Modal */}
       {showCreateModal && (
-        <div style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          zIndex: 200,
-          backdropFilter: "blur(2px)",
-        }}>
+        <div className="overlay">
           <ModalContent
             title="Nuevo Proveedor"
             subtitle="Registre un nuevo proveedor en el sistema."
@@ -547,12 +562,7 @@ const Proveedores: React.FC = () => {
 
       {/* Edit Supplier Modal */}
       {showEditModal && editingSupplier && (
-        <div style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          zIndex: 200,
-          backdropFilter: "blur(2px)",
-        }}>
+        <div className="overlay">
           <ModalContent
             title={`Editar Proveedor: ${editingSupplier.name}`}
             subtitle="Modifique los campos necesarios y guarde los cambios."
