@@ -9,53 +9,24 @@ interface KPICardProps {
   variant?: 'primary' | 'secondary' | 'error' | 'neutral';
 }
 
-const variantConfig = {
-  primary: {
-    iconBg: 'bg-primary-container/10',
-    iconColor: 'text-primary',
-    trendBg: 'bg-green-100',
-    trendText: 'text-green-700'
-  },
-  secondary: {
-    iconBg: 'bg-secondary-container/20',
-    iconColor: 'text-secondary',
-    trendBg: 'bg-surface-container',
-    trendText: 'text-secondary'
-  },
-  error: {
-    iconBg: 'bg-error-container',
-    iconColor: 'text-error',
-    trendBg: 'bg-error-container/50',
-    trendText: 'text-error'
-  },
-  neutral: {
-    iconBg: 'bg-surface-container-highest',
-    iconColor: 'text-on-surface',
-    trendBg: 'bg-surface-container',
-    trendText: 'text-secondary'
-  }
-};
-
-function KPICard({ 
-  title, 
-  value, 
-  icon, 
-  trend, 
-  trendUp, 
-  variant = 'primary' 
+function KPICard({
+  title,
+  value,
+  icon,
+  trend,
+  trendUp,
+  variant = 'primary'
 }: KPICardProps) {
-  const config = variantConfig[variant] || variantConfig.primary;
-
   return (
-    <div className="bg-white p-lg rounded-xl shadow-sm border border-[#E2E8F0] hover:border-primary transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
-      <div className="flex justify-between items-start mb-md">
-        <div className={`p-sm ${config.iconBg} ${config.iconColor} rounded-lg`}>
-          <span className="material-symbols-outlined">{icon}</span>
+    <div className={`kpi-card kpi-variant-${variant}`}>
+      <div className="kpi-card-top">
+        <div className="kpi-card-icon">
+          <span className="material-symbols-outlined icon-md">{icon}</span>
         </div>
         {trend && (
-          <div className={`flex items-center px-xs py-[2px] rounded text-[10px] font-bold ${config.trendBg} ${config.trendText}`}>
+          <div className="kpi-card-trend">
             {trendUp !== null && (
-              <span className="material-symbols-outlined text-xs">
+              <span className="material-symbols-outlined icon-sm">
                 {trendUp ? 'trending_up' : 'trending_down'}
               </span>
             )}
@@ -63,8 +34,8 @@ function KPICard({
           </div>
         )}
       </div>
-      <p className="text-secondary font-label-md text-label-md">{title}</p>
-      <h3 className="font-headline-md text-headline-md text-on-surface mt-xs">{value}</h3>
+      <p className="kpi-card-label">{title}</p>
+      <h3 className="kpi-card-value">{value}</h3>
     </div>
   );
 }

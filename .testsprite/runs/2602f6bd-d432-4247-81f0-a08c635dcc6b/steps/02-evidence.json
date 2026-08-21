@@ -1,0 +1,8 @@
+[
+  {
+    "kind": "snapshot",
+    "stepIndex": 2,
+    "summary": "Step 2 'Navigate to https://lucky-moments-look.loca.lt/' passed (captured at 2026-08-21T22:33:39.481Z).",
+    "path": "steps/02-snapshot.html"
+  }
+]

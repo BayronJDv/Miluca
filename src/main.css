@@ -695,18 +695,40 @@
   }
 
   /* KPI cards (Análisis) */
-  .kpi-grid {
-    display: flex;
-    gap: 14px;
-    flex-wrap: wrap;
-    margin-bottom: 24px;
-  }
   .kpi-card {
     flex: 1 1 200px;
     background: var(--color-surface-lowest);
     border: 1px solid var(--color-outline-variant);
-    border-radius: 10px;
-    padding: 16px 18px;
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-lg);
+    transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+  }
+  .kpi-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, .08);
+    transform: translateY(-2px);
+  }
+  .kpi-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-md);
+  }
+  .kpi-card-icon {
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .kpi-card-trend {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px var(--spacing-xs);
+    border-radius: var(--radius-lg);
+    font-size: 10px;
+    font-weight: 700;
   }
   .kpi-card-label {
     font-size: 11px;
@@ -718,7 +740,7 @@
     font-size: 22px;
     font-weight: 700;
     color: var(--color-on-surface);
-    margin-top: 4px;
+    margin-top: var(--spacing-xs);
   }
   .kpi-card-hint {
     font-size: 12px;
@@ -726,6 +748,16 @@
     margin-top: 2px;
   }
 
+  /* Variantes de color para KPI card */
+  .kpi-variant-primary   .kpi-card-icon { background: color-mix(in srgb, var(--color-primary-container) 15%, transparent); color: var(--color-primary); }
+  .kpi-variant-secondary .kpi-card-icon { background: color-mix(in srgb, var(--color-secondary-container) 25%, transparent); color: var(--color-secondary); }
+  .kpi-variant-error     .kpi-card-icon { background: var(--color-error-container); color: var(--color-error); }
+  .kpi-variant-neutral   .kpi-card-icon { background: var(--color-surface-container-highest); color: var(--color-on-surface); }
+
+  .kpi-variant-primary   .kpi-card-trend { background: var(--color-success-bg); color: var(--color-success); }
+  .kpi-variant-secondary .kpi-card-trend { background: var(--color-surface-container); color: var(--color-secondary); }
+  .kpi-variant-error     .kpi-card-trend { background: color-mix(in srgb, var(--color-error-container) 50%, transparent); color: var(--color-error); }
+  .kpi-variant-neutral   .kpi-card-trend { background: var(--color-surface-container); color: var(--color-secondary); }
   /* Ranking panels (Análisis) */
   .ranking-grid {
     display: flex;
@@ -802,4 +834,72 @@
   /* Table min-width helpers */
   .min-w-600 { min-width: 600px; }
   .min-w-700 { min-width: 700px; }
+}
+
+/* Quick Access panel */
+.quick-access-panel {
+  background: var(--color-surface-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-lg);
+}
+.quick-access-title {
+  font-size: var(--font-size-headline-sm);
+  line-height: var(--line-height-headline-sm);
+  font-weight: var(--font-weight-headline-sm);
+  margin-bottom: var(--spacing-xl);
+}
+.quick-access-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: var(--spacing-md);
+}
+.quick-access-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg);
+  border: none;
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  flex: 1;
+  transition: background 0.2s;
+}
+.quick-access-btn .material-symbols-outlined {
+  font-size: 30px;
+  transition: transform 0.2s;
+}
+.quick-access-btn:hover .material-symbols-outlined {
+  transform: scale(1.1);
+}
+.quick-access-btn-label {
+  font-size: var(--font-size-label-md);
+  line-height: var(--line-height-label-md);
+  letter-spacing: var(--letter-spacing-label-md);
+  font-weight: var(--font-weight-label-md);
+}
+
+/* Variantes de color */
+.quick-access-primary {
+  background: color-mix(in srgb, var(--color-primary-container) 10%, transparent);
+  color: var(--color-primary);
+}
+.quick-access-primary:hover {
+  background: color-mix(in srgb, var(--color-primary-container) 20%, transparent);
+}
+.quick-access-secondary {
+  background: color-mix(in srgb, var(--color-secondary-container) 20%, transparent);
+  color: var(--color-secondary);
+}
+.quick-access-secondary:hover {
+  background: color-mix(in srgb, var(--color-secondary-container) 30%, transparent);
+}
+.quick-access-surface {
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface);
+}
+.quick-access-surface:hover {
+  background: var(--color-surface-container-highest);
 }

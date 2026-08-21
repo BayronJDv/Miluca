@@ -5,8 +5,9 @@ import { obtenerVentas, obtenerFactura, Venta, ItemVenta } from '../db/sales';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useAtomValue } from 'jotai';
-import { isAdminAtom, userIdAtom } from '../store/UserAtom';
+import { isAdminAtom, userIdAtom, userAtom } from '../store/UserAtom';
 import { devolverCliente, obtenerPendienteDevolucionVenta } from '../db/returns';
+import { imprimirFactura } from '../print/printer';
 
 const HistorialVentas: React.FC = () => {
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
@@ -18,6 +19,8 @@ const HistorialVentas: React.FC = () => {
   const [loadingDetalle, setLoadingDetalle] = useState<number | null>(null);
   const isAdmin = useAtomValue(isAdminAtom);
   const userId = useAtomValue(userIdAtom);
+  const currentUser = useAtomValue(userAtom);
+  const [printingId, setPrintingId] = useState<number | null>(null);
   const [returnTarget, setReturnTarget] = useState<{ saleId: number; batchId: number; name: string; max: number } | null>(null);
   const [returnQuantity, setReturnQuantity] = useState('');
   const [returnReason, setReturnReason] = useState('Devolución de cliente');
@@ -67,6 +70,20 @@ const HistorialVentas: React.FC = () => {
         if (factura) setDetallesCache(prev => ({ ...prev, [ventaId]: factura.items }));
       } catch (error) { console.error("Error al cargar detalles de la venta:", error); }
       finally { setLoadingDetalle(null); }
+    }
+  };
+
+  const handleReprint = async (ventaId: number) => {
+    setPrintingId(ventaId);
+    try {
+      const factura = await obtenerFactura(ventaId);
+      if (!factura) { alert('No se encontró la venta a reimprimir.'); return; }
+      await imprimirFactura({ factura, cashier: currentUser?.username ?? 'Cajero', isReprint: true });
+    } catch (error) {
+      console.error('Error al reimprimir ticket:', error);
+      alert('No se pudo reimprimir el ticket: ' + error);
+    } finally {
+      setPrintingId(null);
     }
   };
 
@@ -124,10 +141,16 @@ const HistorialVentas: React.FC = () => {
                     <td style={{ fontWeight: 700 }} className="align-right">{formatPrice(row.total)}</td>
                     {isAdmin && <td className="text-primary align-right" style={{ fontWeight: 700 }}>{formatPrice(row.profit)}</td>}
                     <td>
-                      <button onClick={() => row.id && handleToggleExpand(row.id)} className="btn-link">
-                        {expandedId === row.id ? "Ocultar" : "Ver detalle"}
-                        <Icon name={expandedId === row.id ? "minus" : "plus"} size={18} />
-                      </button>
+                      <div style={{ display: 'flex', gap: 14, justifyContent: 'flex-start', flexWrap: 'wrap' }}>
+                        <button onClick={() => row.id && handleToggleExpand(row.id)} className="btn-link">
+                          {expandedId === row.id ? "Ocultar" : "Ver detalle"}
+                          <Icon name={expandedId === row.id ? "minus" : "plus"} size={18} />
+                        </button>
+                        <button onClick={() => row.id && handleReprint(row.id)} className="btn-link" disabled={printingId === row.id}>
+                          {printingId === row.id ? 'Imprimiendo...' : 'Imprimir'}
+                          <Icon name="download" size={18} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                   {expandedId === row.id && (

@@ -1,12 +1,11 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { print_thermal_printer, ENCODE, type PrintJobRequest } from 'tauri-plugin-thermal-printer';
 import { Icon } from '../components/design/Icon';
 import Btn from '../components/design/Btn';
+import { QtyStepper } from '../components/design/QtyStepper';
 import { buscarProductosPorNombre, buscarProductosPorCodigo, Producto } from '../db/products';
 import { estimarUtilidadVenta, registrarVenta, Factura } from '../db/sales';
 import { mensajeError } from '../db/errors';
-import { getSelectedPrinter, getBusinessData } from '../db/settings';
-import { buildReceiptSections } from '../print/receipt';
+import { imprimirFactura } from '../print/printer';
 import { useAtomValue } from 'jotai';
 import { userAtom } from '../store/UserAtom';
 
@@ -54,11 +53,10 @@ const Pos: React.FC = () => {
     });
   }, [cart]);
 
-  const updateQuantity = useCallback((productId: number, delta: number) => {
+  const setQuantity = useCallback((productId: number, newQty: number) => {
     const item = cart.find(i => i.product_id === productId);
-    if (!item) return;
-    const newQty = item.qty + delta;
-    if (delta > 0 && newQty > item.product_stock) { alert(`Stock insuficiente. Solo hay ${item.product_stock}`); return; }
+    if (!item || newQty === item.qty) return;
+    if (newQty > item.product_stock) { alert(`Stock insuficiente. Solo hay ${item.product_stock}`); return; }
     setCart(prev => {
       if (newQty < 1) return prev.filter(i => i.product_id !== productId);
       return prev.map(i => i.product_id === productId
@@ -109,16 +107,9 @@ const Pos: React.FC = () => {
 
   const handlePrint = useCallback(async () => {
     if (!lastInvoice || !lastPayment) return;
-    const printer = getSelectedPrinter();
-    if (!printer) { alert('No hay una impresora seleccionada. Configúrala en la sección de Configuración.'); return; }
-    const business = getBusinessData();
-    const sections = buildReceiptSections({ business, factura: lastInvoice, cashier: currentUser?.username ?? 'Cajero', received: lastPayment.received, change: lastPayment.change });
     setPrinting(true);
-    try {
-      const request: PrintJobRequest = { printer, paper_size: 'Mm80', options: { code_page: 6, encode: ENCODE.WINDOWS_1252, use_gbk: false }, sections };
-      await print_thermal_printer(request);
-    } catch (error) { console.error('Error al imprimir:', error); alert('Error al imprimir el recibo: ' + error); }
-    finally { setPrinting(false); }
+    await imprimirFactura({ factura: lastInvoice, cashier: currentUser?.username ?? 'Cajero', received: lastPayment.received, change: lastPayment.change });
+    setPrinting(false);
   }, [lastInvoice, lastPayment, currentUser]);
 
   return (
@@ -180,11 +171,7 @@ const Pos: React.FC = () => {
                 {item.priceMode === 'mayorista' ? 'Mayorista' : item.priceMode === 'unitario' ? 'Precio unitario' : 'Precio automático'}
               </button>}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div className="stepper">
-                  <button onClick={() => updateQuantity(item.product_id, -1)} className="btn-icon" style={{ color: 'var(--color-on-surface)' }}><Icon name="minus" size={16} /></button>
-                  <span style={{ fontSize: 14, fontWeight: 700, minWidth: 20, textAlign: 'center' }}>{item.qty}</span>
-                  <button onClick={() => updateQuantity(item.product_id, 1)} className="btn-icon" style={{ color: 'var(--color-on-surface)' }}><Icon name="plus" size={16} /></button>
-                </div>
+                <QtyStepper value={item.qty} onChange={q => setQuantity(item.product_id, q)} />
                 <span className="text-primary" style={{ fontSize: 13, fontWeight: 600 }}>{formatPrice(item.price * item.qty)}</span>
               </div>
             </div>

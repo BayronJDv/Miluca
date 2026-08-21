@@ -42,8 +42,9 @@ export interface BuildReceiptInput {
   business: BusinessData;
   factura: Factura;
   cashier: string;
-  received: number;
-  change: number;
+  received?: number;
+  change?: number;
+  isReprint?: boolean;
 }
 
 export function buildReceiptSections({
@@ -52,6 +53,7 @@ export function buildReceiptSections({
   cashier,
   received,
   change,
+  isReprint,
 }: BuildReceiptInput): PrintSections[] {
   const { venta, items } = factura;
 
@@ -130,7 +132,9 @@ export function buildReceiptSections({
 
   const paymentRows: PrintSections[] = [
     { Text: { text: 'Forma de Pago: EFECTIVO', styles: leftStyle({ bold: true }) } },
-    {
+  ];
+  if (received !== undefined && change !== undefined) {
+    paymentRows.push({
       Table: {
         columns: 2,
         column_widths: [32, 16],
@@ -147,8 +151,8 @@ export function buildReceiptSections({
         ],
         truncate: false,
       },
-    },
-  ];
+    });
+  }
 
   return [
     { Title: { text: business.name, styles: centerStyle({ bold: true, size: 'double' }) } },
@@ -172,6 +176,7 @@ export function buildReceiptSections({
       : []),
     { Line: { character: '=' } },
     { Text: { text: 'RECIBO DE COMPRA', styles: centerStyle({ bold: true }) } },
+    ...(isReprint ? [{ Text: { text: '*** REIMPRESIÓN ***', styles: centerStyle({ bold: true }) } } as PrintSections] : []),
     { Text: { text: `Folio: #${folio}`, styles: leftStyle() } },
     { Text: { text: `Fecha: ${fechaFormateada}`, styles: leftStyle() } },
     { Text: { text: `Cajero: ${cashier}`, styles: leftStyle() } },

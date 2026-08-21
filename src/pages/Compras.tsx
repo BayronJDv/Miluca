@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Icon } from '../components/design/Icon';
 import Btn from '../components/design/Btn';
+import { QtyStepper } from '../components/design/QtyStepper';
 import { Input } from '../components/design/Input';
 import { Select } from '../components/design/Select';
 import { buscarProductosPorNombre, buscarProductosPorCodigo, crearProducto, Producto } from '../db/products';
@@ -60,9 +61,8 @@ const Compras: React.FC = () => {
     });
   }, []);
 
-  const updateQuantity = useCallback((productId: number, delta: number) => {
+  const setQuantity = useCallback((productId: number, newQty: number) => {
     setCart(prev => {
-      const newQty = (prev.find(i => i.product_id === productId)?.qty || 0) + delta;
       if (newQty < 1) return prev.filter(i => i.product_id !== productId);
       return prev.map(item => item.product_id === productId ? { ...item, qty: newQty } : item);
     });
@@ -168,11 +168,7 @@ const Compras: React.FC = () => {
                 <button onClick={() => removeItem(item.product_id)} className="btn-icon btn-icon--muted"><Icon name="close" size={16} /></button>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                <div className="stepper">
-                  <button onClick={() => updateQuantity(item.product_id, -1)} className="btn-icon" style={{ color: 'var(--color-on-surface)' }}><Icon name="minus" size={16} /></button>
-                  <span style={{ fontSize: 14, fontWeight: 700, minWidth: 20, textAlign: 'center' }}>{item.qty}</span>
-                  <button onClick={() => updateQuantity(item.product_id, 1)} className="btn-icon" style={{ color: 'var(--color-on-surface)' }}><Icon name="plus" size={16} /></button>
-                </div>
+                <QtyStepper value={item.qty} onChange={q => setQuantity(item.product_id, q)} />
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                   <span className="text-secondary" style={{ fontSize: 11 }}>$</span>
                   <input type="text" value={item.cost} onChange={e => { const val = Number(e.target.value.replace(/\D/g, "")) || 0; updateCost(item.product_id, val); }}

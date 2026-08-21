@@ -1,0 +1,8 @@
+[
+  {
+    "kind": "snapshot",
+    "stepIndex": 3,
+    "summary": "Step 3 'Test failed during execution (see the run log)' failed. Error: TEST BLOCKED\n\nThe page could not be reached — a server/tunnel error prevented the UI from loading and the assertions from being verified.\n\nObservations:\n- The page displayed '503 - Tunnel Unavailable' with no other content visible.\n- No heading, subtitle, logo, or interactive elements were present on the page, so the assertions could not be checked.",
+    "path": "steps/03-snapshot.html"
+  }
+]

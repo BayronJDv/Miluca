@@ -266,11 +266,12 @@ export async function obtenerFactura(id: number): Promise<Factura | null> {
       `SELECT 
         si.product_id,
         p.name as product_name,
-        p.price as price,
+         si.unit_price as price,
         si.quantity,
-        si.subtotal
-       FROM sale_items si
-       JOIN products p ON p.id = si.product_id
+         si.subtotal, si.batch_id, b.lot_number, b.expiration_date
+        FROM sale_items si
+        JOIN products p ON p.id = si.product_id
+        JOIN product_batches b ON b.id = si.batch_id
        WHERE si.sale_id = ?`,
       [id]
     );

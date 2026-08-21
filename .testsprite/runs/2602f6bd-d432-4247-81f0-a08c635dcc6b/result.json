@@ -1,0 +1,20 @@
+{
+  "testId": "42c0d2a1-7891-4828-acea-28b00b8c4732",
+  "status": "blocked",
+  "startedAt": null,
+  "finishedAt": "2026-08-21T22:34:38.643Z",
+  "videoUrl": "https://testsprite-videos.s3.us-east-1.amazonaws.com/20260821-223436-4928405f.webm",
+  "failureAnalysisUrl": null,
+  "snapshotId": "snap_988c3e036c0484e7",
+  "runIdIfAvailable": "2602f6bd-d432-4247-81f0-a08c635dcc6b",
+  "codeVersion": "v1.0",
+  "targetUrl": null,
+  "targetUrlSource": null,
+  "failedStepIndex": 3,
+  "failureKind": null,
+  "verdict": "blocked",
+  "executionStatus": "completed",
+  "summary": "Blocked before a verdict could be produced: The failure is most likely on the hosting side: the Cloudflare Tunnel cannot reach the upstream application, resulting in a 503 Tunnel Unavailable. This typically happens when the backend server is down, crashed, misconfigured, not listening on the expected port, the tunnel agent is disconnected, or the tunnel is pointing to the wrong origin address/service. Underlying error: TEST BLOCKED\n\nThe page could not be reached — a server/tunnel error prevente…",
+  "apiOutput": null,
+  "trace": null
+}

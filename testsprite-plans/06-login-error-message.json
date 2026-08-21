@@ -1,0 +1,13 @@
+{
+  "projectId": "b09c6c00-c23b-4619-a9bb-bfcb6d4e7797",
+  "type": "frontend",
+  "name": "Login attempt shows error message for invalid credentials",
+  "planSteps": [
+    { "type": "action", "description": "Navigate to the application's root URL" },
+    { "type": "action", "description": "Type 'wronguser' into the 'Usuario' input field" },
+    { "type": "action", "description": "Type 'wrongpass' into the 'Contraseña' input field" },
+    { "type": "action", "description": "Click the 'Ingresar' button to submit the form" },
+    { "type": "assertion", "description": "After a brief loading state, a red error box appears containing the text 'Credenciales inválidas. Verifique usuario y contraseña'" },
+    { "type": "assertion", "description": "The login form remains visible with the username and password fields still present" }
+  ]
+}
