@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { confirm } from "@tauri-apps/plugin-dialog";
 import PageHeader from "../components/design/PageHeader";
 import Btn from "../components/design/Btn";
 import { Icon } from "../components/design/Icon";
@@ -125,7 +126,6 @@ function ProductForm({
             <input
               className="control"
               value={value.code}
-              disabled={editing}
               onChange={(e) => onChange("code", e.target.value)}
               placeholder="770..."
             />
@@ -452,7 +452,14 @@ export default function Inventario() {
     setMovements(movementRows as any[]);
   };
   const remove = async (product: Producto) => {
-    if (product.id && confirm(`¿Eliminar ${product.name}?`)) {
+    if (!product.id) return;
+    const ok = await confirm(`¿Eliminar ${product.name}?`, {
+      title: "Eliminar producto",
+      kind: "warning",
+      okLabel: "Eliminar",
+      cancelLabel: "Cancelar",
+    });
+    if (ok) {
       await eliminarProducto(product.id);
       await load();
     }
@@ -557,7 +564,7 @@ export default function Inventario() {
                     {p.has_invima ? "INVIMA activo" : "Sin INVIMA"}
                   </div>
                 </td>
-                <td style={{ whiteSpace: "nowrap" }}>
+                <td style={{ display: "flex", justifyContent: "space-between" }}>
                   <button
                     title="Ver lotes y kardex"
                     onClick={() => openDetail(p)}

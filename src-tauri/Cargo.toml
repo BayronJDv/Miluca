@@ -1,6 +1,6 @@
 [package]
 name = "gualcala"
-version = "1.0.0"
+version = "5.0.0"
 description = "Una aplicacion de punto de venta"
 authors = ["you"]
 edition = "2021"
@@ -26,3 +26,5 @@ tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 tauri-plugin-dialog = "2"
 base64 = "0.22"
 tauri-plugin-thermal-printer = "2.1.4"
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"

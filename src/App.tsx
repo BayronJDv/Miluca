@@ -19,8 +19,9 @@ import Kardex from "./pages/Kardex";
 import Bajas from "./pages/Bajas";
 import Configuracion from "./pages/Configuracion";
 import HistorialEdiciones from "./pages/HistorialEdiciones";
-import AnalisisVentas from "./pages/Analisis";
+//import AnalisisVentas from "./pages/Analisis";
 import { marcarLotesVencidos } from "./db/batches";
+import { checkForUpdates } from "./utils/updater";
 
 
 function App() {
@@ -28,7 +29,10 @@ function App() {
   const userReady = useAtomValue(userAtom);
 
   useEffect(() => {
-    if (userReady) marcarLotesVencidos().catch(error => console.error('Error actualizando lotes vencidos:', error));
+    if (userReady) {
+      marcarLotesVencidos().catch(error => console.error('Error actualizando lotes vencidos:', error));
+      checkForUpdates();
+    }
   }, [userReady]);
 
   if (!user) {
@@ -66,11 +70,13 @@ function App() {
                   <HistorialEdiciones />
                 </ProtectedRoute>
               } />
+              {/*  
               <Route path="/analisis" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <AnalisisVentas />
                 </ProtectedRoute>
               } />
+               */}
               <Route path="/configuracion" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <Configuracion />

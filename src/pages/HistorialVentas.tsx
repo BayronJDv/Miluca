@@ -126,7 +126,7 @@ const HistorialVentas: React.FC = () => {
         {loading ? (
           <div className="empty-state">Cargando historial de ventas...</div>
         ) : (
-          <table className="data-table" style={{ minWidth: 650 }}>
+          <table className="data-table" >
             <thead><tr>
               {getTableHeaders().map(header => (
                 <th key={header} className={header === "TOTAL" || header === "GANANCIA" ? 'align-right' : ''}>{header}</th>
@@ -141,7 +141,7 @@ const HistorialVentas: React.FC = () => {
                     <td style={{ fontWeight: 700 }} className="align-right">{formatPrice(row.total)}</td>
                     {isAdmin && <td className="text-primary align-right" style={{ fontWeight: 700 }}>{formatPrice(row.profit)}</td>}
                     <td>
-                      <div style={{ display: 'flex', gap: 14, justifyContent: 'flex-start', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: 14, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                         <button onClick={() => row.id && handleToggleExpand(row.id)} className="btn-link">
                           {expandedId === row.id ? "Ocultar" : "Ver detalle"}
                           <Icon name={expandedId === row.id ? "minus" : "plus"} size={18} />

@@ -185,7 +185,7 @@ export default function Reportes() {
         ) : rows.length === 0 ? (
           <div className="empty-state">No se encontraron datos en el rango seleccionado</div>
         ) : (
-          <table className="data-table min-w-600">
+          <table className="data-table ">
             <thead>
               <tr>
                 {["FECHA", "VENTAS", "N° VENTAS", "GANANCIA", "EGRESOS"].map(header => (

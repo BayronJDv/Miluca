@@ -606,7 +606,7 @@ export default function Configuracion() {
               />
             </div>
             <Input
-              label="RFC"
+              label="NIT"
               value={businessForm.rfc}
               onChange={(v) => setBusinessForm((prev) => ({ ...prev, rfc: v }))}
               icon="info"

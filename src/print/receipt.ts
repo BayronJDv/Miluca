@@ -169,7 +169,7 @@ export function buildReceiptSections({
       ? [{ Text: { text: `Tel: ${business.phone}`, styles: centerStyle() } } as PrintSections]
       : []),
     ...(business.rfc
-      ? [{ Text: { text: `RFC: ${business.rfc}`, styles: centerStyle() } } as PrintSections]
+      ? [{ Text: { text: `NIT: ${business.rfc}`, styles: centerStyle() } } as PrintSections]
       : []),
     ...(business.email
       ? [{ Text: { text: business.email, styles: centerStyle() } } as PrintSections]
