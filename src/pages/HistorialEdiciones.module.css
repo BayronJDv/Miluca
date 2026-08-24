@@ -1,0 +1,20 @@
+/* pages/HistorialEdiciones.module.css */
+.root { animation: page-fade-up 0.5s ease-in-out; }
+@keyframes page-fade-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+.cardWrapper { overflow-x: auto; margin-top: 24px; }
+.tableWide { min-width: 750px; }
+.codeCell { font-weight: 600; color: var(--color-secondary); }
+.productCell { font-weight: 500; }
+.reasonCell { font-style: italic; color: var(--color-on-surface-variant); }
+.detailCell { padding: 16px 24px; }
+.detailCard { border-radius: 8px; }
+.detailHeader { font-size: 12px; font-weight: 700; color: var(--color-secondary); }
+.detailHeadRow { background: var(--color-surface-container-lowest); }
+.detailTh { padding: 8px 16px; font-size: 11px; font-weight: 600; }
+.labelCell { font-weight: 600; }
+.oldValue { text-decoration: line-through; color: var(--color-outline); }
+.newValue { font-weight: 700; }
+.indicator { font-size: 11px; }
+.emptySmall { font-size: 13px; }
+.emptyItalic { font-style: italic; }

@@ -1,0 +1,72 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(15,23,42,.48);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  backdrop-filter: blur(2px);
+}
+.solid {
+  background: rgba(0,0,0,.5);
+  z-index: 1000;
+  backdrop-filter: none;
+}
+.modal {
+  background: var(--color-surface-container-lowest);
+  border-radius: 12px;
+  width: 420px;
+  max-width: 95vw;
+  padding: 24px;
+  box-sizing: border-box;
+}
+.confirm { width: 420px; }
+.receipt { width: 500px; max-width: 90vw; max-height: 80vh; overflow: auto; padding: 24px; }
+.sheet { border-radius: 14px; box-shadow: 0 8px 40px rgba(0,0,0,.2); max-height: 94vh; overflow-y: auto; width: 680px; max-width: 95vw; padding: 0; }
+.supplier { width: 520px; max-width: 95vw; max-height: 92vh; overflow-y: auto; border-radius: 14px; box-shadow: 0 8px 40px rgba(0,0,0,.18); }
+.detail { width: 820px; max-width: 95vw; padding: 24px; }
+.header { padding: 20px 24px 16px; border-bottom: 1px solid var(--color-outline-variant); display: flex; justify-content: space-between; align-items: center; }
+.body { padding: 24px; }
+.footer { padding: 14px 24px 20px; border-top: 1px solid var(--color-outline-variant); display: flex; justify-content: flex-end; gap: 10px; }
+.iconBox {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--color-primary);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.closeBtn {
+  background: none; border: none; cursor: pointer;
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-outline);
+  transition: background 0.15s;
+}
+.photoPreview {
+  position: relative;
+  width: 140px; height: 140px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--color-outline-variant);
+  margin-bottom: 8px;
+}
+.photoRemove {
+  position: absolute; top: 4px; right: 4px;
+  width: 28px; height: 28px; border-radius: 50%;
+  border: none; cursor: pointer;
+  background: rgba(0,0,0,0.55);
+  color: var(--color-on-primary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.photoUpload {
+  width: 140px; height: 140px; border-radius: 12px;
+  border: 2px dashed var(--color-outline-variant);
+  background: var(--color-surface-container-low);
+  cursor: pointer;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 6px; color: var(--color-secondary); font-size: 12px;
+  transition: border-color 0.15s, background 0.15s;
+}

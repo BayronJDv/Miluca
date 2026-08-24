@@ -8,6 +8,7 @@ import { mensajeError } from '../db/errors';
 import { imprimirFactura } from '../print/printer';
 import { useAtomValue } from 'jotai';
 import { userAtom } from '../store/UserAtom';
+import styles from './Pos.module.css';
 
 interface CartItem {
   id: number; name: string; price: number; qty: number;
@@ -113,38 +114,37 @@ const Pos: React.FC = () => {
   }, [lastInvoice, lastPayment, currentUser]);
 
   return (
-    <div className="fade-up page-split">
+    <div className={`${styles.root} page-split`}>
       <div className="page-split-left">
-        <div className="page-card page-card--pad" style={{ border: '2px dashed var(--color-primary)' }}>
+        <div className={`page-card page-card--pad ${styles.barcodeCard}`}>
           <div className="section-label">ESCANEO DE CÓDIGO DE BARRAS</div>
           <input type="text" placeholder="Escanear o ingresar código de barras..."
             onKeyDown={e => { if (e.key === 'Enter') { handleBarcode((e.target as HTMLInputElement).value); (e.target as HTMLInputElement).value = ''; } }}
             className="control control--xl" autoFocus />
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <div style={{ flex: 1, position: 'relative' }}>
-            <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-outline)', display: 'flex' }}>
+        <div className={styles.searchRow}>
+          <div className={styles.searchWrapper}>
+            <span className={styles.searchIcon}>
               <Icon name="search" size={16} />
             </span>
-            <input placeholder="Búsqueda manual por nombre..." value={search} onChange={e => handleSearch(e.target.value)}
-              style={{ width: '100%', height: 42, paddingLeft: 34, paddingRight: 12, border: '1px solid var(--color-outline-variant)', borderRadius: 8, fontSize: 14, background: '#fff' }} />
+            <input placeholder="Búsqueda manual por nombre..." value={search} onChange={e => handleSearch(e.target.value)} className={styles.searchInput} />
           </div>
         </div>
         <div className="result-list">
           <div className="page-card-header">
-            <span style={{ fontWeight: 600, fontSize: 14 }}>Resultados de Búsqueda</span>
-            <span className="text-secondary" style={{ fontSize: 12, fontWeight: 600 }}>STOCK DISPONIBLE</span>
+            <span className={styles.resultsTitle}>Resultados de Búsqueda</span>
+            <span className={`text-secondary ${styles.resultsSubtitle}`}>STOCK DISPONIBLE</span>
           </div>
-          {loading && <div style={{ padding: 20, textAlign: 'center' }}>Buscando...</div>}
+          {loading && <div className={styles.loadingBox}>Buscando...</div>}
           {products.map(product => (
             <div key={product.id} onClick={() => addToCart(product)} className="result-row">
               <div className="result-thumb"><Icon name="box" size={18} color="var(--color-secondary)" /></div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 14, fontWeight: 600 }}>{product.name}</div>
-                <div className="text-secondary" style={{ fontSize: 12 }}>Cód: {product.code}</div>
+              <div className={styles.productInfo}>
+                <div className={styles.productName}>{product.name}</div>
+                <div className={`text-secondary ${styles.productCode}`}>Cód: {product.code}</div>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <div className="text-primary" style={{ fontSize: 15, fontWeight: 700 }}>{formatPrice(product.price)}</div>
+              <div className={styles.priceRight}>
+                <div className={`text-primary ${styles.priceValue}`}>{formatPrice(product.price)}</div>
               </div>
             </div>
           ))}
@@ -154,53 +154,52 @@ const Pos: React.FC = () => {
 
       <div className="page-split-right">
         <div className="page-card-header">
-          <div style={{ fontWeight: 700, fontSize: 15 }}>Carrito de Venta</div>
+          <div className={styles.cartHeader}>Carrito de Venta</div>
           <button onClick={clearCart} className="btn-icon btn-icon--muted"><Icon name="trash" size={18} /></button>
         </div>
-        <div style={{ flex: 1, overflow: 'auto', padding: '8px 0' }}>
+        <div className={styles.cartScroll}>
           {cart.map(item => (
-            <div key={item.product_id} style={{ padding: '12px 20px', borderBottom: '1px solid var(--color-surface-container)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, flex: 1, marginRight: 8 }}>{item.name}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ fontSize: 14, fontWeight: 700 }}>{formatPrice(item.price)}</span>
+            <div key={item.product_id} className={styles.cartItem}>
+              <div className={styles.cartItemTop}>
+                <span className={styles.cartItemName}>{item.name}</span>
+                <div className={styles.cartItemPriceBox}>
+                  <span className={styles.cartItemPrice}>{formatPrice(item.price)}</span>
                   <button onClick={() => removeItem(item.product_id)} className="btn-icon btn-icon--muted"><Icon name="close" size={16} /></button>
                 </div>
               </div>
-              {item.wholesalePrice && <button onClick={() => togglePriceMode(item.product_id)} className="btn-link" style={{ fontSize: 11, padding: 0 }}>
+              {item.wholesalePrice && <button onClick={() => togglePriceMode(item.product_id)} className={`btn-link ${styles.wholesaleBtn}`}>
                 {item.priceMode === 'mayorista' ? 'Mayorista' : item.priceMode === 'unitario' ? 'Precio unitario' : 'Precio automático'}
               </button>}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div className={styles.cartItemBottom}>
                 <QtyStepper value={item.qty} onChange={q => setQuantity(item.product_id, q)} />
-                <span className="text-primary" style={{ fontSize: 13, fontWeight: 600 }}>{formatPrice(item.price * item.qty)}</span>
+                <span className={`text-primary ${styles.cartSubtotal}`}>{formatPrice(item.price * item.qty)}</span>
               </div>
             </div>
           ))}
           {cart.length === 0 && <div className="empty-state">Carrito vacío</div>}
         </div>
         <div className="cart-footer">
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-            <span className="text-secondary" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em' }}>TOTAL ACUMULADO</span>
-            <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--color-on-surface)', letterSpacing: '-0.02em' }}>{formatPrice(total)}</span>
+          <div className={styles.footerRow}>
+            <span className={`text-secondary ${styles.footerLabel}`}>TOTAL ACUMULADO</span>
+            <span className={styles.footerTotal}>{formatPrice(total)}</span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
+          <div className={styles.receiveGrid}>
             <div>
-              <div className="text-secondary" style={{ fontSize: 11, fontWeight: 600, marginBottom: 4 }}>VALOR RECIBIDO</div>
-              <div style={{ position: 'relative' }}>
-                <span className="text-secondary" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14 }}>$</span>
-                <input type="text" value={received} onChange={e => setReceived(e.target.value)}
-                  style={{ width: '100%', height: 40, paddingLeft: 24, borderRadius: 8, border: '1px solid var(--color-outline-variant)', fontSize: 15, fontWeight: 700, background: '#fff' }} />
+              <div className={`text-secondary ${styles.receiveLabel}`}>VALOR RECIBIDO</div>
+              <div className={styles.receiveWrapper}>
+                <span className={`text-secondary ${styles.receivePrefix}`}>$</span>
+                <input type="text" value={received} onChange={e => setReceived(e.target.value)} className={styles.receiveInput} />
               </div>
             </div>
             <div>
-              <div className="text-secondary" style={{ fontSize: 11, fontWeight: 600, marginBottom: 4 }}>CAMBIO</div>
-              <div style={{ height: 40, display: 'flex', alignItems: 'center', fontSize: 18, fontWeight: 800, color: change >= 0 ? 'var(--color-success)' : 'var(--color-error)' }}>
+              <div className={`text-secondary ${styles.receiveLabel}`}>CAMBIO</div>
+              <div className={`${styles.changeBox} ${change >= 0 ? styles.changeSuccess : styles.changeError}`}>
                 {formatPrice(change)}
               </div>
             </div>
           </div>
-          <button onClick={handleConfirmSale} className="btn-solid btn-solid--md" style={{ width: '100%' }}>
-            <Icon name="confirm" size={18} color="#fff" />
+          <button onClick={handleConfirmSale} className={`btn-solid btn-solid--md ${styles.fullBtn}`}>
+            <Icon name="confirm" size={18} color="var(--color-on-primary)" />
             Confirmar Venta
           </button>
         </div>
@@ -209,21 +208,21 @@ const Pos: React.FC = () => {
       {showInvoice && lastInvoice && (
         <div className="overlay overlay--solid">
           <div className="modal--receipt modal">
-            <h2 style={{ marginBottom: 16 }}>Comprobante de Venta</h2>
-            <div style={{ marginBottom: 16 }}>
+            <h2 className={styles.invoiceTitle}>Comprobante de Venta</h2>
+            <div className={styles.invoiceSection}>
               <p><strong>Factura #:</strong> {lastInvoice.venta.id}</p>
               <p><strong>Fecha:</strong> {new Date(lastInvoice.venta.sale_date).toLocaleString('es-CO', { timeZone: 'America/Bogota' })}</p>
               <p><strong>Total:</strong> {formatPrice(lastInvoice.venta.total)}</p>
               <p><strong>Ganancia:</strong> {formatPrice(lastInvoice.venta.profit)}</p>
             </div>
-            <table className="data-table" style={{ marginBottom: 16 }}>
+            <table className={`data-table ${styles.invoiceTable}`}>
               <thead><tr>
                 <th>Producto</th><th className="align-right">Cant.</th><th className="align-right">Precio</th><th className="align-right">Subtotal</th>
               </tr></thead>
               <tbody>
                 {lastInvoice.items.map(item => (
                   <tr key={`${item.product_id}-${item.batch_id ?? item.quantity}`}>
-                    <td>{item.product_name}<div className="text-secondary" style={{ fontSize: 10 }}>{item.lot_number ? `Lote ${item.lot_number}` : ''}{item.expiration_date ? ` · Vence ${item.expiration_date}` : ''}</div></td>
+                    <td>{item.product_name}<div className={`text-secondary ${styles.invoiceLot}`}>{item.lot_number ? `Lote ${item.lot_number}` : ''}{item.expiration_date ? ` · Vence ${item.expiration_date}` : ''}</div></td>
                     <td className="align-right">{item.quantity}</td>
                     <td className="align-right">{formatPrice(item.price)}</td>
                     <td className="align-right">{formatPrice(item.subtotal)}</td>
@@ -231,7 +230,7 @@ const Pos: React.FC = () => {
                 ))}
               </tbody>
             </table>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+            <div className={styles.invoiceActions}>
               <Btn variant="ghost" onClick={() => { setShowInvoice(false); setLastInvoice(null); setLastPayment(null); }}>Cerrar</Btn>
               <Btn icon="download" onClick={handlePrint} disabled={printing}>{printing ? 'Imprimiendo...' : 'Imprimir'}</Btn>
             </div>

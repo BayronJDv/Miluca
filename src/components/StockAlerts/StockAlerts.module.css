@@ -1,12 +1,216 @@
-/* Estilos específicos de Alertas de Stock */
-.stock-item {
-  transition: all 0.2s ease;
+/* components/StockAlerts/StockAlerts.module.css */
+.section {
+  background: var(--color-surface-container-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-lg);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.stock-item:hover {
-  background: linear-gradient(90deg, transparent, rgba(0, 88, 190, 0.05), transparent);
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
 }
 
-.progress-bar {
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.headerIcon {
+  color: var(--color-error);
+}
+
+.title {
+  font-size: var(--font-size-headline-sm);
+  line-height: var(--line-height-headline-sm);
+  font-weight: var(--font-weight-headline-sm);
+}
+
+.slideControls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--color-secondary);
+}
+
+.slideBtn {
+  padding: 4px;
+  border-radius: var(--radius-lg);
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--color-secondary);
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.slideBtn:hover:not(:disabled) {
+  background: var(--color-surface-container);
+}
+
+.slideBtn:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+}
+
+.slideCounter {
+  font-size: 12px;
+  font-weight: 600;
+  user-select: none;
+}
+
+.expiryBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  border-radius: var(--radius-lg);
+  background: var(--color-warning-bg);
+  border: 1px solid color-mix(in srgb, var(--color-warning) 30%, transparent);
+  color: color-mix(in srgb, var(--color-warning) 70%, #000);
+  text-decoration: none;
+}
+
+.expiryArrow {
+  font-weight: 600;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.empty {
+  text-align: center;
+  color: var(--color-secondary);
+  padding: var(--spacing-md);
+  font-size: 13px;
+}
+
+.alertRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  background: var(--color-background);
+  border-radius: var(--radius-lg);
+  transition: background 0.2s;
+}
+
+.alertRow:hover {
+  background: var(--color-surface-container);
+}
+
+.alertInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.productName {
+  font-size: var(--font-size-body-md);
+  color: var(--color-on-surface);
+  font-weight: 600;
+}
+
+.productId {
+  font-size: 12px;
+  color: var(--color-secondary);
+}
+
+.alertRight {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.stockInfo {
+  text-align: right;
+}
+
+.stockLine {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  justify-content: flex-end;
+}
+
+.stockCurrent {
+  font-size: var(--font-size-body-sm);
+  font-weight: 700;
+}
+
+.stockCurrent.error { color: var(--color-error); }
+.stockCurrent.warning { color: var(--color-warning); }
+.stockCurrent.success { color: var(--color-success); }
+
+.stockMin {
+  font-size: 12px;
+  color: var(--color-secondary);
+}
+
+.barTrack {
+  width: 128px;
+  height: 4px;
+  background: var(--color-outline-variant);
+  border-radius: 9999px;
+  margin-top: var(--spacing-xs);
+  margin-left: auto;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 9999px;
   transition: width 0.5s ease-out;
+}
+
+.barFill.error { background: var(--color-error); }
+.barFill.warning { background: var(--color-warning); }
+.barFill.success { background: var(--color-success); }
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.alertRow:hover .actions {
+  opacity: 1;
+}
+
+.actionBtn {
+  padding: 4px;
+  border-radius: 9999px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-secondary);
+  transition: background 0.15s;
+}
+
+.actionBtn:hover {
+  background: var(--color-outline-variant);
+}
+
+.actionBtn.delete {
+  color: var(--color-error);
+}
+
+.actionBtn.delete:hover {
+  background: var(--color-danger-bg);
+}
+
+.actionBtn .material-symbols-outlined {
+  font-size: 20px;
 }

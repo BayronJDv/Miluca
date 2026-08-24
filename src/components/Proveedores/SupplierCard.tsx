@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import styles from './SupplierCard.module.css';
 
 interface SupplierCardProps {
   name: string;
@@ -37,48 +38,48 @@ const SupplierCard: React.FC<SupplierCardProps> = ({ name, phone, imageUrl, icon
   }, [imageUrl]);
 
   return (
-    <div className="bg-white p-lg rounded-xl flex flex-col items-center text-center transition-all hover:shadow-md border border-outline-variant card-shadow">
-      <div className="w-20 h-20 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden mb-md">
+    <div className={styles.card}>
+      <div className={styles.avatar}>
         {loadingImg ? (
-          <div className="w-full h-full bg-surface-container-high animate-pulse rounded-full" />
+          <div className={styles.avatarLoading} />
         ) : imgSrc ? (
-          <img src={imgSrc} alt={name} className="w-full h-full object-cover" />
+          <img src={imgSrc} alt={name} className={styles.avatarImg} />
         ) : icon ? (
-          <span className="material-symbols-outlined text-outline text-4xl">{icon}</span>
+          <span className={`material-symbols-outlined ${styles.avatarIcon}`}>{icon}</span>
         ) : (
-          <span className="text-primary-container font-bold text-2xl">{initials}</span>
+          <span className={styles.avatarInitials}>{initials}</span>
         )}
       </div>
-      <h4 className="font-headline-sm text-headline-sm text-on-surface mb-xs">{name}</h4>
+      <h4 className={styles.name}>{name}</h4>
       {phone && (
-        <p className="text-body-md text-secondary flex items-center justify-center">
-          <span className="material-symbols-outlined text-sm mr-xs">call</span>
+        <p className={styles.infoLine}>
+          <span className={`material-symbols-outlined ${styles.infoIcon}`}>call</span>
           {phone}
         </p>
       )}
       {nit && (
-        <p className="text-body-sm text-secondary flex items-center justify-center">
-          <span className="material-symbols-outlined text-sm mr-xs">receipt_long</span>
+        <p className={styles.infoLineSm}>
+          <span className={`material-symbols-outlined ${styles.infoIcon}`}>receipt_long</span>
           NIT: {nit}
         </p>
       )}
       {email && (
-        <p className="text-body-sm text-secondary flex items-center justify-center break-all">
-          <span className="material-symbols-outlined text-sm mr-xs">mail</span>
+        <p className={styles.infoLineSmBreak}>
+          <span className={`material-symbols-outlined ${styles.infoIcon}`}>mail</span>
           {email}
         </p>
       )}
       {address && (
-        <p className="text-body-sm text-secondary flex items-center justify-center">
-          <span className="material-symbols-outlined text-sm mr-xs">location_on</span>
+        <p className={styles.infoLineSm}>
+          <span className={`material-symbols-outlined ${styles.infoIcon}`}>location_on</span>
           {address}
         </p>
       )}
-      <div className="mt-lg pt-md border-t border-outline-variant w-full flex justify-center gap-md">
-        <button onClick={onEdit} className="text-primary hover:text-primary-container font-label-md text-label-md">
+      <div className={styles.actions}>
+        <button onClick={onEdit} className={styles.btnEdit}>
           Editar
         </button>
-        <button onClick={onDelete} className="text-error hover:text-red-700 font-label-md text-label-md">
+        <button onClick={onDelete} className={styles.btnDelete}>
           Eliminar
         </button>
       </div>

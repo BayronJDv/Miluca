@@ -1,0 +1,210 @@
+/* components/Login/Login.module.css */
+.root {
+  min-height: 100vh;
+  min-width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--color-surface);
+  background-image: radial-gradient(var(--color-surface-variant) 0.5px, transparent 0.5px);
+  background-size: 24px 24px;
+}
+
+.loginCard {
+  position: relative;  
+  width: 100%;
+  max-width: 420px;
+  animation: zoomIn 0.45s ease both;
+  border-radius: 0,45rem;
+}
+
+@property --gradient-angle {
+  syntax: "<angle>";
+  initial-value: 90deg;
+  inherits: false;
+}
+
+loginCard::after,
+loginCard::before {
+  content: " ";
+  position: absolute;
+  z-index: -1;
+  inset: -0.15rem;
+  background: conic-gradient(
+    from var(--color-tertiary-fixed-dim),
+    var(--color-inverse-surface),
+    var(--color-surface-container-highest),
+    var(--color-outline-variant),
+    var(--color-outline-variant),
+    var(--color-surface-container-highest),
+    var(--color-inverse-surface),
+    var(--color-tertiary-fixed-dim)
+  );
+  border-radius: inherit;
+  animation: rotate 2.5s linear infinite;
+}
+
+.card::after {
+  filter: blur(0rem);
+}
+
+@keyframes rotate {
+  0% {
+    --gradient-angle: 0deg;
+  }
+  100% {
+    --gradient-angle: 360deg;
+  }
+}
+
+
+@keyframes zoomIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.card {
+  background: var(--color-surface-container-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 12px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+}
+
+.logoSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.logo {
+  width: 60px;
+  height: 60px;
+  background: var(--color-primary);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(0, 88, 190, 0.35);
+  margin-bottom: 12px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-on-surface);
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--color-secondary);
+  text-align: center;
+}
+
+.errorBox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  background: var(--color-error-container);
+  border: 1px solid rgba(186, 26, 26, 0.2);
+  border-radius: 8px;
+  color: var(--color-on-error-container);
+}
+
+.errorText {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.passwordLabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--color-on-surface-variant);
+}
+
+.passwordLabelRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.passwordField {
+  position: relative;
+}
+
+.passwordIcon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-outline);
+  display: flex;
+}
+
+.passwordInput {
+  width: 80%;
+  height: 40px;
+  padding-left: 34px;
+  padding-right: 44px;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--color-surface-container-lowest);
+  font-family: inherit;
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-outline);
+  display: flex;
+}
+
+.submitBtn {
+  width: 100%;
+  height: 44px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.15s;
+}
+
+.submitBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.spinIcon {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

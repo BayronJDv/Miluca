@@ -9,6 +9,7 @@ import PageHeader from "../components/design/PageHeader";
 import Btn from "../components/design/Btn";
 import { userIdAtom } from "../store/UserAtom";
 import { useAtomValue } from "jotai";
+import styles from './Vencimientos.module.css';
 
 type LotRow = ProductBatch & { product_name?: string };
 
@@ -50,24 +51,25 @@ export default function Vencimientos() {
     }
   };
   return (
-    <div className="fade-up">
+    <div className={styles.root}>
       <PageHeader
         title="Vencimientos y bajas"
         subtitle="Control de lotes próximos a vencer y vencidos"
       />
       <div className="filter-bar">
+        <h3 className={styles.formTitle}>Dias de alerta</h3>
         <label className="field">
-          Días de alerta{" "}
           <input
             type="number"
             min={1}
             value={days}
             onChange={(e) => setDays(Number(e.target.value) || 30)}
+            className="control"
           />
         </label>
       </div>
       <div className="page-card page-card--pad">
-        <div style={{ overflow: "auto" }}>
+        <div className={styles.tableWrap}>
           <table className="data-table">
             <thead>
               <tr>
@@ -118,12 +120,12 @@ export default function Vencimientos() {
       {selectedRow && (
         <div className="overlay">
           <div className="modal">
-            <h3 style={{ marginTop: 0 }}>Registrar baja</h3>
+            <h3 className={styles.modalTitle}>Registrar baja</h3>
             <p className="text-secondary">
               {selectedRow.product_name} · lote {selectedRow.lot_number} ·
               disponibles {selectedRow.quantity}
             </p>
-            <label className="field" style={{ marginTop: 12 }}>
+            <label className={`field ${styles.fieldSpaced}`}>
               Cantidad
               <input
                 type="number"
@@ -133,7 +135,7 @@ export default function Vencimientos() {
                 onChange={(e) => setQuantity(e.target.value)}
               />
             </label>
-            <label className="field" style={{ marginTop: 12 }}>
+            <label className={`field ${styles.fieldSpaced}`}>
               Motivo
               <select
                 value={reason}
@@ -145,21 +147,14 @@ export default function Vencimientos() {
                 <option value="otro">Otro</option>
               </select>
             </label>
-            <label className="field" style={{ marginTop: 12 }}>
+            <label className={`field ${styles.fieldSpaced}`}>
               Notas
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
               />
             </label>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: 8,
-                marginTop: 16,
-              }}
-            >
+            <div className={styles.modalActions}>
               <Btn variant="ghost" onClick={() => setSelectedRow(null)}>
                 Cancelar
               </Btn>

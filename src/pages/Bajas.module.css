@@ -1,0 +1,46 @@
+/* pages/Bajas.module.css */
+.root {
+  animation: page-fade-up 0.5s ease-in-out;
+}
+
+@keyframes page-fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.formCard {
+  margin-bottom: 18px;
+}
+
+.formTitle {
+  margin-top: 0;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 12px;
+  align-items: end;
+}
+
+.notesField {
+  grid-column: 2 / 4;
+}
+
+.submitRow {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.historyTitle {
+  padding: 18px 20px;
+  margin: 0;
+}
+
+.tableWrapper {
+  overflow: auto;
+}
+
+.autocompleteWrapper { position: relative; }
+.tableWide { min-width: 800px; }

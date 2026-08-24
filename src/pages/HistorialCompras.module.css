@@ -1,0 +1,18 @@
+/* pages/HistorialCompras.module.css */
+.root { animation: page-fade-up 0.5s ease-in-out; }
+@keyframes page-fade-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+.filtersBar { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; align-items: flex-end; }
+.searchField { flex: 1; min-width: 300px; }
+.tableWide { min-width: 650px; }
+.idCell { font-weight: 600; color: var(--color-secondary); }
+.supplierCell { font-weight: 600; }
+.totalCell { font-weight: 700; }
+.detailCell { padding: 16px 24px; }
+.detailCard { border-radius: 8px; }
+.detailHeader { font-size: 12px; font-weight: 700; color: var(--color-secondary); }
+.emptySmall { font-size: 13px; }
+.subtotalCell { font-weight: 600; }
+.modalTitle { margin-top: 0; }
+.modalField { margin-top: 12px; }
+.modalActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }

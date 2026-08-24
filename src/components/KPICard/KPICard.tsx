@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import styles from './KPICard.module.css';
 
 interface KPICardProps {
   title: string;
@@ -9,6 +10,13 @@ interface KPICardProps {
   variant?: 'primary' | 'secondary' | 'error' | 'neutral';
 }
 
+const variantClass = {
+  primary: styles.variantPrimary,
+  secondary: styles.variantSecondary,
+  error: styles.variantError,
+  neutral: styles.variantNeutral,
+};
+
 function KPICard({
   title,
   value,
@@ -18,13 +26,13 @@ function KPICard({
   variant = 'primary'
 }: KPICardProps) {
   return (
-    <div className={`kpi-card kpi-variant-${variant}`}>
-      <div className="kpi-card-top">
-        <div className="kpi-card-icon">
+    <div className={`${styles.card} ${variantClass[variant]}`}>
+      <div className={styles.top}>
+        <div className={styles.icon}>
           <span className="material-symbols-outlined icon-md">{icon}</span>
         </div>
         {trend && (
-          <div className="kpi-card-trend">
+          <div className={styles.trend}>
             {trendUp !== null && (
               <span className="material-symbols-outlined icon-sm">
                 {trendUp ? 'trending_up' : 'trending_down'}
@@ -34,8 +42,8 @@ function KPICard({
           </div>
         )}
       </div>
-      <p className="kpi-card-label">{title}</p>
-      <h3 className="kpi-card-value">{value}</h3>
+      <p className={styles.label}>{title}</p>
+      <h3 className={styles.value}>{value}</h3>
     </div>
   );
 }

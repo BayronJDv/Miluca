@@ -1,0 +1,17 @@
+/* pages/HistorialVentas.module.css */
+.root { animation: page-fade-up 0.5s ease-in-out; }
+@keyframes page-fade-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+.filtersBar { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; align-items: flex-end; }
+.idCell { font-weight: 600; color: var(--color-secondary); }
+.totalCell { font-weight: 700; }
+.profitCell { font-weight: 700; }
+.actionsRow { display: flex; gap: 14px; justify-content: flex-end; flex-wrap: wrap; }
+.detailCell { padding: 16px 24px; }
+.detailCard { border-radius: 8px; }
+.detailHeader { font-size: 12px; font-weight: 700; color: var(--color-secondary); }
+.emptySmall { font-size: 13px; }
+.subtotalCell { font-weight: 600; }
+.modalTitle { margin-top: 0; }
+.modalField { margin-top: 12px; }
+.modalActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }

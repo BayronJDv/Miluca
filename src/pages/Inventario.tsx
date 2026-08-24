@@ -17,6 +17,7 @@ import {
 } from "../db/batches";
 import { userIdAtom } from "../store/UserAtom";
 import { useAtomValue } from "jotai";
+import styles from './Inventario.module.css';
 
 type FormState = {
   name: string;
@@ -111,9 +112,7 @@ function ProductForm({
       </div>
       <div className="modal-body">
         <div className="section-label">IDENTIFICACIÓN Y PRESENTACIÓN</div>
-        <div
-          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
-        >
+        <div className={styles.formGrid}>
           <Field label="Nombre comercial *" wide>
             <input
               className="control"
@@ -198,17 +197,8 @@ function ProductForm({
         </div>
 
         <div className="section-label mt-lg">REGULACIÓN Y TRAZABILIDAD</div>
-        <div
-          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}
-        >
-          <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              fontSize: 13,
-            }}
-          >
+        <div className={styles.formGrid}>
+          <label className={styles.checkboxLabel}>
             <input
               type="checkbox"
               checked={value.requires_lot_control}
@@ -218,14 +208,7 @@ function ProductForm({
             />{" "}
             Exige control de lote y vencimiento
           </label>
-          <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              fontSize: 13,
-            }}
-          >
+          <label className={styles.checkboxLabel}>
             <input
               type="checkbox"
               checked={value.requires_prescription}
@@ -235,14 +218,7 @@ function ProductForm({
             />{" "}
             Requiere fórmula médica
           </label>
-          <label
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              fontSize: 13,
-            }}
-          >
+          <label className={styles.checkboxLabel}>
             <input
               type="checkbox"
               checked={value.has_invima}
@@ -263,13 +239,7 @@ function ProductForm({
         </div>
 
         <div className="section-label mt-lg">PRECIOS Y ALERTAS</div>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr",
-            gap: 12,
-          }}
-        >
+        <div className={styles.formGridThree}>
           <Field label="Precio de venta *">
             <input
               type="number"
@@ -311,10 +281,7 @@ function ProductForm({
               placeholder="Ej. 12"
             />
           </Field>
-          <div
-            className="field-label"
-            style={{ alignSelf: "end", paddingBottom: 9 }}
-          >
+          <div className={`field-label ${styles.wholesaleHint}`}>
             Se aplica automáticamente en el POS al alcanzar la cantidad.
           </div>
         </div>
@@ -467,7 +434,7 @@ export default function Inventario() {
   const totalValue = items.reduce((sum, p) => sum + (p.cost || 0) * p.stock, 0);
   const lowStock = items.filter((p) => p.stock <= (p.alert_stock ?? 5)).length;
   return (
-    <div className="fade-up">
+    <div className={styles.root}>
       <PageHeader
         title="Inventario farmacéutico"
         subtitle="Catálogo, trazabilidad por lote, regulación y precios."
@@ -495,15 +462,14 @@ export default function Inventario() {
       </div>
       <div className="mb-sm">
         <input
-          className="control"
-          style={{ maxWidth: 420 }}
+          className={`control ${styles.searchInput}`}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar por nombre, genérico o código de barras..."
         />
       </div>
       <div className="page-card page-card--flush">
-        <table className="data-table" style={{ minWidth: 950 }}>
+        <table className={`data-table ${styles.tableWide}`}>
           <thead>
             <tr>
               {[
@@ -533,7 +499,7 @@ export default function Inventario() {
                 </td>
                 <td>{p.code}</td>
                 <td>{p.category?.replace("_", " ")}</td>
-                <td style={{ fontWeight: 700 }}>
+                <td className={styles.priceCell}>
                   ${p.price.toLocaleString("es-CO")}
                 </td>
                 <td>
@@ -542,8 +508,8 @@ export default function Inventario() {
                     : "No definido"}
                 </td>
                 <td
+                  className={styles.stockCell}
                   style={{
-                    fontWeight: 800,
                     color:
                       p.stock <= (p.alert_stock ?? 5)
                         ? "var(--color-danger)"
@@ -552,7 +518,7 @@ export default function Inventario() {
                 >
                   {p.stock}
                 </td>
-                <td style={{ fontSize: 11 }}>
+                <td className={styles.traceCell}>
                   <div>
                     {p.requires_lot_control ? "Lote obligatorio" : "Lote S/N"}
                   </div>
@@ -564,7 +530,7 @@ export default function Inventario() {
                     {p.has_invima ? "INVIMA activo" : "Sin INVIMA"}
                   </div>
                 </td>
-                <td style={{ display: "flex", justifyContent: "space-between" }}>
+                <td className={styles.actionsCell}>
                   <button
                     title="Ver lotes y kardex"
                     onClick={() => openDetail(p)}
@@ -622,9 +588,9 @@ export default function Inventario() {
       {detail && (
         <div className="overlay">
           <div className="modal modal--detail">
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <div className={styles.detailHeader}>
               <div>
-                <h2 style={{ margin: 0 }}>{detail.name}</h2>
+                <h2 className={styles.detailTitle}>{detail.name}</h2>
                 <p className="stat-label mt-xs">
                   Lotes físicos y kardex inmutable
                 </p>
@@ -658,19 +624,10 @@ export default function Inventario() {
                 ))}
               </tbody>
             </table>
-            <h3 style={{ marginTop: 24 }}>Kardex</h3>
-            <div style={{ maxHeight: 220, overflow: "auto" }}>
+            <h3 className={styles.kardexTitle}>Kardex</h3>
+            <div className={styles.kardexScroll}>
               {movements.map((m) => (
-                <div
-                  key={m.id}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    borderTop: "1px solid var(--color-outline-variant)",
-                    padding: "9px 0",
-                    fontSize: 12,
-                  }}
-                >
+                <div key={m.id} className={styles.kardexRow}>
                   <span>
                     {m.movement_date?.slice(0, 10)} · {m.movement_type} · lote{" "}
                     {m.lot_number}

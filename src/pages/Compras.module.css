@@ -1,0 +1,83 @@
+.root { animation: page-fade-up 0.5s ease-in-out; }
+@keyframes page-fade-up { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+.barcodeCard { border: 2px dashed var(--color-primary); }
+.searchRow { display: flex; gap: 10px; }
+.searchWrapper { flex: 1; position: relative; }
+.searchIcon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--color-outline); display: flex; }
+.searchInput {
+  width: 100%;
+  height: 42px;
+  padding-left: 34px;
+  padding-right: 12px;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 8px;
+  font-size: 14px;
+  background: var(--color-surface-container-lowest);
+}
+.newProductBtn { height: 42px; padding: 0 16px; font-size: 12px; white-space: nowrap; }
+.resultsTitle { font-weight: 600; font-size: 14px; }
+.resultsSubtitle { font-size: 12px; font-weight: 600; }
+.loadingBox { padding: 20px; text-align: center; }
+.productInfo { flex: 1; }
+.productName { font-size: 14px; font-weight: 600; }
+.productCode { font-size: 12px; }
+.priceRight { text-align: right; }
+.priceValue { font-size: 15px; font-weight: 700; }
+.stockLabel { font-size: 11px; }
+.cartScroll { flex: 1; overflow: auto; padding: 8px 0; }
+.cartItem { padding: 12px 20px; border-bottom: 1px solid var(--color-surface-container); }
+.cartItemTop { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.cartItemName { font-size: 13px; font-weight: 600; flex: 1; margin-right: 8px; }
+.cartItemActions { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.costBox { display: flex; align-items: center; gap: 4px; }
+.costPrefix { font-size: 11px; }
+.costInput {
+  width: 70px;
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+  background: var(--color-surface-container-lowest);
+}
+.subtotal { font-size: 13px; font-weight: 600; min-width: 70px; text-align: right; }
+.lotGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 8px; }
+.lotInput { min-width: 0; padding: 5px; border: 1px solid var(--color-outline-variant); border-radius: 5px; font-size: 11px; }
+.dateInput { min-width: 0; width: 100%; box-sizing: border-box; padding: 5px; border: 1px solid var(--color-outline-variant); border-radius: 5px; font-size: 11px; }
+.cartFooterRow { display: flex; justify-content: space-between; margin-bottom: 16px; }
+.cartFooterLabel { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; }
+.cartFooterTotal { font-size: 22px; font-weight: 800; color: var(--color-on-surface); letter-spacing: -0.02em; }
+.confirmBtn { width: 100%; }
+.newProductModal {
+  width: 560px;
+  max-width: 95vw;
+  box-sizing: border-box;
+}
+.modalTitle { margin-bottom: 16px; font-size: 18px; }
+.modalForm { display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; width: 100%; }
+.formGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 640px) {
+  .formGrid { grid-template-columns: 1fr; }
+}
+.categoryLabel { font-size: 12px; display: flex; flex-direction: column; gap: 6px; }
+.categorySelect {
+  width: 100%;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 7px;
+  background: var(--color-surface-container-lowest);
+  font-size: 13px;
+  box-sizing: border-box;
+}
+.checkboxLabel { display: flex; align-items: center; gap: 7px; font-size: 12px; margin-top: 20px; }
+.hint { font-size: 11px; }
+.modalActions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
+.invoiceTitle { margin-bottom: 16px; }
+.invoiceSection { margin-bottom: 16px; }
+.invoiceTable { margin-bottom: 16px; }
+.invoiceLot { font-size: 10px; }
+.invoiceActions { display: flex; gap: 12px; justify-content: flex-end; }

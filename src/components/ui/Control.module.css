@@ -1,0 +1,119 @@
+.control {
+  width: 100%;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 7px;
+  background: var(--color-surface-container-lowest);
+  box-sizing: border-box;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--color-on-surface);
+  outline: none;
+}
+.control:focus {
+  border-color: var(--color-primary);
+}
+.md {
+  height: 42px;
+  border-radius: 8px;
+  font-size: 14px;
+  padding: 0 12px;
+  width: 240px;
+}
+.xl {
+  height: 15px;
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 8px;
+}
+.readonly {
+  display: flex;
+  align-items: center;
+  background: var(--color-surface-low);
+  color: var(--color-secondary);
+}
+.btnSolid {
+  height: 38px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 7px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+.btnSolid:disabled { opacity: .5; }
+.btnSolidMd {
+  height: 42px;
+  padding: 0 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  gap: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btnOutline {
+  height: 42px;
+  padding: 0 24px;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 8px;
+  background: var(--color-surface-container-lowest);
+  color: var(--color-on-surface);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btnMiniSolid {
+  height: auto;
+  padding: 6px 9px;
+  border: none;
+  border-radius: 6px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btnMiniOutline {
+  height: auto;
+  padding: 6px 9px;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 6px;
+  background: var(--color-surface-container-lowest);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btnLink {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.btnIcon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.muted {
+  color: var(--color-outline);
+}
+.danger {
+  color: var(--color-error);
+}

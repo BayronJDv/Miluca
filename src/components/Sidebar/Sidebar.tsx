@@ -1,8 +1,12 @@
 import { NavLink } from 'react-router-dom';
 import { invoke } from '@tauri-apps/api/core';
 import { confirm } from '@tauri-apps/plugin-dialog';
-import { isAdminAtom } from '../store/UserAtom';
-import { useAtomValue } from 'jotai';
+import { isAdminAtom } from '../../store/UserAtom';
+import { useAtom, useAtomValue } from 'jotai';
+import { themeAtom, toggleThemeAtom } from '../../store/ThemeAtom';
+import styles from './Sidebar.module.css';
+
+
 
 const menuItems = [
   { path: '/', label: 'Dashboard', icon: 'dashboard' },
@@ -23,20 +27,19 @@ const menuItems = [
 
 function Sidebar() {
   const isAdmin = useAtomValue(isAdminAtom);
+  const theme = useAtomValue(themeAtom);
+  const [, toggleTheme] = useAtom(toggleThemeAtom);
+  const isDark = theme === 'dark';
   return (
-    <aside className="w-64 h-screen fixed left-0 top-0 bg-[#1E293B] flex flex-col py-lg px-md z-50">
+    <aside className={styles.sidebar}>
       {/* Logo ... */}
-      <nav className="flex-1 space-y-1">
+      <nav className={styles.nav}>
         {menuItems.filter((item) => !item.adminOnly || isAdmin).map((item) => (
           <NavLink
             key={item.path}
             to={item.path}
             className={({ isActive }) =>
-              `flex items-center gap-md p-sm text-white transition-all duration-200 ${
-                isActive
-                  ? 'opacity-100 font-semibold border-l-4 border-primary bg-surface-variant/10'
-                  : 'opacity-70 hover:opacity-100 hover:bg-surface-variant/5'
-              }`
+              `${styles.sidebarLink} ${isActive ? styles.active : styles.idle}`
             }
           >
             <span className="material-symbols-outlined">{item.icon}</span>
@@ -44,6 +47,20 @@ function Sidebar() {
           </NavLink>
         ))}
       </nav>
+      <button
+        onClick={() => toggleTheme()}
+        className={styles.themeToggle}
+        aria-label="Cambiar tema"
+        title={isDark ? 'Modo claro' : 'Modo oscuro'}
+      >
+        <span className={`${styles.themeTrack} ${isDark ? styles.themeTrackDark : ''}`}>
+          <span className={`${styles.themeThumb} ${isDark ? styles.themeThumbDark : ''}`}>
+            <span className="material-symbols-outlined" style={{ fontSize: 12 }}>{isDark ? 'dark_mode' : 'light_mode'}</span>
+          </span>
+        </span>
+        <span>{isDark ? 'Modo espacial' : 'Modo claro'}</span>
+      </button>
+
       {/* Botón cerrar sesión ... */}
       <button
         onClick={async () => {
@@ -52,7 +69,7 @@ function Sidebar() {
             invoke('close_app');
           }
         }}
-        className="mt-auto flex items-center justify-center gap-md p-sm bg-red-600 hover:bg-red-700 text-white rounded-md transition-all duration-200"
+        className={styles.logoutBtn}
       >
         <span className="material-symbols-outlined">power_settings_new</span>
         <span className="font-body-md text-body-md">Cerrar programa</span>

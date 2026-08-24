@@ -6,6 +6,7 @@ import { save } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 import { obtenerVentasPorDia } from '../db/sales';
 import { obtenerComprasPorDia } from '../db/purchases';
+import styles from './Reportes.module.css';
 
 interface ReportRow {
   fecha: string;
@@ -130,13 +131,13 @@ export default function Reportes() {
   const isDisabled = loading || !startDate || !endDate;
 
   return (
-    <div className="fade-up">
+    <div className={styles.root}>
       <PageHeader
         title="Reportes"
         subtitle="Genera reportes detallados de ventas y egresos por rango de fechas."
       />
 
-      <div style={{ display: "flex", gap: 16, marginBottom: 24, flexWrap: "wrap", alignItems: "flex-end" }}>
+      <div className={styles.filterRow}>
         <div>
           <label className="field-label">Rango de Fechas</label>
           <DatePicker
@@ -198,19 +199,19 @@ export default function Reportes() {
             <tbody>
               {rows.map((row) => (
                 <tr key={row.fecha} className="hover-row">
-                  <td style={{ fontWeight: 600 }}>
+                  <td className={styles.cellBold}>
                     {formatDateDisplay(row.fecha)}
                   </td>
-                  <td className="align-right" style={{ fontWeight: 600 }}>
+                  <td className={`align-right ${styles.cellBold}`}>
                     {formatPrice(row.ventas)}
                   </td>
                   <td className="align-right">
                     {row.numVentas}
                   </td>
-                  <td className="align-right text-income" style={{ fontWeight: 600 }}>
+                  <td className={`align-right text-income ${styles.cellBold}`}>
                     {formatPrice(row.ganancia)}
                   </td>
-                  <td className="align-right text-expense" style={{ fontWeight: 600 }}>
+                  <td className={`align-right text-expense ${styles.cellBold}`}>
                     {formatPrice(row.egresos)}
                   </td>
                 </tr>

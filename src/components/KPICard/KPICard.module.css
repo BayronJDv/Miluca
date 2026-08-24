@@ -1,16 +1,89 @@
-/* Estilos específicos del KPI Card */
-.kpi-card {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* components/KPICard/KPICard.module.css */
+.card {
+  flex: 1 1 200px;
+  background: var(--color-surface-container-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-lg);
+  transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
 }
 
-.kpi-card:hover {
-    transform: translateY(-2px);
+.card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  transform: translateY(-2px);
 }
 
-.kpi-icon {
-    transition: transform 0.2s ease;
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-md);
 }
 
-.kpi-card:hover .kpi-icon {
-    transform: scale(1.1);
+.icon {
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.trend {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px var(--spacing-xs);
+  border-radius: var(--radius-lg);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--color-secondary);
+}
+
+.value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-on-surface);
+  margin-top: var(--spacing-xs);
+}
+
+/* Variantes de color */
+.variantPrimary .icon {
+  background: color-mix(in srgb, var(--color-primary-container) 15%, transparent);
+  color: var(--color-primary);
+}
+.variantSecondary .icon {
+  background: color-mix(in srgb, var(--color-secondary-container) 25%, transparent);
+  color: var(--color-secondary);
+}
+.variantError .icon {
+  background: var(--color-error-container);
+  color: var(--color-error);
+}
+.variantNeutral .icon {
+  background: var(--color-surface-container-highest);
+  color: var(--color-on-surface);
+}
+
+.variantPrimary .trend {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+.variantSecondary .trend {
+  background: var(--color-surface-container);
+  color: var(--color-secondary);
+}
+.variantError .trend {
+  background: color-mix(in srgb, var(--color-error-container) 50%, transparent);
+  color: var(--color-error);
+}
+.variantNeutral .trend {
+  background: var(--color-surface-container);
+  color: var(--color-secondary);
 }

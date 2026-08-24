@@ -1,14 +1,13 @@
 {
-  "name": "Gualcalapp",
+  "name": "megainventario",
   "private": true,
-  "version": "5.0.0",
+  "version": "6.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri",
-    "tailwind-init": "tailwindcss init -p"
+    "tauri": "tauri"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
@@ -28,7 +27,6 @@
     "tauri-plugin-thermal-printer": "^2.1.4"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.3.0",
     "@tauri-apps/cli": "^2",
     "@types/prop-types": "^15.7.15",
     "@types/react": "^19.1.8",

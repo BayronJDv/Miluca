@@ -20,8 +20,8 @@ Tauri 2 desktop POS app: React 19 + TypeScript + Vite frontend, SQLite via `@tau
 
 ## Conventions
 
-- DB access layer: one module per table in `src/db/` (typed interfaces + exported async functions; SQL uses `$1`/`?` placeholders). Pages in `src/pages/`, reusable UI in `src/components/` (design system primitives in `src/components/design/`, colors from `colors.ts`).
-- Styling is inline styles + CSS Modules; Tailwind is installed but barely used — follow the existing inline-style pattern.
+- DB access layer: one module per table in `src/db/` (typed interfaces + exported async functions; SQL uses `$1`/`?` placeholders). Pages in `src/pages/`, reusable UI in `src/components/` (design system primitives in `src/components/design/`).
+- **Styling: CSS Modules + CSS nativo (no Tailwind).** Tokens en `src/styles/tokens.css` (`:root` `var(--color-*)`). Utilidades atómicas en `src/styles/base.css` (`.p-md`, `.flex`, `.text-primary`). Entry único `src/styles/index.css` → `main.tsx`. Primitivos `src/components/design/*.module.css` y componentes con su `.module.css` (ej `Sidebar/`, `Login/`). Módulos compartidos extraídos en `src/components/ui/` (`PageCard`, `DataTable`, `Modal`, `Control`, `Layout`) reemplazan `src/main.css` global (mantenido temporalmente para transición: `.page-card`, `.control`, `.data-table`, `.overlay`, `.kpi-card`, etc.). **Regla: cero hex sueltos** — todo `var(--color-*)` (ver `tokens.css: chip/rank/sidebar`); `style={{}}` solo para valores dinámicos (`width: `${pct}%``).
 - App state: jotai atoms (`src/store/UserAtom.tsx`). Printer + business data live in **localStorage** (`src/db/settings.ts`), not in the DB.
 - Receipt printing: `tauri-plugin-thermal-printer` (80mm), sections built in `src/print/receipt.ts`.
 - `docs.md` tracks sprint/HU progress and known issues; `plan/plan01.md` is the approved redesign plan (pharmacy traceability: products → batches → kardex, FEFO, wholesale pricing) — follow it when implementing that work.

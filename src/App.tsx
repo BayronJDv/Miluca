@@ -1,11 +1,10 @@
-import "./App.css";
 import { useEffect } from "react";
 import  Login  from "./components/Login/Login";
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { useAtom, useAtomValue } from "jotai";
 import { userAtom } from "./store/UserAtom";
 import { ProtectedRoute } from "./components/ProtectedRoute";
-import Sidebar from "./components/Sidebar";
+import Sidebar from "./components/Sidebar/Sidebar";
 import Home from "./pages/Home";
 import Pos from "./pages/Pos";
 import Inventario from "./pages/Inventario";
@@ -22,11 +21,18 @@ import HistorialEdiciones from "./pages/HistorialEdiciones";
 //import AnalisisVentas from "./pages/Analisis";
 import { marcarLotesVencidos } from "./db/batches";
 import { checkForUpdates } from "./utils/updater";
+import { themeAtom, syncThemeToDom } from "./store/ThemeAtom";
+import styles from "./App.module.css";
 
 
 function App() {
   const [user] = useAtom(userAtom);
   const userReady = useAtomValue(userAtom);
+  const theme = useAtomValue(themeAtom);
+
+  useEffect(() => {
+    syncThemeToDom(theme);
+  }, [theme]);
 
   useEffect(() => {
     if (userReady) {
@@ -37,7 +43,7 @@ function App() {
 
   if (!user) {
     return (
-      <main className="container">
+      <main className={styles.loginWrap}>
         <Login />
       </main>
     );
@@ -45,10 +51,10 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div className="bg-background text-on-background min-h-screen flex">
+      <div className={styles.appShell}>
         <Sidebar />
-        <main className="ml-64 flex-1 flex flex-col min-h-screen">
-          <div className="mt-16 p-lg space-y-lg overflow-y-auto">
+        <main className={styles.mainArea}>
+          <div className={styles.content}>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/pos" element={<Pos />} />

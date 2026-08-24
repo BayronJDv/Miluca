@@ -1,0 +1,35 @@
+/* components/design/Chip.module.css */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.blue {
+  background: var(--color-chip-blue-bg);
+  color: var(--color-chip-blue-text);
+}
+
+.green {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.red {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.amber {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
+.gray {
+  background: var(--color-surface-container-highest);
+  color: var(--color-secondary);
+}

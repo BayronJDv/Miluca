@@ -5,6 +5,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useAtomValue } from 'jotai';
 import { isAdminAtom } from '../store/UserAtom';
+import styles from './Analisis.module.css';
 
 type MetricKey = 'unidades_vendidas' | 'ingresos' | 'ganancia' | 'num_ventas';
 
@@ -179,10 +180,10 @@ const AnalisisVentas: React.FC = () => {
   const maxValor = Math.max(1, ...topRanking.map((p) => Math.abs(p[metricaConfig.key])));
 
   return (
-    <div className="fade-up">
+    <div className={styles.root}>
       <PageHeader title="Análisis de Ventas" subtitle="Rendimiento de productos: qué se mueve, qué no, y qué deja más ganancia." />
 
-      <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+      <div className={styles.filtersBar}>
         <div>
           <label className="field-label">Rango de Fechas</label>
           <DatePicker
@@ -210,28 +211,28 @@ const AnalisisVentas: React.FC = () => {
       ) : (
         <>
           <div className="kpi-grid">
-            <div className="kpi-card" style={{ borderLeft: '3px solid var(--color-primary)' }}>
+            <div className={`kpi-card ${styles.kpiPrimary}`}>
               <div className="kpi-card-label">UNIDADES VENDIDAS</div>
               <div className="kpi-card-value">{formatNumero(totales.unidades)}</div>
             </div>
-            <div className="kpi-card" style={{ borderLeft: '3px solid var(--color-metric-green)' }}>
+            <div className={`kpi-card ${styles.kpiGreen}`}>
               <div className="kpi-card-label">INGRESOS TOTALES</div>
               <div className="kpi-card-value">{formatPrice(totales.ingresos)}</div>
             </div>
             {isAdmin && (
-              <div className="kpi-card" style={{ borderLeft: '3px solid var(--color-metric-gold)' }}>
+              <div className={`kpi-card ${styles.kpiGold}`}>
                 <div className="kpi-card-label">GANANCIA TOTAL</div>
                 <div className="kpi-card-value">{formatPrice(totales.ganancia)}</div>
               </div>
             )}
-            <div className="kpi-card" style={{ borderLeft: '3px solid var(--color-metric-red)' }}>
+            <div className={`kpi-card ${styles.kpiRed}`}>
               <div className="kpi-card-label">SIN MOVIMIENTO</div>
               <div className="kpi-card-value">{formatNumero(totales.sinMovimiento)}</div>
               <div className="kpi-card-hint">Productos con 0 ventas en el período</div>
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+          <div className={styles.chipsRow}>
             {METRICAS.map((m) => (
               <button
                 key={m.key}
@@ -310,15 +311,14 @@ const AnalisisVentas: React.FC = () => {
             </div>
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 12 }}>
-            <div className="text-on-surface" style={{ fontSize: 14, fontWeight: 700 }}>Todos los productos</div>
-            <div style={{ position: 'relative' }}>
+          <div className={styles.tableHeader}>
+            <div className={`text-on-surface ${styles.sectionTitle}`}>Todos los productos</div>
+            <div className={styles.searchWrapper}>
               <input
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
                 placeholder="Buscar por nombre o código..."
-                className="control"
-                style={{ width: 260 }}
+                className={`control ${styles.searchInput}`}
               />
             </div>
           </div>
@@ -331,8 +331,7 @@ const AnalisisVentas: React.FC = () => {
                     <th
                       key={col.key}
                       onClick={() => handleSort(col.key)}
-                      className={col.align === 'right' ? 'align-right' : ''}
-                      style={{ cursor: 'pointer', userSelect: 'none' }}
+                      className={`${col.align === 'right' ? 'align-right' : ''} ${styles.sortable}`}
                     >
                       {col.label}
                       {sortConfig.key === col.key && (sortConfig.dir === 'asc' ? ' ▲' : ' ▼')}
@@ -343,19 +342,18 @@ const AnalisisVentas: React.FC = () => {
               <tbody>
                 {filasTabla.map((p) => (
                   <tr key={p.product_id} className="hover-row">
-                    <td style={{ fontWeight: 600 }}>
+                    <td className={styles.productCell}>
                       {p.name}
-                      <div className="text-secondary" style={{ fontSize: 11, fontWeight: 400 }}>{p.code}</div>
+                      <div className={`text-secondary ${styles.codeSubtext}`}>{p.code}</div>
                     </td>
                     <td className="align-right">{formatNumero(p.stock)}</td>
-                    <td className="align-right" style={{ fontWeight: 600 }}>{formatNumero(p.unidades_vendidas)}</td>
+                    <td className={`align-right ${styles.vendidosCell}`}>{formatNumero(p.unidades_vendidas)}</td>
                     <td className="align-right">{formatNumero(p.num_ventas)}</td>
                     <td className="align-right">{formatPrice(p.ingresos)}</td>
                     {isAdmin && (
                       <td
-                        className="align-right"
+                        className={`align-right ${styles.gananciaCell}`}
                         style={{
-                          fontWeight: 600,
                           color: p.ganancia < 0 ? 'var(--color-metric-red)' : 'var(--color-primary)',
                         }}
                       >

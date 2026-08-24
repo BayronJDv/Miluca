@@ -1,0 +1,200 @@
+/* pages/Configuracion.module.css */
+.root {
+  padding: var(--spacing-lg);
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+}
+
+.grid2 + .grid2 {
+  margin-top: var(--spacing-lg);
+}
+
+.card {
+  background: var(--color-surface-container-lowest);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--color-outline-variant);
+}
+
+.cardFlex {
+  display: flex;
+  flex-direction: column;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.cardIcon {
+  font-size: 20px;
+}
+
+.cardIconPrimary { color: var(--color-primary); }
+.cardIconError { color: var(--color-error); }
+
+.cardTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+
+.cardDesc {
+  font-size: 12px;
+  color: var(--color-secondary);
+  margin-bottom: var(--spacing-md);
+  line-height: 1.5;
+}
+
+.cardActionsTop {
+  margin-top: auto;
+}
+
+.formCol {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.formRow {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--spacing-md);
+}
+
+.flex1 { flex: 1; }
+
+.roleBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: var(--radius-lg);
+  font-size: 13px;
+  font-weight: 500;
+  background: var(--color-secondary-container);
+  color: var(--color-secondary);
+}
+
+.roleLabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--color-on-surface-variant);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.actionsRow {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.section {
+  margin-top: var(--spacing-lg);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.loadingBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+}
+
+.loadingText {
+  font-size: 12px;
+  color: var(--color-secondary);
+}
+
+.printerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-outline-variant);
+  background: var(--color-surface);
+  padding: var(--spacing-md);
+}
+
+.printerName {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-on-surface);
+  margin-top: var(--spacing-xs);
+}
+
+.printerRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.printerRowText {
+  font-size: 12px;
+  color: var(--color-secondary);
+}
+
+.printerRowTextTruncate {
+  font-size: 12px;
+  color: var(--color-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statusDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+}
+
+.statusIdle { background: var(--color-success); }
+.statusBusy { background: var(--color-warning); }
+
+.noPrinters {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  gap: var(--spacing-sm);
+}
+
+.noPrintersIcon {
+  font-size: 40px;
+  color: var(--color-tertiary);
+}
+
+.noPrintersText {
+  font-size: 14px;
+  color: var(--color-secondary);
+}
+
+.testRow {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.savedMsg {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-success);
+}
+
+.span2 { grid-column: 1 / 3; }

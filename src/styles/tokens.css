@@ -1,0 +1,205 @@
+/* tokens.css — Tokens de diseño: colores, espaciados, tipografía, bordes.
+   Única fuente de verdad para variables CSS. No poner clases aquí. */
+
+:root {
+  /* ========== COLORES ========== */
+  --color-tertiary: #595c5e;
+  --color-secondary: #545f73;
+  --color-on-error: #ffffff;
+  --color-primary-fixed: #d8e2ff;
+  --color-background: #f8f9ff;
+  --color-secondary-fixed: #d8e3fb;
+  --color-on-surface-variant: #424754;
+  --color-on-surface: #0b1c30;
+  --color-secondary-container: #d5e0f8;
+  --color-primary-fixed-dim: #adc6ff;
+  --color-error: #ba1a1a;
+  --color-inverse-on-surface: #eaf1ff;
+  --color-surface-container-high: #dce9ff;
+  --color-on-primary-fixed-variant: #004395;
+  --color-on-background: #0b1c30;
+  --color-on-secondary-fixed-variant: #3c475a;
+  --color-on-primary-container: #fefcff;
+  --color-on-tertiary-fixed: #191c1e;
+  --color-secondary-fixed-dim: #bcc7de;
+  --color-on-primary: #ffffff;
+  --color-surface-container-highest: #d3e4fe;
+  --color-on-tertiary-container: #fbfdff;
+  --color-on-tertiary: #ffffff;
+  --color-surface-container-low: #eff4ff;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-fixed: #111c2d;
+  --color-on-secondary-container: #586377;
+  --color-surface-tint: #005ac2;
+  --color-surface-bright: #f8f9ff;
+  --color-on-error-container: #93000a;
+  --color-outline-variant: #c2c6d6;
+  --color-on-tertiary-fixed-variant: #444749;
+  --color-surface-container: #e5eeff;
+  --color-surface-dim: #cbdbf5;
+  --color-surface-variant: #d3e4fe;
+  --color-surface: #f8f9ff;
+  --color-inverse-surface: #213145;
+  --color-tertiary-fixed-dim: #c4c7c9;
+  --color-surface-container-lowest: #ffffff;
+  --color-on-primary-fixed: #001a42;
+  --color-primary-container: #2170e4;
+  --color-primary: #0058be;
+  --color-error-container: #ffdad6;
+  --color-inverse-primary: #adc6ff;
+  --color-tertiary-container: #727577;
+  --color-tertiary-fixed: #e0e3e5;
+  --color-outline: #727785;
+  --color-surface-lowest: #ffffff;
+  --color-surface-low: #eff4ff;
+
+  /* Semánticos de negocio */
+  --color-success: #15803d;
+  --color-success-bg: #dcfce7;
+  --color-warning: #b45309;
+  --color-warning-bg: #fef3c7;
+  --color-danger: #b91c1c;
+  --color-danger-bg: #fee2e2;
+  --color-income: #16a34a;
+  --color-expense: #dc2626;
+  --color-delta-up: #2e7d32;
+  --color-delta-down: #c62828;
+  --color-metric-green: #2E7D5B;
+  --color-metric-gold: #B8860B;
+  --color-metric-purple: #6A4C93;
+  --color-metric-red: #C0392B;
+  --color-chip-blue-bg: #dbeafe;
+  --color-chip-blue-text: #1d4ed8;
+  --color-rank-gold: #FFD700;
+  --color-rank-silver: #C0C0C0;
+  --color-rank-bronze: #CD7F32;
+  --color-sidebar-bg: #1E293B;
+  --color-sidebar-logout: #dc2626;
+  --color-sidebar-logout-hover: #b91c1c;
+
+  --color-overlay: rgba(15, 23, 42, .48);
+  --color-shadow: rgba(0, 0, 0, 0.07);
+  --color-scrollbar-track: var(--color-surface-container);
+  --color-scrollbar-thumb: var(--color-outline);
+  --color-scrollbar-thumb-hover: var(--color-secondary);
+}
+
+[data-theme="dark"] {
+  --color-tertiary: #b8a9e0;
+  --color-secondary: #9aa0c8;
+  --color-on-error: #1a0a12;
+  --color-primary-fixed: #2b2548;
+  --color-background: #0a0c1e;
+  --color-secondary-fixed: #212642;
+  --color-on-surface-variant: #c6c2dc;
+  --color-on-surface: #e8e3ff;
+  --color-secondary-container: #2a2f4b;
+  --color-primary-fixed-dim: #8b7cf8;
+  --color-error: #ffb4ab;
+  --color-inverse-on-surface: #1a1c2e;
+  --color-surface-container-high: #25294a;
+  --color-on-primary-fixed-variant: #d0bcff;
+  --color-on-background: #e8e3ff;
+  --color-on-secondary-fixed-variant: #c3c6e8;
+  --color-on-primary-container: #e9ddff;
+  --color-on-tertiary-fixed: #e9dcff;
+  --color-secondary-fixed-dim: #3b3f62;
+  --color-on-primary: #ffffff;
+  --color-surface-container-highest: #2e3258;
+  --color-on-tertiary-container: #e8dcff;
+  --color-on-tertiary: #ffffff;
+  --color-surface-container-low: #171935;
+  --color-on-secondary: #1e2135;
+  --color-on-secondary-fixed: #e0e2ff;
+  --color-on-secondary-container: #c8ccea;
+  --color-surface-tint: #8b7cf8;
+  --color-surface-bright: #1b1e3c;
+  --color-on-error-container: #ffdada;
+  --color-outline-variant: #2e314d;
+  --color-on-tertiary-fixed-variant: #c9b8e8;
+  --color-surface-container: #1e2142;
+  --color-surface-dim: #0a0c1e;
+  --color-surface-variant: #25294a;
+  --color-surface: #12142b;
+  --color-inverse-surface: #e8e3ff;
+  --color-tertiary-fixed-dim: #4a3f6e;
+  --color-surface-container-lowest: #161832;
+  --color-on-primary-fixed: #e9ddff;
+  --color-primary-container: #3a2e7a;
+  --color-primary: #8b7cf8;
+  --color-error-container: #5c1d2e;
+  --color-inverse-primary: #c4b5fd;
+  --color-tertiary-container: #3e335e;
+  --color-tertiary-fixed: #352d4e;
+  --color-outline: #4a4d6e;
+  --color-surface-lowest: #161832;
+  --color-surface-low: #1a1d3a;
+
+  --color-success: #4ade80;
+  --color-success-bg: #132e22;
+  --color-warning: #fbbf24;
+  --color-warning-bg: #33260a;
+  --color-danger: #f87171;
+  --color-danger-bg: #3a1520;
+  --color-income: #4ade80;
+  --color-expense: #f87171;
+  --color-delta-up: #4ade80;
+  --color-delta-down: #f87171;
+  --color-metric-green: #34d399;
+  --color-metric-gold: #fbbf24;
+  --color-metric-purple: #a78bfa;
+  --color-metric-red: #f87171;
+  --color-chip-blue-bg: #1e2a5a;
+  --color-chip-blue-text: #93c5fd;
+  --color-rank-gold: #fbbf24;
+  --color-rank-silver: #cbd5e1;
+  --color-rank-bronze: #fb923c;
+  --color-sidebar-bg: #080a1a;
+  --color-sidebar-logout: #7f1d1d;
+  --color-sidebar-logout-hover: #991b1b;
+
+  --color-overlay: rgba(2, 4, 18, .72);
+  --color-shadow: rgba(0, 0, 0, 0.4);
+  --color-scrollbar-track: #1e2142;
+  --color-scrollbar-thumb: #4a4d6e;
+  --color-scrollbar-thumb-hover: #6b6fb0;
+
+  color-scheme: dark;
+}
+
+:root {
+  --radius-none: 0.125rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.5rem;
+  --radius-full: 0.75rem;
+
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.75rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+
+  --font-family-sans: Inter;
+
+  --font-size-headline-md: 1.5rem;
+  --line-height-headline-md: 2rem;
+  --letter-spacing-headline-md: -0.01em;
+  --font-weight-headline-md: 600;
+
+  --font-size-headline-sm: 1.25rem;
+  --line-height-headline-sm: 1.75rem;
+  --font-weight-headline-sm: 600;
+
+  --font-size-body-md: 0.875rem;
+  --line-height-body-md: 1.25rem;
+  --font-weight-body-md: 400;
+
+  --font-size-body-sm: 0.75rem;
+  --line-height-body-sm: 1rem;
+  --font-weight-body-sm: 400;
+
+  --font-size-label-md: 0.75rem;
+  --line-height-label-md: 1rem;
+  --letter-spacing-label-md: 0.05em;
+  --font-weight-label-md: 600;
+}

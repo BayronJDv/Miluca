@@ -1,5 +1,5 @@
 import React from 'react';
-import { colors } from "./colors";
+import styles from "./PageHeader.module.css";
 
 interface PageHeaderProps {
   title: string;
@@ -8,12 +8,12 @@ interface PageHeaderProps {
 }
 
 const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, actions }) => (
-  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+  <div className={styles.header}>
     <div>
-      <h1 style={{ fontSize: 24, fontWeight: 700, color: colors.onSurface, letterSpacing: "-0.02em" }}>{title}</h1>
-      {subtitle && <p style={{ fontSize: 14, color: colors.secondary, marginTop: 2 }}>{subtitle}</p>}
+      <h1 className={styles.title}>{title}</h1>
+      {subtitle && <p className={styles.subtitle}>{subtitle}</p>}
     </div>
-    {actions && <div style={{ display: "flex", gap: 8 }}>{actions}</div>}
+    {actions && <div className={styles.actions}>{actions}</div>}
   </div>
 );
 

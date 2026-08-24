@@ -5,6 +5,7 @@ import { Icon } from '../components/design/Icon';
 import Btn from '../components/design/Btn';
 import { obtenerProveedores, obtenerEstadisticasProveedores, crearProveedor, modificarProveedor, eliminarProveedor, Supplier, SupplierStats } from '../db/suppliers';
 import { invoke } from '@tauri-apps/api/core';
+import styles from './Proveedores.module.css';
 
 function getInitials(name: string): string {
   return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
@@ -92,10 +93,10 @@ const ModalContent = memo(({
             <Icon name={isEditing ? "edit" : "plus"} size={22} color="var(--color-on-primary)" />
           </div>
           <div>
-            <div className="font-headline-sm text-headline-sm text-on-surface" style={{ lineHeight: 1.2 }}>
+            <div className={`font-headline-sm text-headline-sm text-on-surface ${styles.modalTitle}`}>
               {title}
             </div>
-            <div className="text-body-sm text-secondary" style={{ marginTop: 2 }}>
+            <div className={`text-body-sm text-secondary ${styles.modalSubtitle}`}>
               {subtitle}
             </div>
           </div>
@@ -112,9 +113,9 @@ const ModalContent = memo(({
 
       {/* Modal Body */}
       <div className="modal-body">
-        <div style={{ marginBottom: 16 }}>
+        <div className={styles.modalField}>
           <label className="field-label">
-            Nombre del Proveedor <span style={{ color: 'var(--color-danger)' }}>*</span>
+            Nombre del Proveedor <span className={styles.labelDanger}>*</span>
           </label>
           <Input
             placeholder="Ej. Distribuidora ABC"
@@ -123,7 +124,7 @@ const ModalContent = memo(({
           />
         </div>
 
-        <div style={{ marginBottom: 16 }}>
+        <div className={styles.modalField}>
           <label className="field-label">
             Informaci&oacute;n de Contacto
           </label>
@@ -134,7 +135,7 @@ const ModalContent = memo(({
           />
         </div>
 
-        <div style={{ marginBottom: 16 }}>
+        <div className={styles.modalField}>
           <label className="field-label">
             NIT
           </label>
@@ -145,7 +146,7 @@ const ModalContent = memo(({
           />
         </div>
 
-        <div style={{ marginBottom: 16 }}>
+        <div className={styles.modalField}>
           <label className="field-label">
             Email
           </label>
@@ -156,7 +157,7 @@ const ModalContent = memo(({
           />
         </div>
 
-        <div style={{ marginBottom: 16 }}>
+        <div className={styles.modalField}>
           <label className="field-label">
             Direcci&oacute;n
           </label>
@@ -167,7 +168,7 @@ const ModalContent = memo(({
           />
         </div>
 
-        <div style={{ marginBottom: 4 }}>
+        <div className={styles.modalFieldSm}>
           <label className="field-label">
             Foto
           </label>
@@ -177,7 +178,7 @@ const ModalContent = memo(({
               <img
                 src={photoPreview}
                 alt="Vista previa"
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                className={styles.previewImg}
               />
               <button
                 onClick={onRemovePhoto}
@@ -428,29 +429,29 @@ const Proveedores: React.FC = () => {
   const trendSign = stats && stats.spendingTrend >= 0 ? '+' : '';
 
   return (
-    <div className="fade-up">
-      <div className="flex justify-between items-center mb-xl">
-        <h2 className="font-headline-md text-headline-md text-on-surface">Gesti&oacute;n de Proveedores</h2>
-        <button onClick={() => setShowCreateModal(true)} className="flex items-center bg-primary text-white px-lg py-sm rounded-lg font-label-md text-label-md hover:bg-primary-container transition-all active:scale-95 shadow-md">
-          <span className="material-symbols-outlined mr-sm">add</span>
+    <div className={styles.root}>
+      <div className={styles.headerRow}>
+        <h2 className="font-headline-md text-on-surface">Gesti&oacute;n de Proveedores</h2>
+        <button onClick={() => setShowCreateModal(true)} className={styles.newBtn}>
+          <span className="material-symbols-outlined">add</span>
           + NUEVO PROVEEDOR
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-lg mb-xl">
-        <div className="bg-white p-lg rounded-xl card-shadow flex flex-col justify-between relative overflow-hidden group border border-outline-variant">
-          <div className="absolute -right-4 -top-4 w-24 h-24 rounded-full bg-primary/5 group-hover:scale-110 transition-transform" />
+      <div className={styles.statsGrid}>
+        <div className={styles.statCard}>
+          <div className={styles.statCardDecor} />
           <div>
-            <p className="font-label-md text-label-md text-secondary uppercase tracking-wider mb-base">Proveedor Principal</p>
+            <p className={styles.statLabel}>Proveedor Principal</p>
             {loading ? (
-              <div className="space-y-2">
-                <div className="h-5 w-40 bg-surface-container-high rounded animate-pulse" />
-                <div className="h-4 w-32 bg-surface-container-high rounded animate-pulse" />
+              <div className={styles.skeletonStack}>
+                <div className={`${styles.skeleton} ${styles.skeletonH20W160}`} />
+                <div className={`${styles.skeleton} ${styles.skeletonH16W128}`} />
               </div>
             ) : stats?.topSupplier ? (
               <>
                 <h3 className="font-headline-sm text-headline-sm text-on-surface">{stats.topSupplier.name}</h3>
-                <p className="font-bold text-lg mt-1" style={{ color: 'var(--color-primary)' }}>
+                <p className={`font-bold text-lg mt-1 ${styles.primaryText}`}>
                   {formatCurrency(stats.topSupplier.monthlyVolume)} <span className="text-secondary text-sm font-normal">vol. mensual</span>
                 </p>
               </>
@@ -459,50 +460,50 @@ const Proveedores: React.FC = () => {
             )}
           </div>
           {stats?.topSupplier && (
-            <div className="mt-md flex">
-              <span className="inline-flex items-center px-sm py-xs rounded-full text-xs font-medium" style={{ background: 'var(--color-success-bg)', color: 'var(--color-success)' }}>
-                <span className="material-symbols-outlined text-sm mr-1" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
+            <div className={styles.reliableWrap}>
+              <span className={`inline-flex items-center px-sm py-xs rounded-full text-xs font-medium ${styles.successBadge}`}>
+                <span className={`material-symbols-outlined text-sm mr-1 ${styles.verifiedFill}`}>verified</span>
                 Most Reliable
               </span>
             </div>
           )}
         </div>
 
-        <div className="bg-white p-lg rounded-xl card-shadow border border-outline-variant">
-          <p className="font-label-md text-label-md text-secondary uppercase tracking-wider mb-base">Total Proveedores</p>
+        <div className={styles.statCard}>
+          <p className={styles.statLabel}>Total Proveedores</p>
           {loading ? (
-            <div className="h-9 w-16 bg-surface-container-high rounded animate-pulse" />
+            <div className={`${styles.skeleton} ${styles.skeletonH36W64}`} />
           ) : (
-            <h3 className="font-display-lg text-display-lg text-on-surface">{stats?.total ?? 0}</h3>
+            <h3 className={styles.statValue}>{stats?.total ?? 0}</h3>
           )}
         </div>
 
-        <div className="bg-white p-lg rounded-xl card-shadow border border-outline-variant">
-          <p className="font-label-md text-label-md text-secondary uppercase tracking-wider mb-base">Compras del Mes</p>
+        <div className={styles.statCard}>
+          <p className={styles.statLabel}>Compras del Mes</p>
           {loading ? (
-            <div className="space-y-2">
-              <div className="h-9 w-28 bg-surface-container-high rounded animate-pulse" />
-              <div className="h-2 w-full bg-surface-container-high rounded animate-pulse" />
+            <div className={styles.skeletonStack}>
+              <div className={`${styles.skeleton} ${styles.skeletonH36W112}`} />
+              <div className={`${styles.skeleton} ${styles.skeletonH8Full}`} />
             </div>
           ) : (
             <>
-              <div className="flex items-baseline gap-xs">
-                <h3 className="font-display-lg text-display-lg text-on-surface">{formatCurrency(stats?.monthlySpending ?? 0)}</h3>
-                <span className="font-semibold text-body-sm flex items-center" style={{ color: trendColor }}>
+              <div className={styles.flexBaseline}>
+                <h3 className={styles.statValue}>{formatCurrency(stats?.monthlySpending ?? 0)}</h3>
+                <span className={styles.trend} style={{ color: trendColor }}>
                   <span className="material-symbols-outlined text-sm">{trendIcon}</span>
                   {trendSign}{(stats?.spendingTrend ?? 0).toFixed(1)}%
                 </span>
               </div>
-              <div className="mt-md w-full rounded-full h-2" style={{ background: 'var(--color-surface-container)' }}>
-                <div className="h-2 rounded-full" style={{ background: 'var(--color-primary)', width: `${stats?.monthlyBudgetPercent ?? 0}%` }} />
+              <div className={styles.budgetTrack}>
+                <div className={styles.budgetFill} style={{ width: `${stats?.monthlyBudgetPercent ?? 0}%` }} />
               </div>
-              <p style={{ fontSize: 10 }} className="text-secondary mt-2">{stats?.monthlyBudgetPercent ?? 0}% del presupuesto mensual ejecutado</p>
+              <p className={styles.budgetDesc}>{stats?.monthlyBudgetPercent ?? 0}% del presupuesto mensual ejecutado</p>
             </>
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-lg">
+      <div className={styles.supplierGrid}>
         {suppliers.map((supplier) => (
             <SupplierCard
             key={supplier.id}
@@ -518,11 +519,11 @@ const Proveedores: React.FC = () => {
           />
         ))}
 
-        <div onClick={() => setShowCreateModal(true)} className="border-2 border-dashed border-outline-variant rounded-xl flex flex-col items-center justify-center p-lg hover:border-primary/50 transition-all cursor-pointer group min-h-[220px]">
-          <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-secondary group-hover:bg-primary group-hover:text-white transition-all mb-md">
-            <span className="material-symbols-outlined" style={{ fontSize: 32 }}>add</span>
+        <div onClick={() => setShowCreateModal(true)} className={styles.addCard}>
+          <div className={styles.addCardIcon}>
+            <span className={`material-symbols-outlined ${styles.iconLg}`}>add</span>
           </div>
-          <p className="font-headline-sm text-headline-sm text-secondary group-hover:text-on-surface">Agregar Proveedor</p>
+          <p className={styles.addCardLabel}>Agregar Proveedor</p>
         </div>
       </div>
 
@@ -531,14 +532,14 @@ const Proveedores: React.FC = () => {
         ref={fileInputRef}
         type="file"
         accept="image/*"
-        style={{ display: 'none' }}
+        className={styles.hiddenInput}
         onChange={(e) => handleFileChange(e, 'create')}
       />
       <input
         ref={editFileInputRef}
         type="file"
         accept="image/*"
-        style={{ display: 'none' }}
+        className={styles.hiddenInput}
         onChange={(e) => handleFileChange(e, 'edit')}
       />
 

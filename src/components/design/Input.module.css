@@ -1,0 +1,65 @@
+/* components/design/Input.module.css */
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--color-on-surface-variant);
+}
+
+.labelDisabled {
+  color: var(--color-outline);
+}
+
+.field {
+  position: relative;
+}
+
+.icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-outline);
+  display: flex;
+}
+
+.input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--color-on-surface);
+  background: var(--color-surface-container-lowest);
+  cursor: text;
+  transition: all 0.15s;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.inputWithIcon {
+  padding-left: 34px;
+}
+
+.input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+.inputDisabled {
+  color: var(--color-outline);
+  background: var(--color-surface-low);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.inputDisabled:focus {
+  border-color: var(--color-outline);
+}

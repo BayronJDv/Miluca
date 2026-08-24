@@ -10,6 +10,7 @@ import { registrarCompra, CompraFactura } from '../db/purchases';
 import { mensajeError } from '../db/errors';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import styles from './Compras.module.css';
 
 const formatDateValue = (date: Date | null): string => {
   if (!date) return '';
@@ -107,47 +108,46 @@ const Compras: React.FC = () => {
   }, [cart, selectedSupplier]);
 
   return (
-    <div className="fade-up page-split">
+    <div className={`${styles.root} page-split`}>
       <div className="page-split-left">
         <div className="page-card page-card--pad">
           <div className="section-label">PROVEEDOR</div>
           <Select placeholder="Seleccionar proveedor..." value={selectedSupplier} onChange={setSelectedSupplier} options={supplierOptions} icon="local_shipping" />
         </div>
-        <div className="page-card page-card--pad" style={{ border: '2px dashed var(--color-primary)' }}>
+        <div className={`page-card page-card--pad ${styles.barcodeCard}`}>
           <div className="section-label">ESCANEO DE CÓDIGO DE BARRAS</div>
           <input type="text" placeholder="Escanear o ingresar código de barras..."
             onKeyDown={e => { if (e.key === 'Enter') { handleBarcode((e.target as HTMLInputElement).value); (e.target as HTMLInputElement).value = ''; } }}
             className="control control--xl" />
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <div style={{ flex: 1, position: 'relative' }}>
-            <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--color-outline)', display: 'flex' }}>
+        <div className={styles.searchRow}>
+          <div className={styles.searchWrapper}>
+            <span className={styles.searchIcon}>
               <Icon name="search" size={16} />
             </span>
-            <input placeholder="Búsqueda manual por nombre..." value={search} onChange={e => handleSearch(e.target.value)}
-              style={{ width: '100%', height: 42, paddingLeft: 34, paddingRight: 12, border: '1px solid var(--color-outline-variant)', borderRadius: 8, fontSize: 14, background: '#fff' }} />
+            <input placeholder="Búsqueda manual por nombre..." value={search} onChange={e => handleSearch(e.target.value)} className={styles.searchInput} />
           </div>
-          <button onClick={() => setShowNewProduct(true)} className="btn-outline" style={{ height: 42, padding: '0 16px', fontSize: 12, whiteSpace: 'nowrap' }}>
+          <button onClick={() => setShowNewProduct(true)} className={`btn-outline ${styles.newProductBtn}`}>
             <Icon name="plus" size={16} />
             Nuevo Producto
           </button>
         </div>
         <div className="result-list">
           <div className="page-card-header">
-            <span style={{ fontWeight: 600, fontSize: 14 }}>Resultados de Búsqueda</span>
-            <span className="text-secondary" style={{ fontSize: 12, fontWeight: 600 }}>COSTO / STOCK</span>
+            <span className={styles.resultsTitle}>Resultados de Búsqueda</span>
+            <span className={`text-secondary ${styles.resultsSubtitle}`}>COSTO / STOCK</span>
           </div>
-          {loading && <div style={{ padding: 20, textAlign: 'center' }}>Buscando...</div>}
+          {loading && <div className={styles.loadingBox}>Buscando...</div>}
           {products.map(product => (
             <div key={product.id} onClick={() => addToCart(product)} className="result-row">
               <div className="result-thumb"><Icon name="box" size={18} color="var(--color-secondary)" /></div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 14, fontWeight: 600 }}>{product.name}</div>
-                <div className="text-secondary" style={{ fontSize: 12 }}>Cód: {product.code}</div>
+              <div className={styles.productInfo}>
+                <div className={styles.productName}>{product.name}</div>
+                <div className={`text-secondary ${styles.productCode}`}>Cód: {product.code}</div>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <div className="text-primary" style={{ fontSize: 15, fontWeight: 700 }}>{product.cost > 0 ? formatPrice(product.cost) : 'Sin costo registrado'}</div>
-                <div className="text-secondary" style={{ fontSize: 11 }}>Stock: {product.stock}</div>
+              <div className={styles.priceRight}>
+                <div className={`text-primary ${styles.priceValue}`}>{product.cost > 0 ? formatPrice(product.cost) : 'Sin costo registrado'}</div>
+                <div className={`text-secondary ${styles.stockLabel}`}>Stock: {product.stock}</div>
               </div>
             </div>
           ))}
@@ -160,65 +160,64 @@ const Compras: React.FC = () => {
           <div style={{ fontWeight: 700, fontSize: 15 }}>Carrito de Compra</div>
           <button onClick={clearCart} className="btn-icon btn-icon--muted"><Icon name="trash" size={18} /></button>
         </div>
-        <div style={{ flex: 1, overflow: 'auto', padding: '8px 0' }}>
+        <div className={styles.cartScroll}>
           {cart.map(item => (
-            <div key={item.product_id} style={{ padding: '12px 20px', borderBottom: '1px solid var(--color-surface-container)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, flex: 1, marginRight: 8 }}>{item.name}</span>
+            <div key={item.product_id} className={styles.cartItem}>
+              <div className={styles.cartItemTop}>
+                <span className={styles.cartItemName}>{item.name}</span>
                 <button onClick={() => removeItem(item.product_id)} className="btn-icon btn-icon--muted"><Icon name="close" size={16} /></button>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+              <div className={styles.cartItemActions}>
                 <QtyStepper value={item.qty} onChange={q => setQuantity(item.product_id, q)} />
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <span className="text-secondary" style={{ fontSize: 11 }}>$</span>
-                  <input type="text" value={item.cost} onChange={e => { const val = Number(e.target.value.replace(/\D/g, "")) || 0; updateCost(item.product_id, val); }}
-                    style={{ width: 70, height: 28, padding: '0 6px', border: '1px solid var(--color-outline-variant)', borderRadius: 6, fontSize: 13, fontWeight: 600, textAlign: 'right', background: '#fff' }} />
+                <div className={styles.costBox}>
+                  <span className={`text-secondary ${styles.costPrefix}`}>$</span>
+                  <input type="text" value={item.cost} onChange={e => { const val = Number(e.target.value.replace(/\D/g, "")) || 0; updateCost(item.product_id, val); }} className={styles.costInput} />
                 </div>
-                <span className="text-primary" style={{ fontSize: 13, fontWeight: 600, minWidth: 70, textAlign: 'right' }}>{formatPrice(item.cost * item.qty)}</span>
+                <span className={`text-primary ${styles.subtotal}`}>{formatPrice(item.cost * item.qty)}</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5, marginTop: 8 }}>
-                <input placeholder={item.requires_lot_control ? 'Lote obligatorio' : 'Lote (S/N)'} value={item.lot_number} onChange={e => updateLot(item.product_id, 'lot_number', e.target.value)} style={{ minWidth: 0, padding: 5, border: '1px solid var(--color-outline-variant)', borderRadius: 5, fontSize: 11 }} />
-                <DatePicker selected={parseDateValue(item.manufacture_date)} onChange={(date: Date | null) => updateLot(item.product_id, 'manufacture_date', formatDateValue(date))} dateFormat="dd/MM/yyyy" placeholderText="Fabricación" showMonthDropdown showYearDropdown scrollableYearDropdown yearDropdownItemNumber={20} dropdownMode="select" customInput={<input style={{ minWidth: 0, width: '100%', boxSizing: 'border-box', padding: 5, border: '1px solid var(--color-outline-variant)', borderRadius: 5, fontSize: 11 }} />} />
-                <DatePicker selected={parseDateValue(item.expiration_date)} onChange={(date: Date | null) => updateLot(item.product_id, 'expiration_date', formatDateValue(date))} dateFormat="dd/MM/yyyy" placeholderText="Vencimiento" showMonthDropdown showYearDropdown scrollableYearDropdown yearDropdownItemNumber={20} dropdownMode="select" customInput={<input style={{ minWidth: 0, width: '100%', boxSizing: 'border-box', padding: 5, border: '1px solid var(--color-outline-variant)', borderRadius: 5, fontSize: 11 }} />} />
+              <div className={styles.lotGrid}>
+                <input placeholder={item.requires_lot_control ? 'Lote obligatorio' : 'Lote (S/N)'} value={item.lot_number} onChange={e => updateLot(item.product_id, 'lot_number', e.target.value)} className={styles.lotInput} />
+                <DatePicker selected={parseDateValue(item.manufacture_date)} onChange={(date: Date | null) => updateLot(item.product_id, 'manufacture_date', formatDateValue(date))} dateFormat="dd/MM/yyyy" placeholderText="Fabricación" showMonthDropdown showYearDropdown scrollableYearDropdown yearDropdownItemNumber={20} dropdownMode="select" customInput={<input className={styles.dateInput} />} />
+                <DatePicker selected={parseDateValue(item.expiration_date)} onChange={(date: Date | null) => updateLot(item.product_id, 'expiration_date', formatDateValue(date))} dateFormat="dd/MM/yyyy" placeholderText="Vencimiento" showMonthDropdown showYearDropdown scrollableYearDropdown yearDropdownItemNumber={20} dropdownMode="select" customInput={<input className={styles.dateInput} />} />
               </div>
             </div>
           ))}
           {cart.length === 0 && <div className="empty-state">Carrito vacío</div>}
         </div>
         <div className="cart-footer">
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
-            <span className="text-secondary" style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em' }}>TOTAL COMPRA</span>
-            <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--color-on-surface)', letterSpacing: '-0.02em' }}>{formatPrice(total)}</span>
+          <div className={styles.cartFooterRow}>
+            <span className={`text-secondary ${styles.cartFooterLabel}`}>TOTAL COMPRA</span>
+            <span className={styles.cartFooterTotal}>{formatPrice(total)}</span>
           </div>
-          <button onClick={handleConfirmPurchase} className="btn-solid btn-solid--md" style={{ width: '100%' }}>
-            <Icon name="confirm" size={18} color="#fff" />
+          <button onClick={handleConfirmPurchase} className={`btn-solid btn-solid--md ${styles.confirmBtn}`}>
+            <Icon name="confirm" size={18} color="var(--color-on-primary)" />
             Confirmar Compra
           </button>
         </div>
       </div>
 
       {showNewProduct && (
-        <div className="overlay overlay--solid">
-          <div className="modal">
-            <h3 style={{ marginBottom: 16, fontSize: 18 }}>Nuevo Producto</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="overlay">
+          <div className={`modal ${styles.newProductModal}`}>
+            <h3 className={styles.modalTitle}>Nuevo Producto</h3>
+            <div className={styles.modalForm}>
               <Input label="Nombre" placeholder="Nombre del producto" value={newProduct.name} onChange={v => handleNewProductInput('name', v)} />
               <Input label="Código de barras" placeholder="Código único" value={newProduct.code} onChange={v => handleNewProductInput('code', v)} />
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className={styles.formGrid}>
                 <Input label="Precio de venta" placeholder="$0" value={newProduct.price} onChange={v => handleNewProductInput('price', v)} icon="attach_money" />
                 <Input label="Nombre genérico" placeholder="Acetaminofén" value={newProduct.generic_name} onChange={v => handleNewProductInput('generic_name', v)} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <label style={{ fontSize: 12 }}>Categoría<select value={newProduct.category} onChange={e => handleNewProductInput('category', e.target.value)} style={{ width: '100%', height: 38, marginTop: 5 }}><option value="medicamento">Medicamento</option><option value="dispositivo_medico">Dispositivo médico</option><option value="cosmetico">Cosmético</option><option value="alimento">Alimento</option><option value="otro">Otro</option></select></label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, marginTop: 20 }}><input type="checkbox" checked={newProduct.requires_lot_control} onChange={e => setNewProduct(prev => ({ ...prev, requires_lot_control: e.target.checked }))} /> Control de lote obligatorio</label>
+              <div className={styles.formGrid}>
+                <label className={styles.categoryLabel}>Categoría<select value={newProduct.category} onChange={e => handleNewProductInput('category', e.target.value)} className={styles.categorySelect}><option value="medicamento">Medicamento</option><option value="dispositivo_medico">Dispositivo médico</option><option value="cosmetico">Cosmético</option><option value="alimento">Alimento</option><option value="otro">Otro</option></select></label>
+                <label className={styles.checkboxLabel}><input type="checkbox" checked={newProduct.requires_lot_control} onChange={e => setNewProduct(prev => ({ ...prev, requires_lot_control: e.target.checked }))} /> Control de lote obligatorio</label>
               </div>
-              <div className="text-secondary" style={{ fontSize: 11 }}>El costo y el stock se capturan en el lote de esta compra, no en el producto.</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className={`text-secondary ${styles.hint}`}>El costo y el stock se capturan en el lote de esta compra, no en el producto.</div>
+              <div className={styles.formGrid}>
                 <Input label="Precio mayorista" placeholder="Opcional" value={newProduct.wholesale_price} onChange={v => handleNewProductInput('wholesale_price', v)} />
                 <Input label="Cantidad mínima mayorista" placeholder="Ej. 12" value={newProduct.wholesale_min_qty} onChange={v => handleNewProductInput('wholesale_min_qty', v)} />
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 20 }}>
+            <div className={styles.modalActions}>
               <Btn variant="ghost" onClick={() => { setShowNewProduct(false); setNewProduct({ name: '', code: '', price: '', generic_name: '', category: 'medicamento', requires_lot_control: true, wholesale_price: '', wholesale_min_qty: '' }); }}>Cancelar</Btn>
               <Btn onClick={handleCreateProduct}>Crear y Agregar</Btn>
             </div>
@@ -229,8 +228,8 @@ const Compras: React.FC = () => {
       {showReceipt && lastPurchase && (
         <div className="overlay overlay--solid">
           <div className="modal--receipt modal">
-            <h2 style={{ marginBottom: 16 }}>resumen de Compra</h2>
-            <div style={{ marginBottom: 16 }}>
+            <h2 className={styles.invoiceTitle}>resumen de Compra</h2>
+            <div className={styles.invoiceSection}>
               <p><strong>Compra #:</strong> {lastPurchase.compra.id}</p>
               <p><strong>Fecha:</strong> {
                 new Date(lastPurchase.compra.purchase_date.includes('T')
@@ -241,14 +240,14 @@ const Compras: React.FC = () => {
               <p><strong>Total:</strong> {formatPrice(lastPurchase.compra.total_cost)}</p>
               <p>Puede ver mas detalles de su compra en el historial</p>
             </div>
-            <table className="data-table" style={{ marginBottom: 16 }}>
+            <table className={`data-table ${styles.invoiceTable}`}>
               <thead><tr>
                 <th>Producto</th><th className="align-right">Cant.</th><th className="align-right">Costo</th><th className="align-right">Subtotal</th>
               </tr></thead>
               <tbody>
                 {lastPurchase.items.map(item => (
                   <tr key={item.product_id}>
-                    <td>{item.product_name}<div className="text-secondary" style={{ fontSize: 10 }}>{item.lot_number ? `Lote ${item.lot_number}` : ''}{item.expiration_date ? ` · Vence ${item.expiration_date}` : ''}</div></td>
+                    <td>{item.product_name}<div className={`text-secondary ${styles.invoiceLot}`}>{item.lot_number ? `Lote ${item.lot_number}` : ''}{item.expiration_date ? ` · Vence ${item.expiration_date}` : ''}</div></td>
                     <td className="align-right">{item.quantity}</td>
                     <td className="align-right">{formatPrice(item.cost)}</td>
                     <td className="align-right">{formatPrice(item.subtotal)}</td>
@@ -256,7 +255,7 @@ const Compras: React.FC = () => {
                 ))}
               </tbody>
             </table>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+            <div className={styles.invoiceActions}>
               <Btn variant="ghost" onClick={() => { setShowReceipt(false); setLastPurchase(null); }}>Cerrar</Btn>
             </div>
           </div>

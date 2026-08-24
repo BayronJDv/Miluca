@@ -1,0 +1,104 @@
+/* components/TopProductos/TopProductos.module.css */
+.section {
+  background: var(--color-surface-container-lowest);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--color-outline-variant);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xl);
+}
+
+.headerIcon {
+  color: var(--color-warning);
+}
+
+.title {
+  font-size: var(--font-size-headline-sm);
+  line-height: var(--line-height-headline-sm);
+  font-weight: var(--font-weight-headline-sm);
+}
+
+.loading,
+.empty {
+  text-align: center;
+  padding: var(--spacing-lg);
+  color: var(--color-secondary);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--color-background);
+  border-radius: var(--radius-lg);
+  transition: background 0.15s;
+}
+
+.row:hover {
+  background: var(--color-surface-container);
+}
+
+.rank {
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.rank1 { background: var(--color-rank-gold); color: var(--color-on-primary); }
+.rank2 { background: var(--color-rank-silver); color: var(--color-on-primary); }
+.rank3 { background: var(--color-rank-bronze); color: var(--color-on-primary); }
+.rankDefault { background: var(--color-surface-container-high); color: var(--color-secondary); }
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  font-size: var(--font-size-body-md);
+  color: var(--color-on-surface);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.code {
+  font-size: 12px;
+  color: var(--color-secondary);
+}
+
+.stats {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.units {
+  font-size: var(--font-size-body-md);
+  color: var(--color-on-surface);
+  font-weight: 700;
+}
+
+.revenue {
+  font-size: 12px;
+  color: var(--color-secondary);
+}

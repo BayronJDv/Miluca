@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import PageHeader from '../components/design/PageHeader';
 import { Icon } from '../components/design/Icon';
 import { listarHistorialPorFecha, EditHistoryEntry } from '../db/edit_history';
+import styles from './HistorialEdiciones.module.css';
 
 const HistorialEdiciones: React.FC = () => {
   const [items, setItems] = useState<EditHistoryEntry[]>([]);
@@ -77,13 +78,13 @@ const HistorialEdiciones: React.FC = () => {
 
     return (
       <tr className="data-table">
-        <td className="text-secondary" style={{ fontWeight: 600 }}>{label}</td>
-        <td style={{ textDecoration: 'line-through', color: 'var(--color-outline)' }}>
+        <td className={`text-secondary ${styles.labelCell}`}>{label}</td>
+        <td className={styles.oldValue}>
           {isPrice ? formatPrice(prev as number) : prev ?? "-"}
         </td>
-        <td className={colorClass} style={{ fontWeight: 700 }}>
+        <td className={`${colorClass} ${styles.newValue}`}>
           {isPrice ? formatPrice(next as number) : next ?? "-"}
-          <span style={{ fontSize: 11 }}>{indicador}</span>
+          <span className={styles.indicator}>{indicador}</span>
         </td>
       </tr>
     );
@@ -92,17 +93,17 @@ const HistorialEdiciones: React.FC = () => {
   const headers = ["FECHA", "CÓDIGO", "PRODUCTO (ACTUAL)", "MOTIVO", "ACCIÓN"];
 
   return (
-    <div className="fade-up">
+    <div className={styles.root}>
       <PageHeader
         title="Historial de Ediciones"
         subtitle="Registro de modificaciones y auditoría de cambios en los productos."
       />
 
-      <div className="page-card page-card--flush" style={{ overflowX: 'auto', marginTop: 24 }}>
+      <div className={`page-card page-card--flush ${styles.cardWrapper}`}>
         {loading ? (
           <div className="empty-state">Cargando historial de cambios...</div>
         ) : (
-          <table className="data-table" style={{ minWidth: 750 }}>
+          <table className={`data-table ${styles.tableWide}`}>
             <thead>
               <tr>
                 {headers.map(header => (
@@ -119,13 +120,13 @@ const HistorialEdiciones: React.FC = () => {
                       <td>
                         {formatDate(row.modification_date)}
                       </td>
-                      <td style={{ fontWeight: 600, color: 'var(--color-secondary)' }}>
+                      <td className={styles.codeCell}>
                         {row.current_product_code ? `${row.current_product_code}` : `ID: ${row.product_id}`}
                       </td>
-                      <td style={{ fontWeight: 500 }}>
+                      <td className={styles.productCell}>
                         {row.new_name || row.previous_name || 'Producto Eliminado/Desconocido'}
                       </td>
-                      <td style={{ fontStyle: 'italic', color: 'var(--color-on-surface-variant)' }}>
+                      <td className={styles.reasonCell}>
                         {row.modification_reason}
                       </td>
                       <td>
@@ -141,18 +142,18 @@ const HistorialEdiciones: React.FC = () => {
                     
                     {expandedId === rowId && (
                       <tr className="row-detail">
-                        <td colSpan={headers.length} style={{ padding: "16px 24px" }}>
-                          <div className="page-card page-card--flush" style={{ borderRadius: 8 }}>
-                            <div className="page-card-header" style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-secondary)' }}>
+                        <td colSpan={headers.length} className={styles.detailCell}>
+                          <div className={`page-card page-card--flush ${styles.detailCard}`}>
+                            <div className={`page-card-header ${styles.detailHeader}`}>
                               DETALLE DE VALORES MODIFICADOS (ID CAMBIO #{rowId})
                             </div>
                             
                             <table className="data-table">
                               <thead>
-                                <tr style={{ background: '#fafafa' }}>
-                                  <th style={{ padding: '8px 16px', fontSize: 11, fontWeight: 600 }}>Propiedad</th>
-                                  <th style={{ padding: '8px 16px', fontSize: 11, fontWeight: 600 }}>Valor Anterior</th>
-                                  <th style={{ padding: '8px 16px', fontSize: 11, fontWeight: 600 }}>Valor Nuevo</th>
+                                <tr className={styles.detailHeadRow}>
+                                  <th className={styles.detailTh}>Propiedad</th>
+                                  <th className={styles.detailTh}>Valor Anterior</th>
+                                  <th className={styles.detailTh}>Valor Nuevo</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -166,7 +167,7 @@ const HistorialEdiciones: React.FC = () => {
                                  row.previous_cost === row.new_cost && 
                                  row.previous_stock === row.new_stock && (
                                   <tr>
-                                    <td colSpan={3} className="empty-state" style={{ fontStyle: 'italic' }}>
+                                    <td colSpan={3} className={`empty-state ${styles.emptyItalic}`}>
                                       No se alteraron los valores base (Nombre, Precios o Stock).
                                     </td>
                                   </tr>

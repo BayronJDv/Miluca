@@ -1,0 +1,111 @@
+.pageSplit {
+  display: flex;
+  gap: 16px;
+  height: calc(100vh - 60px - 48px);
+}
+.left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: hidden;
+}
+.right {
+  width: 600px;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.cartFooter {
+  padding: 16px 20px;
+  background: var(--color-surface-low);
+  border-top: 1px solid var(--color-outline-variant);
+}
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-surface-container);
+  border-radius: 8px;
+  padding: 2px 6px;
+}
+.resultList {
+  background: var(--color-surface-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 10px;
+  flex: 1;
+  overflow: auto;
+}
+.resultRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--color-surface-container);
+  cursor: pointer;
+}
+.resultThumb {
+  width: 38px;
+  height: 38px;
+  background: var(--color-surface-container);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.emptyState {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--color-secondary);
+}
+.autocomplete {
+  position: absolute;
+  z-index: 20;
+  top: 43px;
+  left: 0;
+  right: 0;
+  background: var(--color-surface-container-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 7px;
+  box-shadow: 0 8px 20px rgba(15,23,42,.12);
+  overflow: hidden;
+}
+.autocompleteFixed {
+  width: 280px;
+}
+.autocompleteItem {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px;
+  border: 0;
+  border-bottom: 1px solid var(--color-outline-variant);
+  background: var(--color-surface-container-lowest);
+  text-align: left;
+  cursor: pointer;
+}
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.statCard {
+  background: var(--color-surface-lowest);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 10px;
+  padding: 16px;
+}
+.statLabel {
+  font-size: 11px;
+  color: var(--color-secondary);
+}
+.statValue {
+  display: block;
+  margin-top: 6px;
+  font-size: 20px;
+}

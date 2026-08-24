@@ -23,6 +23,7 @@ import {
   setBusinessData,
   type BusinessData,
 } from '../db/settings';
+import styles from './Configuracion.module.css';
 
 
 export default function Configuracion() {
@@ -326,23 +327,23 @@ export default function Configuracion() {
 };
 
   return (
-    <div className="p-lg">
+    <div className={styles.root}>
       <PageHeader
         title="Configuración"
         subtitle="Administra las opciones del sistema"
       />
 
       {/* Sección Superior: Copias de seguridad */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
-        <div className="bg-white p-lg rounded-xl shadow-sm border border-outline-variant flex flex-col">
-          <div className="flex items-center gap-sm mb-sm">
-            <span className="material-symbols-outlined icon-lg text-primary">backup</span>
-            <h3 className="font-label-lg text-label-lg text-on-surface">Copia de seguridad</h3>
+      <div className={styles.grid2}>
+        <div className={`${styles.card} ${styles.cardFlex}`}>
+          <div className={styles.cardHeader}>
+            <span className={`material-symbols-outlined ${styles.cardIcon} ${styles.cardIconPrimary}`}>backup</span>
+            <h3 className={styles.cardTitle}>Copia de seguridad</h3>
           </div>
-          <p className="text-body-sm text-secondary mb-md leading-relaxed">
+          <p className={styles.cardDesc}>
             Genera una copia completa y consistente de la base de datos.
           </p>
-          <div className="mt-auto">
+          <div className={styles.cardActionsTop}>
             <Btn icon="download" onClick={handleBackup} disabled={backingUp}>
               {backingUp ? 'Generando...' : 'Generar copia'}
             </Btn>
@@ -351,15 +352,15 @@ export default function Configuracion() {
 
         {/* Renderizado condicional: Solo visible si el usuario es Admin */}
         {isAdmin && (
-          <div className="bg-white p-lg rounded-xl shadow-sm border border-outline-variant flex flex-col">
-            <div className="flex items-center gap-sm mb-sm">
-              <span className="material-symbols-outlined icon-lg text-error">restore_page</span>
-              <h3 className="font-label-lg text-label-lg text-on-surface">Restaurar base de datos</h3>
+          <div className={`${styles.card} ${styles.cardFlex}`}>
+            <div className={styles.cardHeader}>
+              <span className={`material-symbols-outlined ${styles.cardIcon} ${styles.cardIconError}`}>restore_page</span>
+              <h3 className={styles.cardTitle}>Restaurar base de datos</h3>
             </div>
-            <p className="text-body-sm text-secondary mb-md leading-relaxed">
+            <p className={styles.cardDesc}>
               Reemplaza los datos actuales con una copia de seguridad previa. Irreversible.
             </p>
-            <div className="mt-auto">
+            <div className={styles.cardActionsTop}>
               <Btn icon="download" variant="danger" onClick={handleRestore} disabled={restoring}>
                 {restoring ? 'Restaurando...' : 'Restaurar desde copia'}
               </Btn>
@@ -369,19 +370,19 @@ export default function Configuracion() {
       </div>
 
       {/* Sección Inferior: Gestión de usuarios */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-lg mt-lg">
+      <div className={styles.grid2}>
 
         {/* Formulario 1: Crear Usuario */}
-        <div className="bg-white p-lg rounded-xl shadow-sm border border-outline-variant w-full">
-          <div className="flex items-center gap-sm mb-sm">
-            <span className="material-symbols-outlined icon-lg text-primary">person_add</span>
-            <h3 className="font-label-lg text-label-lg text-on-surface">Crear nuevo usuario</h3>
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <span className={`material-symbols-outlined ${styles.cardIcon} ${styles.cardIconPrimary}`}>person_add</span>
+            <h3 className={styles.cardTitle}>Crear nuevo usuario</h3>
           </div>
-          <p className="text-body-sm text-secondary mb-md leading-relaxed">
+          <p className={styles.cardDesc}>
             Registra un nuevo usuario asignándole un rol en el sistema.
           </p>
 
-          <div className="flex flex-col gap-md">
+          <div className={styles.formCol}>
             <Input
               label="Nombre de usuario"
               type="text"
@@ -416,18 +417,18 @@ export default function Configuracion() {
         </div>
 
         {/* Formulario 2: Modificar / Eliminar Usuario Existente */}
-        <div className="bg-white p-lg rounded-xl shadow-sm border border-outline-variant w-full">
-          <div className="flex items-center gap-sm mb-sm">
-            <span className="material-symbols-outlined icon-lg text-primary">manage_accounts</span>
-            <h3 className="font-label-lg text-label-lg text-on-surface">Administrar usuario</h3>
+        <div className={styles.card}>
+          <div className={styles.cardHeader}>
+            <span className={`material-symbols-outlined ${styles.cardIcon} ${styles.cardIconPrimary}`}>manage_accounts</span>
+            <h3 className={styles.cardTitle}>Administrar usuario</h3>
           </div>
-          <p className="text-body-sm text-secondary mb-md leading-relaxed">
+          <p className={styles.cardDesc}>
             Cambia la contraseña o elimina cuentas del sistema de forma permanente.
           </p>
 
-          <div className="flex flex-col gap-md">
-            <div className="flex items-end gap-md">
-              <div className="flex-1">
+          <div className={styles.formCol}>
+            <div className={styles.formRow}>
+              <div className={styles.flex1}>
                 <Select
                   label="Usuario"
                   placeholder="Seleccionar usuario"
@@ -441,9 +442,9 @@ export default function Configuracion() {
                 />
               </div>
               {selectedUserId && (
-                <div className="mb-1">
-                  <label className="text-label-md text-on-surface-variant block mb-1">Rol</label>
-                  <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-secondary-container text-secondary">
+                <div>
+                  <span className={styles.roleLabel}>Rol</span>
+                  <span className={styles.roleBadge}>
                     {users.find((u) => String(u.id) === selectedUserId)?.role}
                   </span>
                 </div>
@@ -465,7 +466,7 @@ export default function Configuracion() {
               icon="lock"
             />
 
-            <div className="flex gap-sm mt-sm">
+            <div className={styles.actionsRow}>
               <Btn icon="lock" onClick={handleChangePassword} disabled={changing}>
                 {changing ? 'Cambiando...' : 'Cambiar contraseña'}
               </Btn>
@@ -482,27 +483,27 @@ export default function Configuracion() {
       </div>
 
       {/* Sección: Impresoras térmicas */}
-      <div className="mt-lg">
-        <div className="flex items-center gap-sm mb-lg">
-          <span className="material-symbols-outlined icon-lg text-primary">print</span>
-          <h3 className="font-label-lg text-label-lg text-on-surface">Impresoras térmicas</h3>
+      <div className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <span className={`material-symbols-outlined ${styles.cardIcon} ${styles.cardIconPrimary}`}>print</span>
+          <h3 className={styles.cardTitle}>Impresoras térmicas</h3>
         </div>
 
-        <div className="bg-white p-lg rounded-xl shadow-sm border border-outline-variant">
-          <p className="text-body-sm text-secondary mb-md leading-relaxed">
+        <div className={styles.card}>
+          <p className={styles.cardDesc}>
             Selecciona la impresora que se usará para emitir los recibos de compra. También puedes
             verificar que funcione correctamente con una prueba de impresión.
           </p>
 
           {printersLoading ? (
-            <div className="flex items-center justify-center py-xl">
-              <span className="text-body-sm text-secondary">Buscando impresoras...</span>
+            <div className={styles.loadingBox}>
+              <span className={styles.loadingText}>Buscando impresoras...</span>
             </div>
           ) : (
             <>
-              <div className="flex flex-col gap-md">
-                <div className="flex items-end gap-md">
-                  <div className="flex-1">
+              <div className={styles.formCol}>
+                <div className={styles.formRow}>
+                  <div className={styles.flex1}>
                     <Select
                       label="Impresora predeterminada"
                       placeholder={
@@ -519,7 +520,7 @@ export default function Configuracion() {
                       icon="download"
                     />
                   </div>
-                  <div className="mb-1">
+                  <div>
                     <Btn icon="history" variant="ghost" onClick={refreshPrinters}>
                       Actualizar
                     </Btn>
@@ -527,8 +528,8 @@ export default function Configuracion() {
                 </div>
 
                 {selectedPrinter && printers.find((p) => p.name === selectedPrinter) && (
-                  <div className="flex flex-col gap-sm rounded-lg border border-outline-variant bg-surface p-md">
-                    <div className="text-body-sm font-semibold text-on-surface mt-xs">
+                  <div className={styles.printerInfo}>
+                    <div className={styles.printerName}>
                       {(() => {
                         const printer = printers.find((p) => p.name === selectedPrinter);
                         return printer ? printer.name : selectedPrinter;
@@ -537,22 +538,20 @@ export default function Configuracion() {
                     {(() => {
                       const printer = printers.find((p) => p.name === selectedPrinter);
                       return printer ? (
-                        <div className="flex flex-col gap-sm">
-                          <div className="flex items-center gap-sm">
-                            <span className="material-symbols-outlined icon-md text-tertiary">cable</span>
-                            <span className="text-body-sm text-secondary">{printer.interface_type}</span>
+                        <div className={styles.formCol}>
+                          <div className={styles.printerRow}>
+                            <span className={`material-symbols-outlined ${styles.cardIcon}`}>cable</span>
+                            <span className={styles.printerRowText}>{printer.interface_type}</span>
                           </div>
-                          <div className="flex items-center gap-sm">
-                            <span className="material-symbols-outlined icon-md text-tertiary">link</span>
-                            <span className="text-body-sm text-secondary truncate">{printer.identifier}</span>
+                          <div className={styles.printerRow}>
+                            <span className={`material-symbols-outlined ${styles.cardIcon}`}>link</span>
+                            <span className={styles.printerRowTextTruncate}>{printer.identifier}</span>
                           </div>
-                          <div className="flex items-center gap-sm">
+                          <div className={styles.printerRow}>
                             <span
-                              className={`inline-block w-2 h-2 rounded-full ${
-                                printer.status === 'IDLE' ? 'bg-success' : 'bg-warning'
-                              }`}
+                              className={`${styles.statusDot} ${printer.status === 'IDLE' ? styles.statusIdle : styles.statusBusy}`}
                             />
-                            <span className="text-body-sm text-secondary">{printer.status}</span>
+                            <span className={styles.printerRowText}>{printer.status}</span>
                           </div>
                         </div>
                       ) : null;
@@ -561,16 +560,16 @@ export default function Configuracion() {
                 )}
 
                 {printers.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-lg gap-sm">
-                    <span className="material-symbols-outlined icon-xl text-tertiary">printer_disabled</span>
-                    <span className="text-body-md text-secondary">
+                  <div className={styles.noPrinters}>
+                    <span className={`material-symbols-outlined ${styles.noPrintersIcon}`}>printer_disabled</span>
+                    <span className={styles.noPrintersText}>
                       No se encontraron impresoras térmicas conectadas
                     </span>
                   </div>
                 )}
               </div>
 
-              <div className="flex gap-sm mt-md">
+              <div className={styles.testRow}>
                 <Btn
                   icon="download"
                   onClick={handleTestPrinter}
@@ -585,19 +584,19 @@ export default function Configuracion() {
       </div>
 
       {/* Sección: Datos de la empresa */}
-      <div className="mt-lg">
-        <div className="flex items-center gap-sm mb-lg">
-          <span className="material-symbols-outlined icon-lg text-primary">storefront</span>
-          <h3 className="font-label-lg text-label-lg text-on-surface">Datos de la empresa</h3>
+      <div className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <span className={`material-symbols-outlined ${styles.cardIcon} ${styles.cardIconPrimary}`}>storefront</span>
+          <h3 className={styles.cardTitle}>Datos de la empresa</h3>
         </div>
 
-        <div className="bg-white p-lg rounded-xl shadow-sm border border-outline-variant">
-          <p className="text-body-sm text-secondary mb-md leading-relaxed">
+        <div className={styles.card}>
+          <p className={styles.cardDesc}>
             Estos datos aparecerán en el encabezado y pie de los recibos de compra impresos.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
-            <div className="md:col-span-2">
+          <div className={styles.grid2}>
+            <div className={styles.span2}>
               <Input
                 label="Nombre / Razón social"
                 value={businessForm.name}
@@ -617,7 +616,7 @@ export default function Configuracion() {
               onChange={(v) => setBusinessForm((prev) => ({ ...prev, phone: v }))}
               icon="person"
             />
-            <div className="md:col-span-2">
+            <div className={styles.span2}>
               <Input
                 label="Dirección"
                 value={businessForm.address}
@@ -652,7 +651,7 @@ export default function Configuracion() {
               }
               icon="attach_money"
             />
-            <div className="md:col-span-2">
+            <div className={styles.span2}>
               <Input
                 label="Lema"
                 value={businessForm.slogan}
@@ -660,7 +659,7 @@ export default function Configuracion() {
                 icon="star"
               />
             </div>
-            <div className="md:col-span-2">
+            <div className={styles.span2}>
               <Input
                 label="Leyenda al pie del recibo"
                 value={businessForm.footer}
@@ -670,12 +669,12 @@ export default function Configuracion() {
             </div>
           </div>
 
-          <div className="flex items-center gap-sm mt-md">
+          <div className={styles.actionsRow}>
             <Btn icon="check" onClick={handleSaveBusiness} disabled={savingBusiness}>
               {savingBusiness ? 'Guardando...' : 'Guardar datos'}
             </Btn>
             {savedBusiness && (
-              <span className="text-body-sm font-medium text-success">Datos guardados</span>
+              <span className={styles.savedMsg}>Datos guardados</span>
             )}
           </div>
         </div>

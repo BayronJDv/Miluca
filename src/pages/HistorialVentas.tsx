@@ -8,6 +8,7 @@ import { useAtomValue } from 'jotai';
 import { isAdminAtom, userIdAtom, userAtom } from '../store/UserAtom';
 import { devolverCliente, obtenerPendienteDevolucionVenta } from '../db/returns';
 import { imprimirFactura } from '../print/printer';
+import styles from './HistorialVentas.module.css';
 
 const HistorialVentas: React.FC = () => {
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
@@ -109,9 +110,9 @@ const HistorialVentas: React.FC = () => {
   };
 
   return (
-    <div className="fade-up">
+    <div className={styles.root}>
       <PageHeader title="Historial de Ventas" subtitle="Registro detallado de todas las ventas realizadas." />
-      <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+      <div className={styles.filtersBar}>
         <div>
           <label className="field-label">Rango de Fechas</label>
           <DatePicker selectsRange startDate={startDate} endDate={endDate}
@@ -136,12 +137,12 @@ const HistorialVentas: React.FC = () => {
               {items.map((row) => (
                 <React.Fragment key={row.id}>
                   <tr>
-                    <td style={{ fontWeight: 600, color: 'var(--color-secondary)' }}>#{row.id}</td>
+                    <td className={styles.idCell}>#{row.id}</td>
                     <td>{formatDate(row.sale_date)}</td>
-                    <td style={{ fontWeight: 700 }} className="align-right">{formatPrice(row.total)}</td>
-                    {isAdmin && <td className="text-primary align-right" style={{ fontWeight: 700 }}>{formatPrice(row.profit)}</td>}
+                    <td className={`align-right ${styles.totalCell}`}>{formatPrice(row.total)}</td>
+                    {isAdmin && <td className={`text-primary align-right ${styles.profitCell}`}>{formatPrice(row.profit)}</td>}
                     <td>
-                      <div style={{ display: 'flex', gap: 14, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                      <div className={styles.actionsRow}>
                         <button onClick={() => row.id && handleToggleExpand(row.id)} className="btn-link">
                           {expandedId === row.id ? "Ocultar" : "Ver detalle"}
                           <Icon name={expandedId === row.id ? "minus" : "plus"} size={18} />
@@ -155,13 +156,13 @@ const HistorialVentas: React.FC = () => {
                   </tr>
                   {expandedId === row.id && (
                     <tr className="row-detail">
-                      <td colSpan={isAdmin ? 5 : 4} style={{ padding: "16px 24px" }}>
-                        <div className="page-card page-card--flush" style={{ borderRadius: 8 }}>
-                          <div className="page-card-header" style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-secondary)' }}>
+                      <td colSpan={isAdmin ? 5 : 4} className={styles.detailCell}>
+                        <div className={`page-card page-card--flush ${styles.detailCard}`}>
+                          <div className={`page-card-header ${styles.detailHeader}`}>
                             PRODUCTOS DE LA VENTA #{row.id}
                           </div>
                           {loadingDetalle === row.id ? (
-                            <div className="empty-state" style={{ fontSize: 13 }}>Cargando detalles...</div>
+                            <div className={`empty-state ${styles.emptySmall}`}>Cargando detalles...</div>
                           ) : detallesCache[row.id!] ? (
                             <table className="data-table">
                               <thead><tr>
@@ -173,14 +174,14 @@ const HistorialVentas: React.FC = () => {
                                     <td>{item.product_name}</td>
                                     <td className="align-right">{item.quantity}</td>
                                     <td className="align-right">{formatPrice(item.price)}</td>
-                                    <td className="align-right" style={{ fontWeight: 600 }}>{formatPrice(item.subtotal)}</td>
+                                    <td className={`align-right ${styles.subtotalCell}`}>{formatPrice(item.subtotal)}</td>
                                     <td className="align-right"><button onClick={() => openReturn(row.id!, item)} className="btn-mini-solid">Devolver</button></td>
                                   </tr>
                                 ))}
                               </tbody>
                             </table>
                           ) : (
-                            <div className="empty-state" style={{ fontSize: 13 }}>No se pudieron cargar los detalles.</div>
+                            <div className={`empty-state ${styles.emptySmall}`}>No se pudieron cargar los detalles.</div>
                           )}
                         </div>
                       </td>
@@ -193,7 +194,7 @@ const HistorialVentas: React.FC = () => {
         )}
         {!loading && items.length === 0 && <div className="empty-state">No se encontraron ventas</div>}
       </div>
-      {returnTarget && <div className="overlay"><div className="modal"><h3 style={{ marginTop: 0 }}>Devolución de cliente</h3><p className="text-secondary">{returnTarget.name} · máximo pendiente: {returnTarget.max}</p><label className="field" style={{ marginTop: 12 }}>Cantidad<input type="number" min="0.01" max={returnTarget.max} value={returnQuantity} onChange={e => setReturnQuantity(e.target.value)} /></label><label className="field" style={{ marginTop: 12 }}>Motivo<input value={returnReason} onChange={e => setReturnReason(e.target.value)} /></label><div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}><button onClick={() => setReturnTarget(null)} className="btn-mini-outline">Cancelar</button><button onClick={submitReturn} className="btn-mini-solid">Confirmar devolución</button></div></div></div>}
+      {returnTarget && <div className="overlay"><div className="modal"><h3 className={styles.modalTitle}>Devolución de cliente</h3><p className="text-secondary">{returnTarget.name} · máximo pendiente: {returnTarget.max}</p><label className={`field ${styles.modalField}`}>Cantidad<input type="number" min="0.01" max={returnTarget.max} value={returnQuantity} onChange={e => setReturnQuantity(e.target.value)} /></label><label className={`field ${styles.modalField}`}>Motivo<input value={returnReason} onChange={e => setReturnReason(e.target.value)} /></label><div className={styles.modalActions}><button onClick={() => setReturnTarget(null)} className="btn-mini-outline">Cancelar</button><button onClick={submitReturn} className="btn-mini-solid">Confirmar devolución</button></div></div></div>}
     </div>
   );
 };

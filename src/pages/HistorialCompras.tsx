@@ -16,6 +16,7 @@ import {
   obtenerPendienteDevolucionCompra,
 } from "../db/returns";
 import { useAtomValue } from "jotai";
+import styles from './HistorialCompras.module.css';
 
 const HistorialCompras: React.FC = () => {
   const [search, setSearch] = useState<string>("");
@@ -152,21 +153,13 @@ const HistorialCompras: React.FC = () => {
   };
 
   return (
-    <div className="fade-up">
+    <div className={styles.root}>
       <PageHeader
         title="Historial de Compras"
         subtitle="Registro detallado de todas las compras realizadas a proveedores."
       />
-      <div
-        style={{
-          display: "flex",
-          gap: 16,
-          marginBottom: 24,
-          flexWrap: "wrap",
-          alignItems: "flex-end",
-        }}
-      >
-        <div style={{ flex: 1, minWidth: 300 }}>
+      <div className={styles.filtersBar}>
+        <div className={styles.searchField}>
           <label className="field-label">Buscar Proveedor</label>
           <Input
             placeholder="Ej. Distribuidora del Sur..."
@@ -201,7 +194,7 @@ const HistorialCompras: React.FC = () => {
         {loading ? (
           <div className="empty-state">Cargando historial de compras...</div>
         ) : (
-          <table className="data-table" style={{ minWidth: 650 }}>
+          <table className={`data-table ${styles.tableWide}`}>
             <thead>
               <tr>
                 {["ID COMPRA", "FECHA", "PROVEEDOR", "TOTAL", "ACCIÓN"].map(
@@ -220,19 +213,14 @@ const HistorialCompras: React.FC = () => {
               {filtered.map((row) => (
                 <React.Fragment key={row.id}>
                   <tr>
-                    <td
-                      style={{
-                        fontWeight: 600,
-                        color: "var(--color-secondary)",
-                      }}
-                    >
+                    <td className={styles.idCell}>
                       #{row.id}
                     </td>
                     <td>{formatDate(row.purchase_date)}</td>
-                    <td style={{ fontWeight: 600 }}>
+                    <td className={styles.supplierCell}>
                       {row.supplier_name || "Sin Proveedor"}
                     </td>
-                    <td style={{ fontWeight: 700 }} className="align-right">
+                    <td className={`align-right ${styles.totalCell}`}>
                       {formatPrice(row.total_cost)}
                     </td>
                     <td>
@@ -250,25 +238,18 @@ const HistorialCompras: React.FC = () => {
                   </tr>
                   {expandedId === row.id && (
                     <tr className="row-detail">
-                      <td colSpan={5} style={{ padding: "16px 24px" }}>
+                      <td colSpan={5} className={styles.detailCell}>
                         <div
-                          className="page-card page-card--flush"
-                          style={{ borderRadius: 8 }}
+                          className={`page-card page-card--flush ${styles.detailCard}`}
                         >
                           <div
-                            className="page-card-header"
-                            style={{
-                              fontSize: 12,
-                              fontWeight: 700,
-                              color: "var(--color-secondary)",
-                            }}
+                            className={`page-card-header ${styles.detailHeader}`}
                           >
                             PRODUCTOS DE LA COMPRA #{row.id}
                           </div>
                           {loadingDetalle === row.id ? (
                             <div
-                              className="empty-state"
-                              style={{ fontSize: 13 }}
+                              className={`empty-state ${styles.emptySmall}`}
                             >
                               Cargando detalles...
                             </div>
@@ -296,8 +277,7 @@ const HistorialCompras: React.FC = () => {
                                       {formatPrice(item.cost)}
                                     </td>
                                     <td
-                                      className="align-right"
-                                      style={{ fontWeight: 600 }}
+                                      className={`align-right ${styles.subtotalCell}`}
                                     >
                                       {formatPrice(item.subtotal)}
                                     </td>
@@ -317,8 +297,7 @@ const HistorialCompras: React.FC = () => {
                             </table>
                           ) : (
                             <div
-                              className="empty-state"
-                              style={{ fontSize: 13 }}
+                              className={`empty-state ${styles.emptySmall}`}
                             >
                               No se pudieron cargar los detalles.
                             </div>
@@ -339,11 +318,11 @@ const HistorialCompras: React.FC = () => {
       {returnTarget && (
         <div className="overlay">
           <div className="modal">
-            <h3 style={{ marginTop: 0 }}>Devolución a proveedor</h3>
+            <h3 className={styles.modalTitle}>Devolución a proveedor</h3>
             <p className="text-secondary">
               {returnTarget.name} · máximo pendiente: {returnTarget.max}
             </p>
-            <label className="field" style={{ marginTop: 12 }}>
+            <label className={`field ${styles.modalField}`}>
               Cantidad
               <input
                 type="number"
@@ -353,21 +332,14 @@ const HistorialCompras: React.FC = () => {
                 onChange={(e) => setReturnQuantity(e.target.value)}
               />
             </label>
-            <label className="field" style={{ marginTop: 12 }}>
+            <label className={`field ${styles.modalField}`}>
               Motivo
               <input
                 value={returnReason}
                 onChange={(e) => setReturnReason(e.target.value)}
               />
             </label>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: 8,
-                marginTop: 16,
-              }}
-            >
+            <div className={styles.modalActions}>
               <button
                 onClick={() => setReturnTarget(null)}
                 className="btn-mini-outline"

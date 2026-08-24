@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Icon } from './Icon';
+import styles from './QtyStepper.module.css';
 
 interface QtyStepperProps {
   value: number;
@@ -24,8 +25,8 @@ export const QtyStepper = ({ value, onChange }: QtyStepperProps) => {
   };
 
   return (
-    <div className="stepper">
-      <button type="button" onClick={() => step(-1)} className="btn-icon" style={{ color: 'var(--color-on-surface)' }}>
+    <div className={styles.stepper}>
+      <button type="button" onClick={() => step(-1)} className={styles.btnIcon}>
         <Icon name="minus" size={16} />
       </button>
       <input
@@ -36,9 +37,9 @@ export const QtyStepper = ({ value, onChange }: QtyStepperProps) => {
         onFocus={e => e.currentTarget.select()}
         onBlur={commit}
         onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-        style={{ width: 42, height: 26, border: '1px solid var(--color-outline-variant)', borderRadius: 6, background: '#fff', fontSize: 14, fontWeight: 700, textAlign: 'center', padding: 0 }}
+        className={styles.input}
       />
-      <button type="button" onClick={() => step(1)} className="btn-icon" style={{ color: 'var(--color-on-surface)' }}>
+      <button type="button" onClick={() => step(1)} className={styles.btnIcon}>
         <Icon name="plus" size={16} />
       </button>
     </div>

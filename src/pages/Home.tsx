@@ -7,6 +7,7 @@ import { obtenerTotalVentasHoy, obtenerNumeroTransaccionesHoy, obtenerProfitHoy 
 import { obtenerTotalCompras } from '../db/purchases';
 import { isAdminAtom } from '../store/UserAtom';
 import { useAtomValue } from 'jotai';
+import styles from './Home.module.css';
 
 type Periodo = 'day' | 'week' | 'month';
 
@@ -142,26 +143,22 @@ export default function Home() {
   ] : [];
 
   return (
-    <div className="fade-up">
+    <div className={styles.root}>
       {/* Dashboard Header */}
-      <div className="flex justify-between items-end mb-lg">
+      <div className={styles.header}>
         <div>
-          <h2 className="font-headline-md text-headline-md text-on-surface">Panel de Control</h2>
-          <p className="text-secondary font-body-md text-body-md">Bienvenido de nuevo. Aquí tienes el resumen operativo. usuario {isAdmin.toString()}</p>
+          <h2 className={styles.title}>Panel de Control</h2>
+          <p className={styles.subtitle}>Bienvenido de nuevo. Aquí tienes el resumen operativo. usuario {isAdmin.toString()}</p>
         </div>
 
         {/* Period Selector */}
         {isAdmin && (
-          <div className="flex rounded-lg bg-surface-container-high p-xs gap-xs">
+          <div className={styles.periodSelector}>
             {periodos.map((p) => (
               <button
                 key={p.key}
                 onClick={() => setPeriodo(p.key)}
-                className={`px-md py-sm rounded-md text-label-md font-label-md transition-colors ${
-                  periodo === p.key
-                    ? 'bg-primary text-on-primary shadow-sm'
-                    : 'text-on-surface hover:bg-surface-container-highest'
-                }`}
+                className={`${styles.periodBtn} ${periodo === p.key ? styles.periodBtnActive : ''}`}
               >
                 {p.label}
               </button>
@@ -172,15 +169,15 @@ export default function Home() {
 
       {/* Period Label*/}
       {isAdmin && (
-        <div className="flex items-center gap-sm mb-lg">
-          <span className="material-symbols-outlined text-sm text-secondary">calendar_today</span>
-          <span className="font-body-md text-body-md text-secondary">{titulo}</span>
+        <div className={styles.periodLabel}>
+          <span className={`material-symbols-outlined ${styles.periodIcon}`}>calendar_today</span>
+          <span className={styles.periodText}>{titulo}</span>
         </div>
       )}
 
       {/* KPI Cards Grid*/}
       {isAdmin && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-lg mb-lg">
+        <div className={styles.kpiGrid}>
           {kpiData.map((kpi, index) => (
             <KPICard key={index} {...kpi} />
           ))}
@@ -188,9 +185,9 @@ export default function Home() {
       )}
 
       {/* Bottom Section: 2 Columns */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-lg">
+      <div className={styles.bottomGrid}>
         <TopProductos />
-        <div className="space-y-lg">
+        <div className={styles.bottomRight}>
           <QuickAccess />
           <StockAlerts />
         </div>
