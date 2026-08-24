@@ -1,6 +1,6 @@
 [package]
 name = "gualcala"
-version = "6.0.0"
+version = "6.0.1"
 description = "Una aplicacion de punto de venta"
 authors = ["you"]
 edition = "2021"
