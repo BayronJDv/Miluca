@@ -137,6 +137,12 @@ pub fn run() {
             sql: include_str!("../migrations/004_repair_pharmacy_constraints.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 5,
+            description: "add_customers",
+            sql: include_str!("../migrations/005_customers.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

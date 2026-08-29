@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import PageHeader from '../components/design/PageHeader';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -6,6 +6,7 @@ import { save } from '@tauri-apps/plugin-dialog';
 import { invoke } from '@tauri-apps/api/core';
 import { obtenerVentasPorDia } from '../db/sales';
 import { obtenerComprasPorDia } from '../db/purchases';
+import { listUsers } from '../db/users';
 import styles from './Reportes.module.css';
 
 interface ReportRow {
@@ -67,6 +68,12 @@ export default function Reportes() {
   const [rows, setRows] = useState<ReportRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [generated, setGenerated] = useState(false);
+  const [vendedorId, setVendedorId] = useState<number | ''>('');
+  const [usuarios, setUsuarios] = useState<{ id: number; username: string; role: string }[]>([]);
+
+  useEffect(() => {
+    listUsers().then(setUsuarios).catch(console.error);
+  }, []);
 
   const generarReporte = useCallback(async () => {
     if (!startDate || !endDate) return;
@@ -78,7 +85,7 @@ export default function Reportes() {
       const fin = formatLocal(endDate);
 
       const [ventas, compras] = await Promise.all([
-        obtenerVentasPorDia(inicio, fin),
+        obtenerVentasPorDia(inicio, fin, vendedorId || undefined),
         obtenerComprasPorDia(inicio, fin),
       ]);
 
@@ -116,7 +123,7 @@ export default function Reportes() {
     } finally {
       setLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [startDate, endDate, vendedorId]);
 
   const totals = rows.reduce(
     (acc, r) => ({
@@ -157,6 +164,20 @@ export default function Reportes() {
               <input className="control control--md" />
             }
           />
+        </div>
+
+        <div>
+          <label className="field-label">Vendedor (opcional)</label>
+          <select
+            className="control control--md"
+            value={vendedorId}
+            onChange={e => setVendedorId(e.target.value ? Number(e.target.value) : '')}
+          >
+            <option value="">Todos los vendedores</option>
+            {usuarios.map(u => (
+              <option key={u.id} value={u.id}>{u.username}</option>
+            ))}
+          </select>
         </div>
 
         <button

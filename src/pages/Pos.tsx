@@ -1,9 +1,12 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Icon } from '../components/design/Icon';
 import Btn from '../components/design/Btn';
 import { QtyStepper } from '../components/design/QtyStepper';
+import { Select } from '../components/design/Select';
+import { Input } from '../components/design/Input';
 import { buscarProductosPorNombre, buscarProductosPorCodigo, Producto } from '../db/products';
 import { estimarUtilidadVenta, registrarVenta, Factura } from '../db/sales';
+import { obtenerClientes, crearCliente, Customer } from '../db/customers';
 import { mensajeError } from '../db/errors';
 import { imprimirFactura } from '../print/printer';
 import { useAtomValue } from 'jotai';
@@ -27,7 +30,46 @@ const Pos: React.FC = () => {
   const [showInvoice, setShowInvoice] = useState(false);
   const [lastPayment, setLastPayment] = useState<{ received: number; change: number } | null>(null);
   const [printing, setPrinting] = useState(false);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState<string>("");
+  const [showNewCustomer, setShowNewCustomer] = useState(false);
+  const [newCustomer, setNewCustomer] = useState({ name: '', contact_info: '', nit: '', address: '', email: '' });
   const currentUser = useAtomValue(userAtom);
+
+  useEffect(() => {
+    obtenerClientes().then(list => {
+      setCustomers(list);
+      const generico = list.find(c => c.name.toLowerCase() === 'generico');
+      setSelectedCustomer(generico?.id != null ? String(generico.id) : (list[0]?.id != null ? String(list[0].id) : ""));
+    });
+  }, []);
+
+  const customerOptions = useMemo(() => customers.map(c => ({ value: String(c.id), label: c.name })), [customers]);
+
+  const handleNewCustomerInput = useCallback((key: keyof typeof newCustomer, value: string) => {
+    setNewCustomer(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handleCreateCustomer = useCallback(async () => {
+    if (!newCustomer.name.trim()) { alert('Por favor ingrese el nombre del cliente'); return; }
+    try {
+      const id = await crearCliente({
+        name: newCustomer.name.trim(),
+        contact_info: newCustomer.contact_info.trim() || null,
+        nit: newCustomer.nit.trim() || null,
+        address: newCustomer.address.trim() || null,
+        email: newCustomer.email.trim() || null,
+      });
+      const list = await obtenerClientes();
+      setCustomers(list);
+      setSelectedCustomer(String(id));
+      setShowNewCustomer(false);
+      setNewCustomer({ name: '', contact_info: '', nit: '', address: '', email: '' });
+    } catch (error) {
+      console.error('Error al crear cliente:', error);
+      alert('No se pudo crear el cliente: ' + error);
+    }
+  }, [newCustomer]);
 
   const handleSearch = useCallback(async (value: string) => {
     setSearch(value);
@@ -100,11 +142,11 @@ const Pos: React.FC = () => {
         alert(`Venta bloqueada: uno o más lotes tienen un costo superior al precio de venta.\n\n${details}\n\nSe aconseja cambiar el precio del producto desde Inventario y volver a intentar la venta.`);
         return;
       }
-      const factura = await registrarVenta(items, currentUser?.id ?? null);
+      const factura = await registrarVenta(items, currentUser?.id ?? null, selectedCustomer ? Number(selectedCustomer) : null);
       setLastInvoice(factura); setLastPayment({ received: receivedNumber, change }); setShowInvoice(true);
       setCart([]); setReceived("");
     } catch (error) { console.error('Error al registrar venta:', error); alert(`No se pudo procesar la venta: ${mensajeError(error)}`); }
-  }, [cart, total, receivedNumber, change]);
+  }, [cart, total, receivedNumber, change, selectedCustomer]);
 
   const handlePrint = useCallback(async () => {
     if (!lastInvoice || !lastPayment) return;
@@ -153,6 +195,15 @@ const Pos: React.FC = () => {
       </div>
 
       <div className="page-split-right">
+        <div className="page-card page-card--pad">
+          <div className={`section-label ${styles.customerHeader}`}>CLIENTE
+            <button onClick={() => setShowNewCustomer(true)} className={`btn-outline ${styles.newCustomerBtn}`}>
+              <Icon name="plus" size={16} />
+              Nuevo Cliente
+            </button>
+          </div>
+          <Select placeholder="Seleccionar cliente..." value={selectedCustomer} onChange={setSelectedCustomer} options={customerOptions} icon="person" />
+        </div>
         <div className="page-card-header">
           <div className={styles.cartHeader}>Carrito de Venta</div>
           <button onClick={clearCart} className="btn-icon btn-icon--muted"><Icon name="trash" size={18} /></button>
@@ -211,7 +262,8 @@ const Pos: React.FC = () => {
             <h2 className={styles.invoiceTitle}>Comprobante de Venta</h2>
             <div className={styles.invoiceSection}>
               <p><strong>Factura #:</strong> {lastInvoice.venta.id}</p>
-              <p><strong>Fecha:</strong> {new Date(lastInvoice.venta.sale_date).toLocaleString('es-CO', { timeZone: 'America/Bogota' })}</p>
+              <p><strong>Fecha:</strong> {new Date(lastInvoice.venta.sale_date.includes('T') ? lastInvoice.venta.sale_date : lastInvoice.venta.sale_date.replace(' ', 'T') + 'Z').toLocaleString('es-CO', { timeZone: 'America/Bogota' })}</p>
+              <p><strong>Cliente:</strong> {lastInvoice.venta.customer_name ?? 'Generico'}</p>
               <p><strong>Total:</strong> {formatPrice(lastInvoice.venta.total)}</p>
               <p><strong>Ganancia:</strong> {formatPrice(lastInvoice.venta.profit)}</p>
             </div>
@@ -233,6 +285,25 @@ const Pos: React.FC = () => {
             <div className={styles.invoiceActions}>
               <Btn variant="ghost" onClick={() => { setShowInvoice(false); setLastInvoice(null); setLastPayment(null); }}>Cerrar</Btn>
               <Btn icon="download" onClick={handlePrint} disabled={printing}>{printing ? 'Imprimiendo...' : 'Imprimir'}</Btn>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showNewCustomer && (
+        <div className="overlay">
+          <div className={`modal ${styles.newCustomerModal}`}>
+            <h3 className={styles.modalTitle}>Nuevo Cliente</h3>
+            <div className={styles.newCustomerForm}>
+              <Input label="Nombre" placeholder="Nombre del cliente" value={newCustomer.name} onChange={v => handleNewCustomerInput('name', v)} />
+              <Input label="Teléfono de contacto" placeholder="Ej. 3001234567" value={newCustomer.contact_info} onChange={v => handleNewCustomerInput('contact_info', v)} />
+              <Input label="NIT / Cédula" placeholder="Ej. 1234567890" value={newCustomer.nit} onChange={v => handleNewCustomerInput('nit', v)} />
+              <Input label="Email" placeholder="Ej. cliente@correo.com" value={newCustomer.email} onChange={v => handleNewCustomerInput('email', v)} />
+              <Input label="Dirección" placeholder="Ej. Calle 123 #45-67" value={newCustomer.address} onChange={v => handleNewCustomerInput('address', v)} />
+            </div>
+            <div className={styles.invoiceActions}>
+              <Btn variant="ghost" onClick={() => { setShowNewCustomer(false); setNewCustomer({ name: '', contact_info: '', nit: '', address: '', email: '' }); }}>Cancelar</Btn>
+              <Btn onClick={handleCreateCustomer}>Crear y Seleccionar</Btn>
             </div>
           </div>
         </div>

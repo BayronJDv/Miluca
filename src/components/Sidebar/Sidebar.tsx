@@ -15,7 +15,7 @@ const menuItems = [
   { path: '/vencimientos', label: 'Vencimientos', icon: 'warning' },
   { path: '/kardex', label: 'Kardex', icon: 'history' },
   { path: '/bajas', label: 'Bajas', icon: 'delete_sweep', adminOnly: true },
-  { path: '/proveedores', label: 'Proveedores', icon: 'local_shipping' },
+  { path: '/proveedores', label: 'Proveedores & clientes', icon: 'local_shipping' },
   { path: '/compras', label: 'Compras', icon: 'shopping_cart' },
   //{ path: '/analisis', label: 'Análisis', icon: 'bar_chart', adminOnly: true },
   { path: '/historial-compras', label: 'Historial Compras', icon: 'receipt_long' },

@@ -8,6 +8,9 @@ export interface Venta {
   sale_date: string;
   total: number;
   profit: number;
+  customer_id?: number | null;
+  customer_name?: string | null;
+  customer_nit?: string | null;
 }
 
 export interface ItemVenta {
@@ -54,7 +57,7 @@ export async function estimarUtilidadVenta(items: { product_id: number; quantity
 }
 
 export async function registrarVenta(
-  items: { product_id: number; quantity: number; price: number }[], userId: number | null = null
+  items: { product_id: number; quantity: number; price: number }[], userId: number | null = null, customerId: number | null = null
 ): Promise<Factura> {
   return executeInTransaction(async (db) => {
     let total = 0;
@@ -77,7 +80,7 @@ export async function registrarVenta(
     }
 
     const result = await db.execute(
-      `INSERT INTO sales (user_id, sale_date, total, profit) VALUES (?, datetime('now'), ?, ?)`, [userId, total, profit]
+      `INSERT INTO sales (user_id, customer_id, sale_date, total, profit) VALUES (?, ?, datetime('now'), ?, ?)`, [userId, customerId, total, profit]
     );
     
     const saleId = result.lastInsertId;
@@ -94,7 +97,10 @@ export async function registrarVenta(
     
     // 5. Fetch resulting invoice to return
     const venta = await db.select<Venta[]>(
-      'SELECT * FROM sales WHERE id = ?',
+      `SELECT s.*, c.name as customer_name, c.nit as customer_nit
+       FROM sales s
+       LEFT JOIN customers c ON c.id = s.customer_id
+       WHERE s.id = ?`,
       [saleId]
     );
     
@@ -148,9 +154,11 @@ export async function obtenerVentas(
     );
     
     const ventas = await db.select<Venta[]>(
-      `SELECT * FROM sales
+      `SELECT s.*, c.name as customer_name, c.nit as customer_nit
+       FROM sales s
+       LEFT JOIN customers c ON c.id = s.customer_id
        ${whereClause}
-       ORDER BY sale_date DESC
+       ORDER BY s.sale_date DESC
        LIMIT ? OFFSET ?`,
       [...params, porPagina, offset]
     );
@@ -166,19 +174,24 @@ export async function obtenerVentas(
 
 export async function obtenerTotalVentasHoy(
   fechaInicio?: string,
-  fechaFin?: string
+  fechaFin?: string,
+  vendedorId?: number
 ): Promise<number> {
   return enqueueGlobalOperation(async () => {
     const db = await getDb();
-    let query: string;
-    let params: string[];
+    const where: string[] = [];
+    const params: (string | number)[] = [];
     if (fechaInicio && fechaFin) {
-      query = `SELECT COALESCE(SUM(total), 0) as total FROM sales WHERE date(sale_date, 'localtime') >= ? AND date(sale_date, 'localtime') <= ?`;
-      params = [fechaInicio, fechaFin];
+      where.push("date(sale_date, 'localtime') >= ? AND date(sale_date, 'localtime') <= ?");
+      params.push(fechaInicio, fechaFin);
     } else {
-      query = `SELECT COALESCE(SUM(total), 0) as total FROM sales WHERE date(sale_date, 'localtime') = date('now', 'localtime')`;
-      params = [];
+      where.push("date(sale_date, 'localtime') = date('now', 'localtime')");
     }
+    if (vendedorId) {
+      where.push("user_id = ?");
+      params.push(vendedorId);
+    }
+    const query = `SELECT COALESCE(SUM(total), 0) as total FROM sales WHERE ${where.join(' AND ')}`;
     const result = await db.select<{ total: number }[]>(query, params);
     return result[0].total;
   });
@@ -186,19 +199,24 @@ export async function obtenerTotalVentasHoy(
 
 export async function obtenerProfitHoy(
   fechaInicio?: string,
-  fechaFin?: string
+  fechaFin?: string,
+  vendedorId?: number
 ): Promise<number> {
   return enqueueGlobalOperation(async () => {
     const db = await getDb();
-    let query: string;
-    let params: string[];
+    const where: string[] = [];
+    const params: (string | number)[] = [];
     if (fechaInicio && fechaFin) {
-      query = `SELECT COALESCE(SUM(profit), 0) as profit FROM sales WHERE date(sale_date, 'localtime') >= ? AND date(sale_date, 'localtime') <= ?`;
-      params = [fechaInicio, fechaFin];
+      where.push("date(sale_date, 'localtime') >= ? AND date(sale_date, 'localtime') <= ?");
+      params.push(fechaInicio, fechaFin);
     } else {
-      query = `SELECT COALESCE(SUM(profit), 0) as profit FROM sales WHERE date(sale_date, 'localtime') = date('now', 'localtime')`;
-      params = [];
+      where.push("date(sale_date, 'localtime') = date('now', 'localtime')");
     }
+    if (vendedorId) {
+      where.push("user_id = ?");
+      params.push(vendedorId);
+    }
+    const query = `SELECT COALESCE(SUM(profit), 0) as profit FROM sales WHERE ${where.join(' AND ')}`;
     const result = await db.select<{ profit: number }[]>(query, params);
     return result[0].profit;
   });
@@ -206,19 +224,24 @@ export async function obtenerProfitHoy(
 
 export async function obtenerNumeroTransaccionesHoy(
   fechaInicio?: string,
-  fechaFin?: string
+  fechaFin?: string,
+  vendedorId?: number
 ): Promise<number> {
   return enqueueGlobalOperation(async () => {
     const db = await getDb();
-    let query: string;
-    let params: string[];
+    const where: string[] = [];
+    const params: (string | number)[] = [];
     if (fechaInicio && fechaFin) {
-      query = `SELECT COUNT(*) as count FROM sales WHERE date(sale_date, 'localtime') >= ? AND date(sale_date, 'localtime') <= ?`;
-      params = [fechaInicio, fechaFin];
+      where.push("date(sale_date, 'localtime') >= ? AND date(sale_date, 'localtime') <= ?");
+      params.push(fechaInicio, fechaFin);
     } else {
-      query = `SELECT COUNT(*) as count FROM sales WHERE date(sale_date, 'localtime') = date('now', 'localtime')`;
-      params = [];
+      where.push("date(sale_date, 'localtime') = date('now', 'localtime')");
     }
+    if (vendedorId) {
+      where.push("user_id = ?");
+      params.push(vendedorId);
+    }
+    const query = `SELECT COUNT(*) as count FROM sales WHERE ${where.join(' AND ')}`;
     const result = await db.select<{ count: number }[]>(query, params);
     return result[0].count;
   });
@@ -233,20 +256,27 @@ export interface VentaPorDia {
 
 export async function obtenerVentasPorDia(
   fechaInicio: string,
-  fechaFin: string
+  fechaFin: string,
+  vendedorId?: number
 ): Promise<VentaPorDia[]> {
   return enqueueGlobalOperation(async () => {
     const db = await getDb();
+    let whereClause = "date(sale_date, 'localtime') >= ? AND date(sale_date, 'localtime') <= ?";
+    const params: (string | number)[] = [fechaInicio, fechaFin];
+    if (vendedorId) {
+      whereClause += " AND user_id = ?";
+      params.push(vendedorId);
+    }
     return db.select<VentaPorDia[]>(
       `SELECT date(sale_date, 'localtime') as fecha,
               COALESCE(SUM(total), 0) as total_ventas,
               COUNT(*) as num_ventas,
               COALESCE(SUM(profit), 0) as ganancia
        FROM sales
-       WHERE date(sale_date, 'localtime') >= ? AND date(sale_date, 'localtime') <= ?
+       WHERE ${whereClause}
        GROUP BY date(sale_date, 'localtime')
        ORDER BY fecha ASC`,
-      [fechaInicio, fechaFin]
+      params
     );
   });
 }
@@ -256,7 +286,10 @@ export async function obtenerFactura(id: number): Promise<Factura | null> {
     const db = await getDb();
     
     const ventas = await db.select<Venta[]>(
-      'SELECT * FROM sales WHERE id = ?',
+      `SELECT s.*, c.name as customer_name, c.nit as customer_nit
+       FROM sales s
+       LEFT JOIN customers c ON c.id = s.customer_id
+       WHERE s.id = ?`,
       [id]
     );
     

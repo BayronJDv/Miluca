@@ -17,6 +17,7 @@ import {
 } from "../db/batches";
 import { userIdAtom } from "../store/UserAtom";
 import { useAtomValue } from "jotai";
+import { isAdminAtom } from '../store/UserAtom';
 import styles from './Inventario.module.css';
 
 type FormState = {
@@ -347,6 +348,8 @@ export default function Inventario() {
   const [movements, setMovements] = useState<any[]>([]);
   const [reason, setReason] = useState("");
   const userId = useAtomValue(userIdAtom);
+  const isAdmin = useAtomValue(isAdminAtom);
+  
   const load = useCallback(async () => setItems(await obtenerProductos()), []);
   useEffect(() => {
     load();
@@ -431,7 +434,7 @@ export default function Inventario() {
       await load();
     }
   };
-  const totalValue = items.reduce((sum, p) => sum + (p.cost || 0) * p.stock, 0);
+  const totalValue = isAdmin? items.reduce((sum, p) => sum + (p.cost || 0) * p.stock, 0) : "---"   
   const lowStock = items.filter((p) => p.stock <= (p.alert_stock ?? 5)).length;
   return (
     <div className={styles.root}>

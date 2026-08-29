@@ -23,7 +23,7 @@ export async function imprimirFactura({
   const business = getBusinessData();
   const sections = buildReceiptSections({ business, factura, cashier, received, change, isReprint });
   try {
-    const request: PrintJobRequest = { printer, paper_size: 'Mm80', options: { code_page: 6, encode: ENCODE.WINDOWS_1252, use_gbk: false }, sections };
+    const request: PrintJobRequest = { printer, paper_size: 'Mm72', options: { code_page: 6, encode: ENCODE.WINDOWS_1252, use_gbk: false }, sections };
     await print_thermal_printer(request);
   } catch (error) { console.error('Error al imprimir:', error); alert('Error al imprimir el recibo: ' + error); }
 }

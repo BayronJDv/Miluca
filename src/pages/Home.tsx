@@ -5,6 +5,7 @@ import QuickAccess from '../components/QuickAccess/QuickAccess';
 import TopProductos from '../components/TopProductos/TopProductos';
 import { obtenerTotalVentasHoy, obtenerNumeroTransaccionesHoy, obtenerProfitHoy } from '../db/sales';
 import { obtenerTotalCompras } from '../db/purchases';
+import { listUsers } from '../db/users';
 import { isAdminAtom } from '../store/UserAtom';
 import { useAtomValue } from 'jotai';
 import styles from './Home.module.css';
@@ -75,6 +76,12 @@ export default function Home() {
   const [profit, setProfit] = useState<number>(0);
   const [totalCompras, setTotalCompras] = useState<number>(0);
   const [loading, setLoading] = useState(true);
+  const [vendedorId, setVendedorId] = useState<number | ''>('');
+  const [usuarios, setUsuarios] = useState<{ id: number; username: string; role: string }[]>([]);
+
+  useEffect(() => {
+    listUsers().then(setUsuarios).catch(console.error);
+  }, []);
 
   const loadData = useCallback(async () => {
     if (!isAdmin) {
@@ -85,9 +92,9 @@ export default function Home() {
       setLoading(true);
       try {
         const [total, count, profitVal, compras] = await Promise.all([
-          obtenerTotalVentasHoy(fechaInicio, fechaFin),
-          obtenerNumeroTransaccionesHoy(fechaInicio, fechaFin),
-          obtenerProfitHoy(fechaInicio, fechaFin),
+          obtenerTotalVentasHoy(fechaInicio, fechaFin, vendedorId || undefined),
+          obtenerNumeroTransaccionesHoy(fechaInicio, fechaFin, vendedorId || undefined),
+          obtenerProfitHoy(fechaInicio, fechaFin, vendedorId || undefined),
           obtenerTotalCompras(fechaInicio, fechaFin),
         ]);
         setTotalVentas(total);
@@ -99,7 +106,7 @@ export default function Home() {
       } finally {
         setLoading(false);
       }
-    }, [periodo, isAdmin]);
+    }, [periodo, isAdmin, vendedorId]);
 
   useEffect(() => {
     loadData();
@@ -153,16 +160,28 @@ export default function Home() {
 
         {/* Period Selector */}
         {isAdmin && (
-          <div className={styles.periodSelector}>
-            {periodos.map((p) => (
-              <button
-                key={p.key}
-                onClick={() => setPeriodo(p.key)}
-                className={`${styles.periodBtn} ${periodo === p.key ? styles.periodBtnActive : ''}`}
-              >
-                {p.label}
-              </button>
-            ))}
+          <div className={styles.headerRight}>
+            <select
+              className={styles.vendedorSelect}
+              value={vendedorId}
+              onChange={e => setVendedorId(e.target.value ? Number(e.target.value) : '')}
+            >
+              <option value="">Todos los vendedores</option>
+              {usuarios.map(u => (
+                <option key={u.id} value={u.id}>{u.username}</option>
+              ))}
+            </select>
+            <div className={styles.periodSelector}>
+              {periodos.map((p) => (
+                <button
+                  key={p.key}
+                  onClick={() => setPeriodo(p.key)}
+                  className={`${styles.periodBtn} ${periodo === p.key ? styles.periodBtnActive : ''}`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>

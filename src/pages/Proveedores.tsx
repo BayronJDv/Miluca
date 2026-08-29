@@ -4,6 +4,7 @@ import { Input } from '../components/design/Input';
 import { Icon } from '../components/design/Icon';
 import Btn from '../components/design/Btn';
 import { obtenerProveedores, obtenerEstadisticasProveedores, crearProveedor, modificarProveedor, eliminarProveedor, Supplier, SupplierStats } from '../db/suppliers';
+import { obtenerClientes, crearCliente, modificarCliente, eliminarCliente, Customer } from '../db/customers';
 import { invoke } from '@tauri-apps/api/core';
 import styles from './Proveedores.module.css';
 
@@ -219,6 +220,95 @@ const ModalContent = memo(({
 
 ModalContent.displayName = 'ModalContent';
 
+interface CustomerFormData {
+  name: string;
+  contact_info: string;
+  nit: string;
+  address: string;
+  email: string;
+}
+
+const EMPTY_CUSTOMER_FORM: CustomerFormData = {
+  name: '',
+  contact_info: '',
+  nit: '',
+  address: '',
+  email: '',
+};
+
+const CustomerModalContent = memo(({
+  title,
+  subtitle,
+  formData,
+  onInputChange,
+  onSave,
+  onClose,
+  isEditing,
+}: {
+  title: string;
+  subtitle: string;
+  formData: CustomerFormData;
+  onInputChange: (key: keyof CustomerFormData, value: string) => void;
+  onSave: () => void;
+  onClose: () => void;
+  isEditing: boolean;
+}) => {
+  return (
+    <div className="modal modal--supplier">
+      <div className="modal-header">
+        <div className="flex items-center gap-md">
+          <div className="modal-icon-box">
+            <Icon name={isEditing ? "edit" : "plus"} size={22} color="var(--color-on-primary)" />
+          </div>
+          <div>
+            <div className={`font-headline-sm text-headline-sm text-on-surface ${styles.modalTitle}`}>
+              {title}
+            </div>
+            <div className={`text-body-sm text-secondary ${styles.modalSubtitle}`}>
+              {subtitle}
+            </div>
+          </div>
+        </div>
+        <button onClick={onClose} className="modal-close-btn"
+          onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-surface-container-low)')}
+          onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
+          <Icon name="close" size={18} color="var(--color-outline)" />
+        </button>
+      </div>
+
+      <div className="modal-body">
+        <div className={styles.modalField}>
+          <label className="field-label">Nombre del Cliente <span className={styles.labelDanger}>*</span></label>
+          <Input placeholder="Ej. Juan Pérez" value={formData.name} onChange={v => onInputChange('name', v)} />
+        </div>
+        <div className={styles.modalField}>
+          <label className="field-label">Teléfono de Contacto</label>
+          <Input placeholder="Ej. 3001234567" value={formData.contact_info} onChange={v => onInputChange('contact_info', v)} />
+        </div>
+        <div className={styles.modalField}>
+          <label className="field-label">NIT / Cédula</label>
+          <Input placeholder="Ej. 1234567890" value={formData.nit} onChange={v => onInputChange('nit', v)} />
+        </div>
+        <div className={styles.modalField}>
+          <label className="field-label">Email</label>
+          <Input placeholder="Ej. cliente@correo.com" value={formData.email} onChange={v => onInputChange('email', v)} />
+        </div>
+        <div className={styles.modalField}>
+          <label className="field-label">Dirección</label>
+          <Input placeholder="Ej. Calle 123 #45-67" value={formData.address} onChange={v => onInputChange('address', v)} />
+        </div>
+      </div>
+
+      <div className="modal-footer">
+        <Btn variant="ghost" onClick={onClose}>Cancelar</Btn>
+        <Btn onClick={onSave}>{isEditing ? "Actualizar Cliente" : "Guardar Cliente"}</Btn>
+      </div>
+    </div>
+  );
+});
+
+CustomerModalContent.displayName = 'CustomerModalContent';
+
 const Proveedores: React.FC = () => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [stats, setStats] = useState<SupplierStats | null>(null);
@@ -230,12 +320,14 @@ const Proveedores: React.FC = () => {
   useEffect(() => {
     (async () => {
       try {
-        const [proveedores, estadisticas] = await Promise.all([
+        const [proveedores, estadisticas, clientes] = await Promise.all([
           obtenerProveedores(),
           obtenerEstadisticasProveedores(),
+          obtenerClientes(),
         ]);
         setSuppliers(proveedores);
         setStats(estadisticas);
+        setCustomers(clientes);
       } catch (error) {
         console.error('Error al cargar proveedores:', error);
       } finally {
@@ -252,6 +344,18 @@ const Proveedores: React.FC = () => {
   const [createPhoto, setCreatePhoto] = useState<PhotoSelection | null>(null);
   const [editPhoto, setEditPhoto] = useState<PhotoSelection | null>(null);
   const [editExistingPreview, setEditExistingPreview] = useState<string | null>(null);
+
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [showCreateCustomerModal, setShowCreateCustomerModal] = useState(false);
+  const [showEditCustomerModal, setShowEditCustomerModal] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [customerForm, setCustomerForm] = useState<CustomerFormData>(EMPTY_CUSTOMER_FORM);
+  const [editCustomerForm, setEditCustomerForm] = useState<CustomerFormData>(EMPTY_CUSTOMER_FORM);
+
+  const refreshCustomers = useCallback(async () => {
+    const list = await obtenerClientes();
+    setCustomers(list);
+  }, []);
 
   const handleInputChange = useCallback((key: keyof SupplierFormData, value: string) => {
     setForm(prev => ({ ...prev, [key]: value }));
@@ -424,6 +528,82 @@ const Proveedores: React.FC = () => {
     setEditExistingPreview(null);
   }, []);
 
+  const handleCustomerInputChange = useCallback((key: keyof CustomerFormData, value: string) => {
+    setCustomerForm(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handleEditCustomerInputChange = useCallback((key: keyof CustomerFormData, value: string) => {
+    setEditCustomerForm(prev => ({ ...prev, [key]: value }));
+  }, []);
+
+  const handleCustomerCreate = useCallback(async () => {
+    if (!customerForm.name.trim()) {
+      alert('Por favor ingrese el nombre del cliente');
+      return;
+    }
+    await crearCliente({
+      name: customerForm.name.trim(),
+      contact_info: customerForm.contact_info.trim() || null,
+      nit: customerForm.nit.trim() || null,
+      address: customerForm.address.trim() || null,
+      email: customerForm.email.trim() || null,
+    });
+    await refreshCustomers();
+    setShowCreateCustomerModal(false);
+    setCustomerForm(EMPTY_CUSTOMER_FORM);
+  }, [customerForm, refreshCustomers]);
+
+  const handleCustomerUpdate = useCallback(async () => {
+    if (!editingCustomer || !editingCustomer.id) return;
+    if (!editCustomerForm.name.trim()) {
+      alert('Por favor ingrese el nombre del cliente');
+      return;
+    }
+    await modificarCliente(editingCustomer.id, {
+      name: editCustomerForm.name.trim(),
+      contact_info: editCustomerForm.contact_info.trim() || null,
+      nit: editCustomerForm.nit.trim() || null,
+      address: editCustomerForm.address.trim() || null,
+      email: editCustomerForm.email.trim() || null,
+    });
+    await refreshCustomers();
+    setShowEditCustomerModal(false);
+    setEditingCustomer(null);
+    setEditCustomerForm(EMPTY_CUSTOMER_FORM);
+  }, [editingCustomer, editCustomerForm, refreshCustomers]);
+
+  const handleCustomerDelete = useCallback(async (customer: Customer) => {
+    if (!customer.id) return;
+    const confirmDelete = window.confirm(`¿Estás seguro de que deseas eliminar el cliente "${customer.name}"?`);
+    if (confirmDelete) {
+      await eliminarCliente(customer.id);
+      await refreshCustomers();
+    }
+  }, [refreshCustomers]);
+
+  const openCustomerEdit = useCallback((customer: Customer) => {
+    setEditingCustomer(customer);
+    setEditCustomerForm({
+      name: customer.name,
+      contact_info: customer.contact_info ?? '',
+      nit: customer.nit ?? '',
+      address: customer.address ?? '',
+      email: customer.email ?? '',
+    });
+    setShowEditCustomerModal(true);
+  }, []);
+
+  const handleCloseCreateCustomer = useCallback(() => {
+    setShowCreateCustomerModal(false);
+    setCustomerForm(EMPTY_CUSTOMER_FORM);
+  }, []);
+
+  const handleCloseEditCustomer = useCallback(() => {
+    setShowEditCustomerModal(false);
+    setEditingCustomer(null);
+    setEditCustomerForm(EMPTY_CUSTOMER_FORM);
+  }, []);
+
   const trendIcon = stats && stats.spendingTrend >= 0 ? 'trending_up' : 'trending_down';
   const trendColor = stats && stats.spendingTrend >= 0 ? 'var(--color-delta-up)' : 'var(--color-delta-down)';
   const trendSign = stats && stats.spendingTrend >= 0 ? '+' : '';
@@ -527,6 +707,37 @@ const Proveedores: React.FC = () => {
         </div>
       </div>
 
+      <div className={styles.headerRow} style={{ marginTop: 'var(--spacing-xl)' }}>
+        <h2 className="font-headline-md text-on-surface">Gesti&oacute;n de Clientes</h2>
+        <button onClick={() => setShowCreateCustomerModal(true)} className={styles.newBtn}>
+          <span className="material-symbols-outlined">add</span>
+          + NUEVO CLIENTE
+        </button>
+      </div>
+
+      <div className={styles.supplierGrid}>
+        {customers.map((customer) => (
+          <SupplierCard
+            key={customer.id}
+            name={customer.name}
+            phone={customer.contact_info ?? ''}
+            initials={getInitials(customer.name)}
+            nit={customer.nit}
+            address={customer.address}
+            email={customer.email}
+            onEdit={() => openCustomerEdit(customer)}
+            onDelete={() => handleCustomerDelete(customer)}
+          />
+        ))}
+
+        <div onClick={() => setShowCreateCustomerModal(true)} className={styles.addCard}>
+          <div className={styles.addCardIcon}>
+            <span className={`material-symbols-outlined ${styles.iconLg}`}>add</span>
+          </div>
+          <p className={styles.addCardLabel}>Agregar Cliente</p>
+        </div>
+      </div>
+
       {/* Hidden file inputs */}
       <input
         ref={fileInputRef}
@@ -575,6 +786,36 @@ const Proveedores: React.FC = () => {
             photoPreview={editPhoto?.preview ?? editExistingPreview ?? null}
             onPickPhoto={handleEditPickPhoto}
             onRemovePhoto={() => handleRemovePhoto('edit')}
+          />
+        </div>
+      )}
+
+      {/* Create Customer Modal */}
+      {showCreateCustomerModal && (
+        <div className="overlay">
+          <CustomerModalContent
+            title="Nuevo Cliente"
+            subtitle="Registre un nuevo cliente en el sistema."
+            formData={customerForm}
+            onInputChange={handleCustomerInputChange}
+            onSave={handleCustomerCreate}
+            onClose={handleCloseCreateCustomer}
+            isEditing={false}
+          />
+        </div>
+      )}
+
+      {/* Edit Customer Modal */}
+      {showEditCustomerModal && editingCustomer && (
+        <div className="overlay">
+          <CustomerModalContent
+            title={`Editar Cliente: ${editingCustomer.name}`}
+            subtitle="Modifique los campos necesarios y guarde los cambios."
+            formData={editCustomerForm}
+            onInputChange={handleEditCustomerInputChange}
+            onSave={handleCustomerUpdate}
+            onClose={handleCloseEditCustomer}
+            isEditing={true}
           />
         </div>
       )}

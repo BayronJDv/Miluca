@@ -63,7 +63,10 @@ export function buildReceiptSections({
   const subtotal = total - iva;
   const quantitySum = items.reduce((sum, i) => sum + i.quantity, 0);
 
-  const facturaDate = new Date(venta.sale_date);
+  const normalizedDate = venta.sale_date.includes('T')
+    ? venta.sale_date
+    : venta.sale_date.replace(' ', 'T') + 'Z';
+  const facturaDate = new Date(normalizedDate);
   const fechaFormateada = facturaDate.toLocaleString('es-CO', {
     timeZone: 'America/Bogota',
     day: '2-digit',
@@ -180,6 +183,10 @@ export function buildReceiptSections({
     { Text: { text: `Folio: #${folio}`, styles: leftStyle() } },
     { Text: { text: `Fecha: ${fechaFormateada}`, styles: leftStyle() } },
     { Text: { text: `Cajero: ${cashier}`, styles: leftStyle() } },
+    { Text: { text: `Cliente: ${venta.customer_name || 'Generico'}`, styles: leftStyle() } },
+    ...(venta.customer_nit
+      ? [{ Text: { text: `NIT: ${venta.customer_nit}`, styles: leftStyle() } } as PrintSections]
+      : []),
     { Line: { character: '=' } },
     ...itemRows,
     { Line: { character: '=' } },

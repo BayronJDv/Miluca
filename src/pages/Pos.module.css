@@ -35,13 +35,15 @@
 .cartSubtotal { font-size: 13px; font-weight: 600; }
 .footerRow { display: flex; justify-content: space-between; margin-bottom: 12px; }
 .footerLabel { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; }
+.customerHeader { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
+.newCustomerBtn { white-space: nowrap; font-size: 11px; padding: 4px 10px; }
 .footerTotal { font-size: 22px; font-weight: 800; color: var(--color-on-surface); letter-spacing: -0.02em; }
 .receiveGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
 .receiveLabel { font-size: 11px; font-weight: 600; margin-bottom: 4px; }
 .receiveWrapper { position: relative; }
 .receivePrefix { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 14px; }
 .receiveInput {
-  width: 100%;
+  width: fit-content;
   height: 40px;
   padding-left: 24px;
   border-radius: 8px;
@@ -60,3 +62,6 @@
 .invoiceLot { font-size: 10px; }
 .invoiceActions { display: flex; gap: 12px; justify-content: flex-end; }
 .fullBtn { width: 100%; }
+.newCustomerModal { max-width: 420px; }
+.newCustomerModal .modalTitle { margin-bottom: 16px; }
+.newCustomerForm { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }

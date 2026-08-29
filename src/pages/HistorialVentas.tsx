@@ -103,7 +103,7 @@ const HistorialVentas: React.FC = () => {
   };
 
   const getTableHeaders = () => {
-    const headers = ["ID VENTA", "FECHA", "TOTAL"];
+    const headers = ["ID VENTA", "FECHA", "CLIENTE", "TOTAL"];
     if (isAdmin) headers.push("GANANCIA");
     headers.push("ACCIÓN");
     return headers;
@@ -139,6 +139,7 @@ const HistorialVentas: React.FC = () => {
                   <tr>
                     <td className={styles.idCell}>#{row.id}</td>
                     <td>{formatDate(row.sale_date)}</td>
+                    <td>{row.customer_name ?? 'Generico'}</td>
                     <td className={`align-right ${styles.totalCell}`}>{formatPrice(row.total)}</td>
                     {isAdmin && <td className={`text-primary align-right ${styles.profitCell}`}>{formatPrice(row.profit)}</td>}
                     <td>
@@ -156,7 +157,7 @@ const HistorialVentas: React.FC = () => {
                   </tr>
                   {expandedId === row.id && (
                     <tr className="row-detail">
-                      <td colSpan={isAdmin ? 5 : 4} className={styles.detailCell}>
+                      <td colSpan={isAdmin ? 6 : 5} className={styles.detailCell}>
                         <div className={`page-card page-card--flush ${styles.detailCard}`}>
                           <div className={`page-card-header ${styles.detailHeader}`}>
                             PRODUCTOS DE LA VENTA #{row.id}
