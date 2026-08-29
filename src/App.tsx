@@ -18,7 +18,6 @@ import Kardex from "./pages/Kardex";
 import Bajas from "./pages/Bajas";
 import Configuracion from "./pages/Configuracion";
 import HistorialEdiciones from "./pages/HistorialEdiciones";
-//import AnalisisVentas from "./pages/Analisis";
 import { marcarLotesVencidos } from "./db/batches";
 import { checkForUpdates } from "./utils/updater";
 import { themeAtom, syncThemeToDom } from "./store/ThemeAtom";
@@ -76,13 +75,6 @@ function App() {
                   <HistorialEdiciones />
                 </ProtectedRoute>
               } />
-              {/*  
-              <Route path="/analisis" element={
-                <ProtectedRoute allowedRoles={['admin']}>
-                  <AnalisisVentas />
-                </ProtectedRoute>
-              } />
-               */}
               <Route path="/configuracion" element={
                 <ProtectedRoute allowedRoles={['admin']}>
                   <Configuracion />

@@ -17,7 +17,7 @@ const menuItems = [
   { path: '/bajas', label: 'Bajas', icon: 'delete_sweep', adminOnly: true },
   { path: '/proveedores', label: 'Proveedores & clientes', icon: 'local_shipping' },
   { path: '/compras', label: 'Compras', icon: 'shopping_cart' },
-  //{ path: '/analisis', label: 'Análisis', icon: 'bar_chart', adminOnly: true },
+  
   { path: '/historial-compras', label: 'Historial Compras', icon: 'receipt_long' },
   { path: '/historial-ventas', label: 'Historial Ventas', icon: 'receipt' },
   { path: '/historial-ediciones', label: 'Historial Ediciones', icon: 'receipt_long', adminOnly: true },
