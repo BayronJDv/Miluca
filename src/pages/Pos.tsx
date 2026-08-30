@@ -73,7 +73,14 @@ const Pos: React.FC = () => {
 
   const handleSearch = useCallback(async (value: string) => {
     setSearch(value);
-    if (value.length >= 2) { setLoading(true); setProducts(await buscarProductosPorNombre(value)); setLoading(false); }
+    if (value.length >= 2) {
+      setLoading(true);
+      try {
+        setProducts(await buscarProductosPorNombre(value));
+      } finally {
+        setLoading(false);
+      }
+    }
     else setProducts([]);
   }, []);
 
@@ -175,7 +182,7 @@ const Pos: React.FC = () => {
         <div className="result-list">
           <div className="page-card-header">
             <span className={styles.resultsTitle}>Resultados de Búsqueda</span>
-            <span className={`text-secondary ${styles.resultsSubtitle}`}>STOCK DISPONIBLE</span>
+            <span className={`text-secondary ${styles.resultsSubtitle}`}>PRECIO · STOCK DISPONIBLE</span>
           </div>
           {loading && <div className={styles.loadingBox}>Buscando...</div>}
           {products.map(product => (
@@ -187,6 +194,7 @@ const Pos: React.FC = () => {
               </div>
               <div className={styles.priceRight}>
                 <div className={`text-primary ${styles.priceValue}`}>{formatPrice(product.price)}</div>
+                <div className={`text-secondary ${styles.stockValue}`}>Stock: {product.stock}</div>
               </div>
             </div>
           ))}

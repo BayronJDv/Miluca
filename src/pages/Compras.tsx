@@ -43,7 +43,14 @@ const Compras: React.FC = () => {
 
   const handleSearch = useCallback(async (value: string) => {
     setSearch(value);
-    if (value.length >= 2) { setLoading(true); setProducts(await buscarProductosPorNombre(value)); setLoading(false); }
+    if (value.length >= 2) {
+      setLoading(true);
+      try {
+        setProducts(await buscarProductosPorNombre(value));
+      } finally {
+        setLoading(false);
+      }
+    }
     else setProducts([]);
   }, []);
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   obtenerLotesPorVencer,
   obtenerLotesVencidos,
@@ -23,14 +23,21 @@ export default function Vencimientos() {
   >("vencido");
   const [notes, setNotes] = useState("");
   const userId = useAtomValue(userIdAtom);
-  const load = async () =>
+  const load = useCallback(async () => {
     setRows([
       ...(await obtenerLotesVencidos()),
       ...(await obtenerLotesPorVencer(days)),
     ] as LotRow[]);
-  useEffect(() => {
-    load();
   }, [days]);
+  useEffect(() => {
+    let cancelled = false;
+    load().catch((error) => {
+      if (!cancelled) alert(String(error));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [load]);
   const dispose = async () => {
     if (!selectedRow || !quantity || Number(quantity) <= 0)
       return alert("Indica una cantidad válida.");

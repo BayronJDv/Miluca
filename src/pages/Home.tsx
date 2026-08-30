@@ -197,8 +197,8 @@ export default function Home() {
       {/* KPI Cards Grid*/}
       {isAdmin && (
         <div className={styles.kpiGrid}>
-          {kpiData.map((kpi, index) => (
-            <KPICard key={index} {...kpi} />
+          {kpiData.map((kpi) => (
+            <KPICard key={kpi.title} {...kpi} />
           ))}
         </div>
       )}

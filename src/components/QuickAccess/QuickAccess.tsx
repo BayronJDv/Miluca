@@ -27,9 +27,9 @@ function QuickAccess() {
     <section className={styles.panel}>
       <h3 className={styles.title}>Accesos Rápidos</h3>
       <div className={styles.grid}>
-        {visibleActions.map((action, index) => (
+        {visibleActions.map((action) => (
           <button
-            key={index}
+            key={action.path}
             onClick={() => navigate(action.path)}
             className={`${styles.btn} ${variantClass[action.variant]}`}
           >
