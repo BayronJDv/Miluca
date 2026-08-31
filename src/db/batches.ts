@@ -27,7 +27,7 @@ export async function obtenerLotesVendibles(productId: number, dbParam?: Databas
   return db.select<ProductBatch[]>(
     `SELECT * FROM product_batches
      WHERE product_id = ? AND status = 'activo' AND quantity > 0
-       AND (expiration_date IS NULL OR date(expiration_date) >= date('now'))
+       AND (expiration_date IS NULL OR date(expiration_date, 'start of month') >= date('now', 'start of month'))
      ORDER BY CASE WHEN expiration_date IS NULL THEN 1 ELSE 0 END, expiration_date ASC, id ASC`, [productId]
   );
 }
@@ -49,14 +49,22 @@ export async function obtenerLotesVencidos(): Promise<ProductBatch[]> {
   return db.select<ProductBatch[]>(
     `SELECT b.*, p.name AS product_name FROM product_batches b JOIN products p ON p.id = b.product_id
      WHERE b.status IN ('activo','vencido') AND b.expiration_date IS NOT NULL
-       AND date(b.expiration_date) < date('now') ORDER BY b.expiration_date`
+       AND date(b.expiration_date, 'start of month') < date('now', 'start of month') ORDER BY b.expiration_date`
   );
 }
 
 export async function marcarLotesVencidos(dbParam?: Database): Promise<void> {
   const db = dbParam || await getDb();
   await db.execute(`UPDATE product_batches SET status = 'vencido'
-    WHERE status = 'activo' AND expiration_date IS NOT NULL AND date(expiration_date) < date('now')`);
+    WHERE status = 'activo' AND expiration_date IS NOT NULL AND date(expiration_date, 'start of month') < date('now', 'start of month')`);
+}
+
+export async function obtenerRecepcionesLote(productId: number, lotNumber: string): Promise<ProductBatch[]> {
+  const db = await getDb();
+  return db.select<ProductBatch[]>(
+    `SELECT * FROM product_batches WHERE product_id = ? AND lot_number = ?
+     ORDER BY created_at ASC, id ASC`, [productId, lotNumber]
+  );
 }
 
 export async function crearLote(

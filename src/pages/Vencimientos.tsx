@@ -9,6 +9,7 @@ import PageHeader from "../components/design/PageHeader";
 import Btn from "../components/design/Btn";
 import { userIdAtom } from "../store/UserAtom";
 import { useAtomValue } from "jotai";
+import { formatMesAnio } from "../utils/dates";
 import styles from './Vencimientos.module.css';
 
 type LotRow = ProductBatch & { product_name?: string };
@@ -92,17 +93,18 @@ export default function Vencimientos() {
                 <tr key={row.id}>
                   <td>{row.product_name}</td>
                   <td>{row.lot_number}</td>
-                  <td>{row.expiration_date ?? "Sin fecha"}</td>
+                  <td>{row.expiration_date ? formatMesAnio(row.expiration_date) : "Sin fecha"}</td>
                   <td>{row.quantity}</td>
                   <td>
                     <Btn
                       onClick={() => {
+                        const ahora = new Date();
+                        const mesActual = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
                         setSelectedRow(row);
                         setQuantity(String(row.quantity));
                         setReason(
                           row.expiration_date &&
-                            row.expiration_date <
-                              new Date().toISOString().slice(0, 10)
+                            row.expiration_date.slice(0, 7) < mesActual
                             ? "vencido"
                             : "otro",
                         );

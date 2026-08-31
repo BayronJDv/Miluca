@@ -6,6 +6,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import PageHeader from '../components/design/PageHeader';
 import { buscarProductosPorNombre, Producto } from '../db/products';
 import { obtenerKardexRegulatorio } from '../db/regulatory_reports';
+import { formatMesAnio } from '../utils/dates';
 import styles from './Kardex.module.css';
 
 type Movement = { movement_date: string; movement_type: string; quantity: number; product_name: string; code: string; lot_number: string; manufacture_date: string | null; expiration_date: string | null; cost: number; reason: string | null };
@@ -63,6 +64,6 @@ export default function Kardex() {
       <button onClick={load} disabled={!selected || loading} className={`btn-solid btn-solid--md ${styles.consultBtn}`}>{loading ? 'Consultando...' : 'Consultar'}</button>
       {rows.length > 0 && <button onClick={exportCsv} className="btn-outline">Exportar CSV</button>}
     </div>
-    <div className="page-card page-card--flush"><div className={styles.tableWrap}><table className={`data-table ${styles.dataTable}`}><thead><tr>{['FECHA LOCAL','MOVIMIENTO','LOTE','FABRICACIÓN','VENCIMIENTO','CANTIDAD','COSTO','MOTIVO'].map(header => <th key={header}>{header}</th>)}</tr></thead><tbody>{rows.map((row, index) => <tr key={`${row.movement_date}-${index}`}><td>{formatMovementDate(row.movement_date)}</td><td>{row.movement_type}</td><td>{row.lot_number}</td><td>{row.manufacture_date || '-'}</td><td>{row.expiration_date || '-'}</td><td>{row.quantity}</td><td>${row.cost?.toLocaleString('es-CO')}</td><td>{row.reason || '-'}</td></tr>)}{!rows.length && <tr><td colSpan={8} className="empty-state">{selected ? 'No hay movimientos para los filtros seleccionados.' : 'Busca y selecciona un producto para consultar su kardex.'}</td></tr>}</tbody></table></div></div>
+    <div className="page-card page-card--flush"><div className={styles.tableWrap}><table className={`data-table ${styles.dataTable}`}><thead><tr>{['FECHA LOCAL','MOVIMIENTO','LOTE','FABRICACIÓN','VENCIMIENTO','CANTIDAD','COSTO','MOTIVO'].map(header => <th key={header}>{header}</th>)}</tr></thead><tbody>{rows.map((row, index) => <tr key={`${row.movement_date}-${index}`}><td>{formatMovementDate(row.movement_date)}</td><td>{row.movement_type}</td><td>{row.lot_number}</td><td>{formatMesAnio(row.manufacture_date) || '-'}</td><td>{formatMesAnio(row.expiration_date) || '-'}</td><td>{row.quantity}</td><td>${row.cost?.toLocaleString('es-CO')}</td><td>{row.reason || '-'}</td></tr>)}{!rows.length && <tr><td colSpan={8} className="empty-state">{selected ? 'No hay movimientos para los filtros seleccionados.' : 'Busca y selecciona un producto para consultar su kardex.'}</td></tr>}</tbody></table></div></div>
   </div>;
 }

@@ -28,6 +28,8 @@ export interface CompraFactura {
   items: ItemCompra[];
 }
 
+const normalizarMes = (value?: string | null): string | null => (value ? `${value.slice(0, 7)}-01` : null);
+
 export async function registrarCompra(
   items: { product_id: number; quantity: number; cost: number; lot_number?: string; manufacture_date?: string | null; expiration_date?: string | null }[],
   supplier_id: number | null
@@ -43,17 +45,22 @@ export async function registrarCompra(
 
     const purchaseId = result.lastInsertId;
 
+    const ahora = new Date();
+    const mesActual = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}`;
+
     for (const item of items) {
       const product = (await db.select<{ requires_lot_control: number }[]>('SELECT requires_lot_control FROM products WHERE id = ?', [item.product_id]))[0];
       const lotNumber = item.lot_number?.trim() || 'S/N';
-      if (product?.requires_lot_control && (!item.lot_number || !item.expiration_date)) throw new Error('El producto requiere lote y fecha de vencimiento');
-      if (item.expiration_date && item.expiration_date <= new Date().toISOString().slice(0, 10)) throw new Error('La fecha de vencimiento debe ser futura');
-      if (item.manufacture_date && item.expiration_date && item.manufacture_date > item.expiration_date) throw new Error('La fabricación no puede ser posterior al vencimiento');
-      const batchId = await crearLote({ product_id: item.product_id, lot_number: lotNumber, manufacture_date: item.manufacture_date ?? null, expiration_date: item.expiration_date ?? null, quantity: item.quantity, cost: item.cost, supplier_id }, db);
+      const expiration = normalizarMes(item.expiration_date);
+      const manufacture = normalizarMes(item.manufacture_date);
+      if (product?.requires_lot_control && (!item.lot_number || !expiration)) throw new Error('El producto requiere lote y fecha de vencimiento');
+      if (expiration && expiration.slice(0, 7) < mesActual) throw new Error('El mes de vencimiento no puede ser anterior al mes actual');
+      if (manufacture && expiration && manufacture > expiration) throw new Error('La fabricación no puede ser posterior al vencimiento');
+      const batchId = await crearLote({ product_id: item.product_id, lot_number: lotNumber, manufacture_date: manufacture, expiration_date: expiration, quantity: item.quantity, cost: item.cost, supplier_id }, db);
       const purchaseItem = await db.execute(
         `INSERT INTO purchase_items (purchase_id, product_id, batch_id, quantity, cost, lot_number, manufacture_date, expiration_date)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [purchaseId, item.product_id, batchId, item.quantity, item.cost, lotNumber, item.manufacture_date ?? null, item.expiration_date ?? null]
+        [purchaseId, item.product_id, batchId, item.quantity, item.cost, lotNumber, manufacture, expiration]
       );
       await db.execute('UPDATE product_batches SET purchase_item_id = ? WHERE id = ?', [purchaseItem.lastInsertId, batchId]);
       await registrarMovimiento({ batch_id: batchId, movement_type: 'entrada_compra', quantity: item.quantity, reference_type: 'purchase', reference_id: purchaseId }, db);

@@ -29,7 +29,7 @@ export async function devolverCliente(input: { sale_id: number; batch_id: number
     const batch = await db.select<{ id: number }[]>('SELECT id FROM product_batches WHERE id = ?', [input.batch_id]);
     if (!batch.length) throw new Error('El lote original ya no existe.');
     await ajustarCantidadLote(input.batch_id, input.quantity, db);
-    await db.execute(`UPDATE product_batches SET status = CASE WHEN expiration_date IS NOT NULL AND date(expiration_date) < date('now') THEN 'vencido' ELSE 'activo' END WHERE id = ?`, [input.batch_id]);
+    await db.execute(`UPDATE product_batches SET status = CASE WHEN expiration_date IS NOT NULL AND date(expiration_date, 'start of month') < date('now', 'start of month') THEN 'vencido' ELSE 'activo' END WHERE id = ?`, [input.batch_id]);
     await registrarMovimiento({ batch_id: input.batch_id, movement_type: 'devolucion_entrada', quantity: input.quantity, user_id: input.user_id, reason: input.reason ?? 'Devolución de cliente', reference_type: 'sale', reference_id: input.sale_id }, db);
   });
 }

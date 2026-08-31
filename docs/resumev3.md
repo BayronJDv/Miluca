@@ -82,10 +82,14 @@ Se añadieron los módulos:
 `registrarCompra` ahora:
 
 1. Valida que el lote sea obligatorio cuando el producto requiere control.
-2. Valida que el vencimiento sea posterior a la fecha actual.
+2. Valida que el mes de vencimiento no sea anterior al mes actual.
 3. Valida que fabricación no sea posterior a vencimiento.
-4. Crea el lote con su costo y proveedor.
-5. Crea el movimiento `entrada_compra`.
+4. Normaliza ambas fechas al día 01 del mes seleccionado y crea una nueva recepción del lote con su propio costo y proveedor.
+5. Crea el `purchase_item` y el movimiento `entrada_compra` asociados a la recepción.
+
+Cada compra es una recepción independiente: el mismo número de lote puede ingresarse varias veces, incluso con vencimientos distintos, y cada fila conserva su costo propio. Así la utilidad de venta se calcula con el costo real de la recepción consumida y el "último costo" del producto corresponde siempre a la última compra. La migración 006 eliminó el `UNIQUE (product_id, lot_number, expiration_date)` que impedía registrar dos veces el mismo lote. En el carrito de compras, al digitar un número de lote ya registrado, la aplicación avisa (sin bloquear) que se creará una nueva recepción con su propio costo.
+
+Las fechas de lote tienen granularidad de mes: los selectores del carrito eligen año y mes, la fabricación se autocompleta dos años antes del vencimiento (editable) y en la base de datos ambas fechas se guardan con día 01. Un lote se considera válido durante todo su mes de vencimiento: se marca vencido solo cuando el mes actual es posterior al mes de vencimiento (ventas FEFO, bajas, devoluciones e informe regulatorio comparan por mes). Las pantallas y el recibo muestran las fechas como `MM/AAAA`.
 
 La compra es la única operación normal que ingresa stock al sistema.
 
@@ -188,7 +192,7 @@ El stock no se duplica en `products`. Se calcula desde `v_product_stock`, reduci
 
 ### Lote por defecto
 
-El lote `S/N` permite que dispositivos médicos, cosméticos, alimentos u otros productos sin control obligatorio sigan funcionando sin capturas regulatorias innecesarias.
+El lote `S/N` permite que dispositivos médicos, cosméticos, alimentos u otros productos sin control obligatorio sigan funcionando sin capturas regulatorias innecesarias. Al igual que los lotes controlados, cada compra genera su propia fila `S/N`.
 
 ### FEFO obligatorio
 

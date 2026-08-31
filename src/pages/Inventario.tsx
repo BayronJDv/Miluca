@@ -17,6 +17,7 @@ import {
 } from "../db/batches";
 import { userIdAtom } from "../store/UserAtom";
 import { useAtomValue } from "jotai";
+import { formatMesAnio } from "../utils/dates";
 import { isAdminAtom } from '../store/UserAtom';
 import styles from './Inventario.module.css';
 
@@ -607,6 +608,7 @@ export default function Inventario() {
               <thead>
                 <tr>
                   <th>LOTE</th>
+                  <th>INGRESO</th>
                   <th>FABRICACIÓN</th>
                   <th>VENCIMIENTO</th>
                   <th>CANTIDAD</th>
@@ -618,8 +620,9 @@ export default function Inventario() {
                 {batches.map((b) => (
                   <tr key={b.id}>
                     <td>{b.lot_number}</td>
-                    <td>{b.manufacture_date || "-"}</td>
-                    <td>{b.expiration_date || "-"}</td>
+                    <td>{b.created_at.slice(0, 10)}</td>
+                    <td>{formatMesAnio(b.manufacture_date) || "-"}</td>
+                    <td>{formatMesAnio(b.expiration_date) || "-"}</td>
                     <td>{b.quantity}</td>
                     <td>${b.cost.toLocaleString("es-CO")}</td>
                     <td>{b.status}</td>

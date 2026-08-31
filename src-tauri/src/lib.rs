@@ -143,6 +143,12 @@ pub fn run() {
             sql: include_str!("../migrations/005_customers.sql"),
             kind: MigrationKind::Up,
         },
+        Migration {
+            version: 6,
+            description: "lote_multi_recepcion",
+            sql: include_str!("../migrations/006_lote_multi_recepcion.sql"),
+            kind: MigrationKind::Up,
+        },
     ];
 
     tauri::Builder::default()

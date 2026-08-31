@@ -15,6 +15,6 @@ export async function obtenerInformeVencidosBajas() {
   return db.select(`SELECT p.name AS product_name, p.code, b.lot_number, b.expiration_date,
     b.quantity AS remaining_quantity, d.quantity AS disposed_quantity, d.reason, d.disposal_date, d.notes
     FROM product_batches b JOIN products p ON p.id = b.product_id LEFT JOIN disposals d ON d.batch_id = b.id
-    WHERE b.expiration_date IS NOT NULL AND date(b.expiration_date) < date('now') OR d.id IS NOT NULL
+    WHERE b.expiration_date IS NOT NULL AND date(b.expiration_date, 'start of month') < date('now', 'start of month') OR d.id IS NOT NULL
     ORDER BY COALESCE(d.disposal_date, b.expiration_date) DESC`);
 }

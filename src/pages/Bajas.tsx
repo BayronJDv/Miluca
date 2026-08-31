@@ -6,6 +6,7 @@ import { obtenerLotes, ProductBatch } from '../db/batches';
 import { obtenerBajas, registrarBaja, Disposal } from '../db/disposals';
 import { userIdAtom } from '../store/UserAtom';
 import { useAtomValue } from 'jotai';
+import { formatMesAnio } from '../utils/dates';
 import styles from './Bajas.module.css';
 
 export default function Bajas() {
@@ -72,7 +73,7 @@ export default function Bajas() {
             <select className="control" value={batchId} onChange={e => setBatchId(e.target.value)}>
               <option value="">Seleccionar lote...</option>
               {batches.filter(batch => batch.quantity > 0).map(batch => (
-                <option key={batch.id} value={batch.id}>{batch.lot_number} · {batch.quantity} disponibles · vence {batch.expiration_date || 'sin fecha'}</option>
+                <option key={batch.id} value={batch.id}>{batch.lot_number} · {batch.quantity} disponibles · vence {formatMesAnio(batch.expiration_date) || 'sin fecha'} · ingreso {batch.created_at.slice(0, 10)}</option>
               ))}
             </select>
           </label>

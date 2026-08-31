@@ -9,6 +9,7 @@ import { estimarUtilidadVenta, registrarVenta, Factura } from '../db/sales';
 import { obtenerClientes, crearCliente, Customer } from '../db/customers';
 import { mensajeError } from '../db/errors';
 import { imprimirFactura } from '../print/printer';
+import { formatMesAnio } from '../utils/dates';
 import { useAtomValue } from 'jotai';
 import { userAtom } from '../store/UserAtom';
 import styles from './Pos.module.css';
@@ -282,7 +283,7 @@ const Pos: React.FC = () => {
               <tbody>
                 {lastInvoice.items.map(item => (
                   <tr key={`${item.product_id}-${item.batch_id ?? item.quantity}`}>
-                    <td>{item.product_name}<div className={`text-secondary ${styles.invoiceLot}`}>{item.lot_number ? `Lote ${item.lot_number}` : ''}{item.expiration_date ? ` · Vence ${item.expiration_date}` : ''}</div></td>
+                    <td>{item.product_name}<div className={`text-secondary ${styles.invoiceLot}`}>{item.lot_number ? `Lote ${item.lot_number}` : ''}{item.expiration_date ? ` · Vence ${formatMesAnio(item.expiration_date)}` : ''}</div></td>
                     <td className="align-right">{item.quantity}</td>
                     <td className="align-right">{formatPrice(item.price)}</td>
                     <td className="align-right">{formatPrice(item.subtotal)}</td>

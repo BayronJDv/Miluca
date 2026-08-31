@@ -7,23 +7,25 @@ import { Select } from '../components/design/Select';
 import { buscarProductosPorNombre, buscarProductosPorCodigo, crearProducto, Producto } from '../db/products';
 import { obtenerProveedores, Supplier } from '../db/suppliers';
 import { registrarCompra, CompraFactura } from '../db/purchases';
+import { obtenerRecepcionesLote } from '../db/batches';
+import { formatMesAnio } from '../utils/dates';
 import { mensajeError } from '../db/errors';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import styles from './Compras.module.css';
 
-const formatDateValue = (date: Date | null): string => {
+const formatMonthValue = (date: Date | null): string => {
   if (!date) return '';
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return `${year}-${month}-01`;
 };
 const parseDateValue = (value: string): Date | null => value ? new Date(`${value}T12:00:00`) : null;
 
 interface CartItem {
   id: number; name: string; cost: number; qty: number; product_id: number; code: string;
   lot_number: string; manufacture_date: string; expiration_date: string; requires_lot_control: number;
+  loteAviso?: string;
 }
 
 const Compras: React.FC = () => {
@@ -82,8 +84,36 @@ const Compras: React.FC = () => {
 
   const removeItem = useCallback((productId: number) => setCart(prev => prev.filter(item => item.product_id !== productId)), []);
   const updateLot = useCallback((productId: number, field: 'lot_number' | 'manufacture_date' | 'expiration_date', value: string) => {
-    setCart(prev => prev.map(item => item.product_id === productId ? { ...item, [field]: value } : item));
+    setCart(prev => prev.map(item => {
+      if (item.product_id !== productId) return item;
+      return field === 'lot_number' ? { ...item, lot_number: value, loteAviso: '' } : { ...item, [field]: value };
+    }));
   }, []);
+
+  const updateExpiry = useCallback((productId: number, date: Date | null) => {
+    setCart(prev => prev.map(item => {
+      if (item.product_id !== productId) return item;
+      const expiration_date = formatMonthValue(date);
+      const manufacture_date = date ? formatMonthValue(new Date(date.getFullYear() - 2, date.getMonth(), 1)) : item.manufacture_date;
+      return { ...item, expiration_date, manufacture_date };
+    }));
+  }, []);
+
+  const checkLoteExistente = useCallback(async (productId: number) => {
+    const item = cart.find(i => i.product_id === productId);
+    if (!item) return;
+    const lot = item.lot_number.trim();
+    if (!item.requires_lot_control || !lot || lot.toUpperCase() === 'S/N') {
+      setCart(prev => prev.map(i => i.product_id === productId ? { ...i, loteAviso: '' } : i));
+      return;
+    }
+    const previas = await obtenerRecepcionesLote(productId, lot);
+    const ultima = previas[previas.length - 1];
+    const aviso = ultima
+      ? `Lote ${lot} ya fue registrado (${new Date(ultima.created_at).toLocaleDateString('es-CO')}); esta compra creará una nueva recepción con su propio costo.`
+      : '';
+    setCart(prev => prev.map(i => i.product_id === productId ? { ...i, loteAviso: aviso } : i));
+  }, [cart]);
   const clearCart = useCallback(() => { if (window.confirm('¿Vaciar carrito de compra?')) setCart([]); }, []);
   const total = useMemo(() => cart.reduce((sum, item) => sum + item.cost * item.qty, 0), [cart]);
   const formatPrice = (n: number | null | undefined): string => "$" + (n ?? 0).toLocaleString("es-CO", { minimumFractionDigits: 2 });
@@ -183,10 +213,11 @@ const Compras: React.FC = () => {
                 <span className={`text-primary ${styles.subtotal}`}>{formatPrice(item.cost * item.qty)}</span>
               </div>
               <div className={styles.lotGrid}>
-                <input placeholder={item.requires_lot_control ? 'Lote obligatorio' : 'Lote (S/N)'} value={item.lot_number} onChange={e => updateLot(item.product_id, 'lot_number', e.target.value)} className={styles.lotInput} />
-                <DatePicker selected={parseDateValue(item.manufacture_date)} onChange={(date: Date | null) => updateLot(item.product_id, 'manufacture_date', formatDateValue(date))} dateFormat="dd/MM/yyyy" placeholderText="Fabricación" showMonthDropdown showYearDropdown scrollableYearDropdown yearDropdownItemNumber={20} dropdownMode="select" customInput={<input className={styles.dateInput} />} />
-                <DatePicker selected={parseDateValue(item.expiration_date)} onChange={(date: Date | null) => updateLot(item.product_id, 'expiration_date', formatDateValue(date))} dateFormat="dd/MM/yyyy" placeholderText="Vencimiento" showMonthDropdown showYearDropdown scrollableYearDropdown yearDropdownItemNumber={20} dropdownMode="select" customInput={<input className={styles.dateInput} />} />
+                <input placeholder={item.requires_lot_control ? 'Lote obligatorio' : 'Lote (S/N)'} value={item.lot_number} onChange={e => updateLot(item.product_id, 'lot_number', e.target.value)} onBlur={() => checkLoteExistente(item.product_id)} className={styles.lotInput} />
+                <DatePicker selected={parseDateValue(item.manufacture_date)} onChange={(date: Date | null) => updateLot(item.product_id, 'manufacture_date', formatMonthValue(date))} dateFormat="MM/yyyy" placeholderText="Fabricación" showMonthYearPicker dropdownMode="select" customInput={<input className={styles.dateInput} />} />
+                <DatePicker selected={parseDateValue(item.expiration_date)} onChange={(date: Date | null) => updateExpiry(item.product_id, date)} dateFormat="MM/yyyy" placeholderText="Vencimiento" showMonthYearPicker dropdownMode="select" customInput={<input className={styles.dateInput} />} />
               </div>
+              {item.loteAviso && <div className={styles.lotAviso}>{item.loteAviso}</div>}
             </div>
           ))}
           {cart.length === 0 && <div className="empty-state">Carrito vacío</div>}
@@ -254,7 +285,7 @@ const Compras: React.FC = () => {
               <tbody>
                 {lastPurchase.items.map(item => (
                   <tr key={item.product_id}>
-                    <td>{item.product_name}<div className={`text-secondary ${styles.invoiceLot}`}>{item.lot_number ? `Lote ${item.lot_number}` : ''}{item.expiration_date ? ` · Vence ${item.expiration_date}` : ''}</div></td>
+                    <td>{item.product_name}<div className={`text-secondary ${styles.invoiceLot}`}>{item.lot_number ? `Lote ${item.lot_number}` : ''}{item.expiration_date ? ` · Vence ${formatMesAnio(item.expiration_date)}` : ''}</div></td>
                     <td className="align-right">{item.quantity}</td>
                     <td className="align-right">{formatPrice(item.cost)}</td>
                     <td className="align-right">{formatPrice(item.subtotal)}</td>

@@ -1,6 +1,7 @@
 import { numericBarcodeData, type PrintSections } from 'tauri-plugin-thermal-printer';
 import type { Factura } from '../db/sales';
 import type { BusinessData } from '../db/settings';
+import { formatMesAnio } from '../utils/dates';
 
 type Align = 'left' | 'center' | 'right';
 type Size = 'normal' | 'height' | 'width' | 'double';
@@ -94,7 +95,7 @@ export function buildReceiptSections({
         ],
         body: items.map((item) => [
           { text: String(item.quantity), styles: leftStyle() },
-           { text: `${item.product_name}${item.lot_number ? ` Lote:${item.lot_number}` : ''}${item.expiration_date ? ` Vence:${item.expiration_date}` : ''}`, styles: leftStyle() },
+            { text: `${item.product_name}${item.lot_number ? ` Lote:${item.lot_number}` : ''}${item.expiration_date ? ` Vence:${formatMesAnio(item.expiration_date)}` : ''}`, styles: leftStyle() },
           { text: formatMoney(item.price), styles: rightStyle() },
           { text: formatMoney(item.subtotal), styles: rightStyle() },
         ]),
