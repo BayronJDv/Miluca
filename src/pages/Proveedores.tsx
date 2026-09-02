@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useCallback, memo, useRef } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import SupplierCard from '../components/Proveedores/SupplierCard';
 import { Input } from '../components/design/Input';
 import { Icon } from '../components/design/Icon';
 import Btn from '../components/design/Btn';
 import { obtenerProveedores, obtenerEstadisticasProveedores, crearProveedor, modificarProveedor, eliminarProveedor, Supplier, SupplierStats } from '../db/suppliers';
 import { obtenerClientes, crearCliente, modificarCliente, eliminarCliente, Customer } from '../db/customers';
-import { invoke } from '@tauri-apps/api/core';
 import styles from './Proveedores.module.css';
 
 function getInitials(name: string): string {
@@ -21,7 +20,6 @@ function formatCurrency(value: number): string {
 interface SupplierFormData {
   name: string;
   contact_info: string;
-  photo_route: string;
   nit: string;
   address: string;
   email: string;
@@ -30,17 +28,10 @@ interface SupplierFormData {
 const EMPTY_FORM: SupplierFormData = {
   name: '',
   contact_info: '',
-  photo_route: '',
   nit: '',
   address: '',
   email: '',
 };
-
-interface PhotoSelection {
-  data: string;
-  ext: string;
-  preview: string;
-}
 
 const ModalContent = memo(({
   title,
@@ -50,9 +41,6 @@ const ModalContent = memo(({
   onSave,
   onClose,
   isEditing = false,
-  photoPreview,
-  onPickPhoto,
-  onRemovePhoto,
 }: {
   title: string;
   subtitle: string;
@@ -61,9 +49,6 @@ const ModalContent = memo(({
   onSave: () => void;
   onClose: () => void;
   isEditing?: boolean;
-  photoPreview: string | null;
-  onPickPhoto: () => void;
-  onRemovePhoto: () => void;
 }) => {
   const handleNameChange = useCallback((value: string) => {
     onInputChange('name', value);
@@ -167,45 +152,6 @@ const ModalContent = memo(({
             value={formData.address}
             onChange={handleAddressChange}
           />
-        </div>
-
-        <div className={styles.modalFieldSm}>
-          <label className="field-label">
-            Foto
-          </label>
-
-          {photoPreview ? (
-            <div className="photo-preview-container">
-              <img
-                src={photoPreview}
-                alt="Vista previa"
-                className={styles.previewImg}
-              />
-              <button
-                onClick={onRemovePhoto}
-                className="photo-remove-btn"
-                title="Quitar foto"
-              >
-                ✕
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={onPickPhoto}
-              className="photo-upload-btn"
-              onMouseEnter={e => {
-                e.currentTarget.style.borderColor = 'var(--color-primary)';
-                e.currentTarget.style.background = 'var(--color-secondary-container)';
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = 'var(--color-outline-variant)';
-                e.currentTarget.style.background = 'var(--color-surface-container-low)';
-              }}
-            >
-              <Icon name="plus" size={28} color="var(--color-secondary)" />
-              Seleccionar foto
-            </button>
-          )}
         </div>
       </div>
 
@@ -314,9 +260,6 @@ const Proveedores: React.FC = () => {
   const [stats, setStats] = useState<SupplierStats | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const editFileInputRef = useRef<HTMLInputElement>(null);
-
   useEffect(() => {
     (async () => {
       try {
@@ -341,10 +284,6 @@ const Proveedores: React.FC = () => {
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [form, setForm] = useState<SupplierFormData>(EMPTY_FORM);
   const [editForm, setEditForm] = useState<SupplierFormData>(EMPTY_FORM);
-  const [createPhoto, setCreatePhoto] = useState<PhotoSelection | null>(null);
-  const [editPhoto, setEditPhoto] = useState<PhotoSelection | null>(null);
-  const [editExistingPreview, setEditExistingPreview] = useState<string | null>(null);
-
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [showCreateCustomerModal, setShowCreateCustomerModal] = useState(false);
   const [showEditCustomerModal, setShowEditCustomerModal] = useState(false);
@@ -365,78 +304,15 @@ const Proveedores: React.FC = () => {
     setEditForm(prev => ({ ...prev, [key]: value }));
   }, []);
 
-  const readFileAsBase64 = useCallback((file: File): Promise<PhotoSelection> => {
-    return new Promise((resolve, reject) => {
-      const ext = file.name.split('.').pop() || 'png';
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        const base64 = result.split(',')[1];
-        resolve({ data: base64, ext, preview: result });
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }, []);
-
-  const handlePickPhoto = useCallback(() => {
-    fileInputRef.current?.click();
-  }, []);
-
-  const handleEditPickPhoto = useCallback(() => {
-    editFileInputRef.current?.click();
-  }, []);
-
-  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>, mode: 'create' | 'edit') => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const selection = await readFileAsBase64(file);
-    if (mode === 'create') {
-      setCreatePhoto(selection);
-    } else {
-      setEditPhoto(selection);
-      setEditExistingPreview(null);
-    }
-    e.target.value = '';
-  }, [readFileAsBase64]);
-
-  const handleRemovePhoto = useCallback((mode: 'create' | 'edit') => {
-    if (mode === 'create') {
-      setCreatePhoto(null);
-    } else {
-      setEditPhoto(null);
-      if (editingSupplier?.photo_route) {
-        loadExistingPreview(editingSupplier.photo_route);
-      }
-    }
-  }, [editingSupplier]);
-
-  const loadExistingPreview = useCallback(async (photoRoute: string) => {
-    try {
-      const base64 = await invoke<string>('get_supplier_image_base64', { path: photoRoute });
-      setEditExistingPreview(base64);
-    } catch {
-      setEditExistingPreview(null);
-    }
-  }, []);
-
-  const uploadPhoto = useCallback(async (photo: PhotoSelection): Promise<string> => {
-    return await invoke<string>('save_supplier_image', { data: photo.data, ext: photo.ext });
-  }, []);
-
   const handleCreate = useCallback(async () => {
     if (!form.name.trim()) {
       alert('Por favor ingrese el nombre del proveedor');
       return;
     }
-    let photoRoute = form.photo_route.trim() || null;
-    if (createPhoto) {
-      photoRoute = await uploadPhoto(createPhoto);
-    }
     await crearProveedor({
       name: form.name.trim(),
       contact_info: form.contact_info.trim() || null,
-      photo_route: photoRoute,
+      photo_route: null,
       nit: form.nit.trim() || null,
       address: form.address.trim() || null,
       email: form.email.trim() || null,
@@ -449,8 +325,7 @@ const Proveedores: React.FC = () => {
     setStats(estadisticas);
     setShowCreateModal(false);
     setForm(EMPTY_FORM);
-    setCreatePhoto(null);
-  }, [form, createPhoto, uploadPhoto]);
+  }, [form]);
 
   const handleUpdate = useCallback(async () => {
     if (!editingSupplier || !editingSupplier.id) return;
@@ -458,13 +333,10 @@ const Proveedores: React.FC = () => {
       alert('Por favor ingrese el nombre del proveedor');
       return;
     }
-    let photoRoute = editPhoto
-      ? await uploadPhoto(editPhoto)
-      : (editForm.photo_route.trim() || null);
     await modificarProveedor(editingSupplier.id, {
       name: editForm.name.trim(),
       contact_info: editForm.contact_info.trim() || null,
-      photo_route: photoRoute,
+      photo_route: null,
       nit: editForm.nit.trim() || null,
       address: editForm.address.trim() || null,
       email: editForm.email.trim() || null,
@@ -478,9 +350,7 @@ const Proveedores: React.FC = () => {
     setShowEditModal(false);
     setEditingSupplier(null);
     setEditForm(EMPTY_FORM);
-    setEditPhoto(null);
-    setEditExistingPreview(null);
-  }, [editForm, editingSupplier, editPhoto, uploadPhoto]);
+  }, [editForm, editingSupplier]);
 
   const handleDelete = useCallback(async (supplier: Supplier) => {
     if (!supplier.id) return;
@@ -501,31 +371,22 @@ const Proveedores: React.FC = () => {
     setEditForm({
       name: supplier.name,
       contact_info: supplier.contact_info ?? '',
-      photo_route: supplier.photo_route ?? '',
       nit: supplier.nit ?? '',
       address: supplier.address ?? '',
       email: supplier.email ?? '',
     });
-    setEditPhoto(null);
-    setEditExistingPreview(null);
-    if (supplier.photo_route) {
-      loadExistingPreview(supplier.photo_route);
-    }
     setShowEditModal(true);
-  }, [loadExistingPreview]);
+  }, []);
 
   const handleCloseCreate = useCallback(() => {
     setShowCreateModal(false);
     setForm(EMPTY_FORM);
-    setCreatePhoto(null);
   }, []);
 
   const handleCloseEdit = useCallback(() => {
     setShowEditModal(false);
     setEditingSupplier(null);
     setEditForm(EMPTY_FORM);
-    setEditPhoto(null);
-    setEditExistingPreview(null);
   }, []);
 
   const handleCustomerInputChange = useCallback((key: keyof CustomerFormData, value: string) => {
@@ -689,7 +550,6 @@ const Proveedores: React.FC = () => {
             key={supplier.id}
             name={supplier.name}
             phone={supplier.contact_info ?? ''}
-            imageUrl={supplier.photo_route}
             initials={getInitials(supplier.name)}
             nit={supplier.nit}
             address={supplier.address}
@@ -738,22 +598,6 @@ const Proveedores: React.FC = () => {
         </div>
       </div>
 
-      {/* Hidden file inputs */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className={styles.hiddenInput}
-        onChange={(e) => handleFileChange(e, 'create')}
-      />
-      <input
-        ref={editFileInputRef}
-        type="file"
-        accept="image/*"
-        className={styles.hiddenInput}
-        onChange={(e) => handleFileChange(e, 'edit')}
-      />
-
       {/* Create Supplier Modal */}
       {showCreateModal && (
         <div className="overlay">
@@ -765,9 +609,6 @@ const Proveedores: React.FC = () => {
             onSave={handleCreate}
             onClose={handleCloseCreate}
             isEditing={false}
-            photoPreview={createPhoto?.preview ?? null}
-            onPickPhoto={handlePickPhoto}
-            onRemovePhoto={() => handleRemovePhoto('create')}
           />
         </div>
       )}
@@ -783,9 +624,6 @@ const Proveedores: React.FC = () => {
             onSave={handleUpdate}
             onClose={handleCloseEdit}
             isEditing={true}
-            photoPreview={editPhoto?.preview ?? editExistingPreview ?? null}
-            onPickPhoto={handleEditPickPhoto}
-            onRemovePhoto={() => handleRemovePhoto('edit')}
           />
         </div>
       )}

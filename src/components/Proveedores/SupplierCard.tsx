@@ -1,11 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import React from 'react';
 import styles from './SupplierCard.module.css';
 
 interface SupplierCardProps {
   name: string;
   phone: string;
-  imageUrl?: string | null;
   icon?: string;
   initials?: string;
   nit?: string | null;
@@ -15,36 +13,11 @@ interface SupplierCardProps {
   onDelete?: () => void;
 }
 
-const SupplierCard: React.FC<SupplierCardProps> = ({ name, phone, imageUrl, icon, initials, nit, address, email, onEdit, onDelete }) => {
-  const [imgSrc, setImgSrc] = useState<string | null>(null);
-  const [loadingImg, setLoadingImg] = useState(!!imageUrl);
-
-  useEffect(() => {
-    if (!imageUrl) {
-      setImgSrc(null);
-      setLoadingImg(false);
-      return;
-    }
-
-    if (imageUrl.startsWith('/suppliers/')) {
-      invoke<string>('get_supplier_image_base64', { path: imageUrl })
-        .then(setImgSrc)
-        .catch(() => setImgSrc(null))
-        .finally(() => setLoadingImg(false));
-    } else {
-      setImgSrc(imageUrl);
-      setLoadingImg(false);
-    }
-  }, [imageUrl]);
-
+const SupplierCard: React.FC<SupplierCardProps> = ({ name, phone, icon, initials, nit, address, email, onEdit, onDelete }) => {
   return (
     <div className={styles.card}>
       <div className={styles.avatar}>
-        {loadingImg ? (
-          <div className={styles.avatarLoading} />
-        ) : imgSrc ? (
-          <img src={imgSrc} alt={name} className={styles.avatarImg} />
-        ) : icon ? (
+        {icon ? (
           <span className={`material-symbols-outlined ${styles.avatarIcon}`}>{icon}</span>
         ) : (
           <span className={styles.avatarInitials}>{initials}</span>
